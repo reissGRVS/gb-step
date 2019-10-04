@@ -3,12 +3,11 @@ project(gba)               # Create project "simple_example"
 set(CMAKE_CXX_STANDARD 14)            # Enable c++14 standard
 
 # Add main.cpp file of project root directory as source file
-set(SOURCE_FILES src/sample_arm.c)
-
-set(CMAKE_CXX_FLAGS -pthread)
-set(CMAKE_C_FLAGS -pthread)
+set(SOURCE_FILES
+	src/main.cpp
+	src/memory.cpp)
 
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(gba ${SOURCE_FILES})
 
-target_link_libraries(gba pthread unicorn m rt)
+target_link_libraries(gba)
