@@ -3,26 +3,27 @@
 
 #include "gba.hpp"
 
+#include "spdlog/spdlog.h"
+
 int main(int argc, char *argv[])
 {
-	std::cout << "Entering" << std::endl;
+	spdlog::set_level(spdlog::level::debug); // Set global log level to info
+    spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
+
+    spdlog::info("Launching");
+
 	if (argc != 3)
 	{
-		std::cerr << "Wrong number of args";
+		spdlog::error("Wrong number of args");
 		//TODO: Log wrong number args
 		return -1;
 	}
 
-	std::cout << "Populate config" << std::endl;
 	GBAConfig cfg;
 	cfg.biosPath = argv[1];
 	cfg.romPath = argv[2];
 
-	std::cout << "Create gba" << std::endl;
-
 	GBA gba(cfg);
-			/*
-	
 	gba.Run();
-	*/
+
 }

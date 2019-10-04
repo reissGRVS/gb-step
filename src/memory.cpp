@@ -1,6 +1,9 @@
 #include "memory.hpp"
+
 #include <iostream>
 #include <fstream>
+
+#include "spdlog/spdlog.h"
 
 Memory::Memory(std::string biosPath, std::string romPath)
 {
@@ -8,7 +11,7 @@ Memory::Memory(std::string biosPath, std::string romPath)
 	{
 		std::ifstream infile(biosPath);
 		if (!infile.is_open()){
-			std::cerr << "bios not found";
+			spdlog::error("BIOS not found at supplied path");
 			exit(-1);
 		}
 		infile.seekg(0, infile.end);
@@ -17,7 +20,7 @@ Memory::Memory(std::string biosPath, std::string romPath)
 		if (length > mem.gen.bios.size())
 		{
 			//TODO: Log bios too big
-			std::cerr << "bios too big";
+			spdlog::error("BIOS too big");
 			exit(-1);
 		}
 		infile.read(reinterpret_cast<char *>(mem.gen.bios.data()), length);
@@ -26,7 +29,7 @@ Memory::Memory(std::string biosPath, std::string romPath)
 	{
 		std::ifstream infile(romPath);
 		if (!infile.is_open()){
-			std::cerr << "rom not found";
+			spdlog::error("ROM not found at supplied path");
 			exit(-1);
 		}
 		infile.seekg(0, infile.end);
@@ -34,8 +37,7 @@ Memory::Memory(std::string biosPath, std::string romPath)
 		infile.seekg(0, infile.beg);
 		if (length > mem.ext.rom.size())
 		{
-			//TODO: Log rom too big
-			std::cerr << "rom too big";
+			spdlog::error("ROM too big");
 			exit(-1);
 		}
 		infile.read(reinterpret_cast<char *>(mem.ext.rom.data()), length);
