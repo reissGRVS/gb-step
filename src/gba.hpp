@@ -1,4 +1,6 @@
-#include "cpu.hpp"
+#pragma once
+
+#include "arm7tdmi/cpu.hpp"
 #include "ppu.hpp"
 #include "memory.hpp"
 #include "timer.hpp"
