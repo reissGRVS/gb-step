@@ -114,11 +114,11 @@ namespace ARM7TDMI
 	class RegisterSet
 	{
 		public:
-			std::uint32_t& getReg(ModeBank mode, Register reg)
+			std::uint32_t& get(ModeBank mode, Register reg)
 			{
 				if (reg <= Register::R12)
 				{
-					if (reg >= Register::R8 && mode == ModeBank::FIQ)
+					if (mode == ModeBank::FIQ && reg >= Register::R8)
 					{
 						return registers.GPR_FIQ[reg - Register::R8];
 					}
@@ -153,7 +153,32 @@ namespace ARM7TDMI
 				}
 				
 			}
-
+			
+			// https://problemkaputt.de/gbatek.htm#armcpuflagsconditionfieldcond
+			bool ConditionCheck(Condition cond)
+			{
+				switch (cond)
+				{
+				case EQ: return SRFlag::get(CPSR,SRFlag::z);
+				case NE: return !SRFlag::get(CPSR,SRFlag::z);
+				case CS: return SRFlag::get(CPSR,SRFlag::c);
+				case CC: return !SRFlag::get(CPSR,SRFlag::c);
+				case MI: return SRFlag::get(CPSR,SRFlag::n);
+				case PL: return !SRFlag::get(CPSR,SRFlag::n);
+				case VS: return SRFlag::get(CPSR,SRFlag::v);
+				case VC: return !SRFlag::get(CPSR,SRFlag::v);
+				case HI: return SRFlag::get(CPSR,SRFlag::c) && !SRFlag::get(CPSR,SRFlag::z);
+				case LS: return !SRFlag::get(CPSR,SRFlag::c) && SRFlag::get(CPSR,SRFlag::z);
+				case GE: return SRFlag::get(CPSR,SRFlag::n) == SRFlag::get(CPSR, SRFlag::v);
+				case LT: return SRFlag::get(CPSR,SRFlag::n) != SRFlag::get(CPSR, SRFlag::v);
+				case GT: return SRFlag::get(CPSR,SRFlag::n) == SRFlag::get(CPSR, SRFlag::v) && !SRFlag::get(CPSR,SRFlag::z);
+				case LE: return SRFlag::get(CPSR,SRFlag::n) != SRFlag::get(CPSR, SRFlag::v) && SRFlag::get(CPSR,SRFlag::z);
+				case AL: return true;
+				case NV: return false;
+				default: //TODO Complain 
+					return false;
+				}
+			}
 		private:
 			struct Registers
 			{
@@ -174,4 +199,4 @@ namespace ARM7TDMI
 			RegisterSet registers;
 	};
 
-	}
+}

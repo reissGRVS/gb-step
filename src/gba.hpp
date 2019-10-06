@@ -21,9 +21,9 @@ class GBA
 		{};
 		void Run() {};
 
-	private:
+	private: 
 		std::unique_ptr<Memory> memory;
-		CPU cpu;
+		ARM7TDMI::CPU cpu;
 		PPU ppu;
 		Timer timer;
 		DMA dma;
