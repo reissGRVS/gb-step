@@ -125,6 +125,11 @@ namespace ARM7TDMI
 	class RegisterSet
 	{
 		public:
+			std::uint32_t& get(Register reg)
+			{
+				return get(currentBank, reg);
+			}
+			
 			std::uint32_t& get(ModeBank mode, Register reg)
 			{
 				if (reg <= Register::R12)
@@ -205,7 +210,7 @@ namespace ARM7TDMI
 			}
 
 		private:
-		
+
 			ModeBank currentBank = ModeBank::SYS;
 
 			struct Registers
