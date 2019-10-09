@@ -11,7 +11,7 @@ class Memory
 	public:
 		Memory(std::string biosPath, std::string romPath);
 		
-		enum AccessType
+		enum Sequentiality
 		{
 			NSEQ,
 			SEQ
@@ -24,8 +24,8 @@ class Memory
 			Word = 0xFFFFFFFF
 		};
 		
-		uint32_t Read(AccessSize size, std::uint32_t address, AccessType type);
-		void Write(AccessSize size, std::uint32_t address, std::uint32_t value, AccessType type);
+		uint32_t Read(AccessSize size, std::uint32_t address, Sequentiality type);
+		void Write(AccessSize size, std::uint32_t address, std::uint32_t value, Sequentiality type);
 	private:
 		uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
 		void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);

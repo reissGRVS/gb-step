@@ -24,6 +24,6 @@ int main(int argc, char *argv[])
 	cfg.romPath = argv[2];
 
 	GBA gba(cfg);
-	gba.Run();
+	gba.run();
 
 }

@@ -17,12 +17,14 @@ class GBA
 {
 	public:
 		GBA(GBAConfig cfg) :
-			memory(std::make_unique<Memory>(cfg.biosPath, cfg.romPath))
+			memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
+			cpu(memory)
 		{};
-		void Run() {};
+		
+		void run() {};
 
 	private: 
-		std::unique_ptr<Memory> memory;
+		std::shared_ptr<Memory> memory;
 		ARM7TDMI::CPU cpu;
 		PPU ppu;
 		Timer timer;

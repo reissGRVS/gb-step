@@ -50,7 +50,7 @@ uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size)
 	return (*word) & size;
 }
 
-uint32_t Memory::Read(AccessSize size, std::uint32_t address, AccessType accessType)
+uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality accessType)
 {
 	auto page = address >> 24;
 	//TODO: Take size into account
@@ -68,7 +68,7 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, AccessType accessT
 	case 0x08: case 0x09: 
 	case 0x0A: case 0x0B:
 	case 0x0C: case 0x0D:
-		return ReadToSize(&mem.ext.rom[address & rom_mask];
+		return ReadToSize(&mem.ext.rom[address & rom_mask], size);
 	default:
 		return 0;
 	}
@@ -79,20 +79,26 @@ void Memory::WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize siz
 	switch (size)
 	{
 	case AccessSize::Byte:
-		(*byte) = value;
-		break;
+		{
+			(*byte) = value;
+			break;
+		}
 	case AccessSize::Half:
-		auto half = reinterpret_cast<std::uint16_t*>(byte);
-		(*half) = value;
-		break;
+		{
+			auto half = reinterpret_cast<std::uint16_t*>(byte);
+			(*half) = value;
+			break;
+		}
 	case AccessSize::Word:
-		auto word = reinterpret_cast<std::uint32_t*>(byte);
-		(*word) = value;
-		break;
+		{
+			auto word = reinterpret_cast<std::uint32_t*>(byte);
+			(*word) = value;
+			break;
+		}
 	}
 }
 
-void Memory::Write(AccessSize size, std::uint32_t address, std::uint32_t value, AccessType accessType)
+void Memory::Write(AccessSize size, std::uint32_t address, std::uint32_t value, Sequentiality accessType)
 {
 	auto page = address >> 24;
 
