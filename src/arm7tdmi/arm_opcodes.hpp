@@ -9,8 +9,30 @@
 
 ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 
+void Shift(std::uint32_t& value, const std::uint32_t amount, const std::uint32_t& shiftType, std::uint8_t& carryOut);
+
 std::function<void(ParamList)> ArmOperation(OpCode opcode);
 //ARM Operations
+
+enum DPOps
+{
+	AND,
+	EOR,
+	SUB,
+	RSB,
+	ADD,
+	ADC,
+	SBC,
+	RSC,
+	TST,
+	TEQ,
+	CMP,
+	CMN,
+	ORR,
+	MOV,
+	BIC,
+	MVN
+};
 
 const ParamSegments DataProcessingSegments 
 //  I       Opcode  S       Rn      Rd      Op2
