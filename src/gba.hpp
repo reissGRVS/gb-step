@@ -15,19 +15,16 @@ struct GBAConfig
 
 class GBA
 {
-	public:
-		GBA(GBAConfig cfg) :
-			memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
-			cpu(memory)
-		{};
-		
-		void run() {};
+public:
+	GBA(GBAConfig cfg) : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
+						 cpu(memory){};
 
-	private: 
-		std::shared_ptr<Memory> memory;
-		ARM7TDMI::CPU cpu;
-		PPU ppu;
-		Timer timer;
-		DMA dma;
+	void run(){};
+
+private:
+	std::shared_ptr<Memory> memory;
+	ARM7TDMI::CPU cpu;
+	PPU ppu;
+	Timer timer;
+	DMA dma;
 };
-
