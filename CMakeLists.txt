@@ -8,7 +8,11 @@ endif()
 # Add main.cpp file of project root directory as source file
 set(SOURCE_FILES
 	src/main.cpp
-	src/memory.cpp)
+	src/memory.cpp	
+	src/arm7tdmi/arm_opcodes.cpp
+	src/arm7tdmi/registers.cpp
+	src/arm7tdmi/cpu.cpp
+	)
 
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(gba ${SOURCE_FILES})
