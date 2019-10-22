@@ -365,9 +365,9 @@ void CPU::ArmDataProcessing(ParamList params)
 
 void CPU::ArmMultiply(ParamList params)
 {
-	std::uint32_t Rm = params[0], Rs = params[1],
-				  Rn = params[2], Rd = params[3],
-				  S = params[4], A = params[5];
+	uint32_t Rm = params[0], Rs = params[1],
+			Rn = params[2], Rd = params[3],
+			S = params[4], A = params[5];
 
 	auto& dest = registers.get((Register)Rd);
 
@@ -410,8 +410,8 @@ void CPU::ArmMultiply(ParamList params)
 void CPU::ArmMultiplyLong(ParamList params)
 {
 	uint32_t Rm = params[0], Rs = params[1],
-				  RdLo = params[2], RdHi = params[3],
-				  S = params[4], A = params[5], U = params[5];
+			RdLo = params[2], RdHi = params[3],
+			S = params[4], A = params[5], U = params[5];
 
 	if (RdLo == Rm || RdHi == Rm || RdLo == RdHi)
 	{
@@ -433,8 +433,9 @@ void CPU::ArmMultiplyLong(ParamList params)
 
 	if (A)
 	{
-		result = op3 + op4 << 32;
-		
+		result = op4;
+		result <<= 32;
+		result += op3;
 	}
 
 	if (U)
@@ -481,7 +482,72 @@ void CPU::ArmHalfwordDTImmOffset(ParamList params)
 
 void CPU::ArmSingleDataTransfer(ParamList params)
 {
-	return;
+	uint32_t Offset = params[0], Rd = params[1], Rn = params[2], 
+			L = params[3], W = params[4], B = params[5], 
+			U = params[6], P = params[7], I = params[8];
+
+	if (I)
+	{
+		auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+		auto &Rm = registers.get((Register)(Offset & BIT_MASK(4)));
+		auto shiftType = Offset >> 5 & BIT_MASK(2);
+		auto shiftAmount = Offset >> 7;
+		Shift(Rm, shiftAmount, shiftType, carry);
+		Offset = Rm;
+	}
+
+	auto base = registers.get((Register)Rn);
+	auto baseOffset = base;
+
+	if (U)
+	{
+		baseOffset += Offset;
+	}
+	else
+	{
+		baseOffset -= Offset;
+	}
+
+	auto memAddr = base;
+	if (P)
+	{
+		memAddr = baseOffset;
+	}
+	
+	auto destReg = registers.get((Register)Rd);
+
+	if (L)
+	{
+		if (B)
+		{
+			destReg = memory->Read(Memory::AccessSize::Byte, memAddr, Memory::Sequentiality::NSEQ);
+		}
+		else
+		{
+			//TODO: Check word boundary addr LD behaviour, seems complicated pg 49 or 55 of pdf
+			destReg = memory->Read(Memory::AccessSize::Word, memAddr, Memory::Sequentiality::NSEQ);
+		}
+	}
+	else
+	{
+		if (B)
+		{
+			memory->Write(Memory::AccessSize::Byte, memAddr,   destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr+1, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr+2, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr+3, destReg, Memory::Sequentiality::NSEQ);
+		}
+		else
+		{
+			//TODO: Check word boundary addr
+			memory->Write(Memory::AccessSize::Word, memAddr, destReg, Memory::Sequentiality::NSEQ);
+		}
+	}
+	
+	if (W || !P)
+	{
+		registers.get((Register)Rn) = baseOffset;
+	}
 }
 
 void CPU::ArmUndefined(ParamList params)
