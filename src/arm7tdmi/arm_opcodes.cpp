@@ -365,12 +365,98 @@ void CPU::ArmDataProcessing(ParamList params)
 
 void CPU::ArmMultiply(ParamList params)
 {
-	return;
+	std::uint32_t Rm = params[0], Rs = params[1],
+				  Rn = params[2], Rd = params[3],
+				  S = params[4], A = params[5];
+
+	auto& dest = registers.get((Register)Rd);
+
+	if (Rd == Rm)
+	{
+		//TODO: Not sure but not valid
+		return;
+	}
+
+	if (Rm == 15 || Rs == 15 || Rn == 15 || Rd == 15)
+	{
+		//TODO: Not sure, but this isnt valid! 
+		return;
+	}
+
+	int32_t op1 = registers.get((Register)Rm);
+	int32_t op2 = registers.get((Register)Rs);
+	int32_t op3 = registers.get((Register)Rn);
+
+	if (A)
+	{
+		dest = op1*op2+op3;
+	}
+	else
+	{
+		dest = op1*op2;
+	}
+	
+	if (S)
+	{
+		auto &cpsr = registers.get(CPSR);
+		uint8_t zVal = dest == 0;
+		uint8_t nVal = dest >> 31;
+		SRFlag::set(cpsr, SRFlag::n, nVal);
+		SRFlag::set(cpsr, SRFlag::z, zVal);
+	}
+	
 }
 
 void CPU::ArmMultiplyLong(ParamList params)
 {
-	return;
+	uint32_t Rm = params[0], Rs = params[1],
+				  RdLo = params[2], RdHi = params[3],
+				  S = params[4], A = params[5], U = params[5];
+
+	if (RdLo == Rm || RdHi == Rm || RdLo == RdHi)
+	{
+		//TODO: Not sure but not valid
+		return;
+	}
+
+	if (Rm == 15 || Rs == 15 || RdHi == 15 || RdLo == 15)
+	{
+		//TODO: Not sure, but this isnt valid! 
+		return;
+	}
+
+	int64_t result = 0;
+	uint32_t op1 = registers.get((Register)Rm);
+	uint32_t op2 = registers.get((Register)Rs);
+	uint32_t op3 = registers.get((Register)RdLo);
+	uint32_t op4 = registers.get((Register)RdHi);
+
+	if (A)
+	{
+		result = op3 + op4 << 32;
+		
+	}
+
+	if (U)
+	{
+		result += op1 * op2;
+	}
+	else
+	{
+		result += (int32_t)op1 * (int32_t)op2;
+	}
+
+	registers.get((Register)RdLo) = (uint32_t)result;
+	registers.get((Register)RdHi) = result >> 32;
+
+	if (S)
+	{
+		auto &cpsr = registers.get(CPSR);
+		uint8_t zVal = result == 0;
+		uint8_t nVal = result >> 63;
+		SRFlag::set(cpsr, SRFlag::n, nVal);
+		SRFlag::set(cpsr, SRFlag::z, zVal);
+	}
 }
 
 void CPU::ArmSingleDataSwap(ParamList params)
