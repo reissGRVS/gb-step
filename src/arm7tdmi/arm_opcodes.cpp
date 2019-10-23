@@ -600,7 +600,21 @@ void CPU::ArmBlockDataTransfer(ParamList params)
 
 void CPU::ArmBranch(ParamList params)
 {
+	uint32_t Offset = params[0], L = params[1];
+	Offset <<= 2;
+	int32_t signedOffset = (Offset & BIT_MASK(25));
+	if (Offset >> 25) 
+	{
+		signedOffset *= -1;
+	}
 
+	if (L)
+	{
+		//TODO: Adjust for prefetch
+		registers.get(Register::R14) = registers.get(Register::R15) & ~BIT_MASK(2);
+	}
+
+	registers.get(Register::R15) += signedOffset;
 }
 
 void CPU::ArmSWI(ParamList params)
