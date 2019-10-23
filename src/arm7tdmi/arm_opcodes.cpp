@@ -2,6 +2,8 @@
 
 #define BIT_MASK(N) ((1 << N) - 1)
 
+
+//TODO: TIMINGS
 namespace ARM7TDMI
 {
 ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs)
@@ -366,10 +368,10 @@ void CPU::ArmDataProcessing(ParamList params)
 void CPU::ArmMultiply(ParamList params)
 {
 	uint32_t Rm = params[0], Rs = params[1],
-			Rn = params[2], Rd = params[3],
-			S = params[4], A = params[5];
+			 Rn = params[2], Rd = params[3],
+			 S = params[4], A = params[5];
 
-	auto& dest = registers.get((Register)Rd);
+	auto &dest = registers.get((Register)Rd);
 
 	if (Rd == Rm)
 	{
@@ -379,7 +381,7 @@ void CPU::ArmMultiply(ParamList params)
 
 	if (Rm == 15 || Rs == 15 || Rn == 15 || Rd == 15)
 	{
-		//TODO: Not sure, but this isnt valid! 
+		//TODO: Not sure, but this isnt valid!
 		return;
 	}
 
@@ -389,13 +391,13 @@ void CPU::ArmMultiply(ParamList params)
 
 	if (A)
 	{
-		dest = op1*op2+op3;
+		dest = op1 * op2 + op3;
 	}
 	else
 	{
-		dest = op1*op2;
+		dest = op1 * op2;
 	}
-	
+
 	if (S)
 	{
 		auto &cpsr = registers.get(CPSR);
@@ -404,14 +406,13 @@ void CPU::ArmMultiply(ParamList params)
 		SRFlag::set(cpsr, SRFlag::n, nVal);
 		SRFlag::set(cpsr, SRFlag::z, zVal);
 	}
-	
 }
 
 void CPU::ArmMultiplyLong(ParamList params)
 {
 	uint32_t Rm = params[0], Rs = params[1],
-			RdLo = params[2], RdHi = params[3],
-			S = params[4], A = params[5], U = params[5];
+			 RdLo = params[2], RdHi = params[3],
+			 S = params[4], A = params[5], U = params[5];
 
 	if (RdLo == Rm || RdHi == Rm || RdLo == RdHi)
 	{
@@ -421,7 +422,7 @@ void CPU::ArmMultiplyLong(ParamList params)
 
 	if (Rm == 15 || Rs == 15 || RdHi == 15 || RdLo == 15)
 	{
-		//TODO: Not sure, but this isnt valid! 
+		//TODO: Not sure, but this isnt valid!
 		return;
 	}
 
@@ -462,7 +463,33 @@ void CPU::ArmMultiplyLong(ParamList params)
 
 void CPU::ArmSingleDataSwap(ParamList params)
 {
-	return;
+	uint32_t Rm = params[0], Rd = params[1],
+			 Rn = params[2], B = params[3];
+
+	if (Rm == 15 || Rn == 15 || Rd == 15)
+	{
+		//TODO: Not sure, but this isnt valid!
+		return;
+	}
+
+	if (B)
+	{
+		auto addr = registers.get((Register)Rn);
+		auto memVal = memory->Read(Memory::AccessSize::Byte, addr, Memory::Sequentiality::NSEQ);
+		memory->Write(Memory::AccessSize::Byte, addr, registers.get((Register)Rm), Memory::Sequentiality::NSEQ);
+		registers.get((Register)Rd) = memVal;
+	}
+	else
+	{
+		auto addr = registers.get((Register)Rn);
+		auto memVal = memory->Read(Memory::AccessSize::Word, addr, Memory::Sequentiality::NSEQ);
+		//TODO: Maybe these writes need to be word aligned?
+		memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm), Memory::Sequentiality::NSEQ);
+		memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm), Memory::Sequentiality::NSEQ);
+		memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm), Memory::Sequentiality::NSEQ);
+		memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm), Memory::Sequentiality::NSEQ);
+		registers.get((Register)Rd) = memVal;
+	}
 }
 
 void CPU::ArmBranchAndExchange(ParamList params)
@@ -482,9 +509,9 @@ void CPU::ArmHalfwordDTImmOffset(ParamList params)
 
 void CPU::ArmSingleDataTransfer(ParamList params)
 {
-	uint32_t Offset = params[0], Rd = params[1], Rn = params[2], 
-			L = params[3], W = params[4], B = params[5], 
-			U = params[6], P = params[7], I = params[8];
+	uint32_t Offset = params[0], Rd = params[1], Rn = params[2],
+			 L = params[3], W = params[4], B = params[5],
+			 U = params[6], P = params[7], I = params[8];
 
 	if (I)
 	{
@@ -513,7 +540,7 @@ void CPU::ArmSingleDataTransfer(ParamList params)
 	{
 		memAddr = baseOffset;
 	}
-	
+
 	auto destReg = registers.get((Register)Rd);
 
 	if (L)
@@ -532,10 +559,10 @@ void CPU::ArmSingleDataTransfer(ParamList params)
 	{
 		if (B)
 		{
-			memory->Write(Memory::AccessSize::Byte, memAddr,   destReg, Memory::Sequentiality::NSEQ);
-			memory->Write(Memory::AccessSize::Byte, memAddr+1, destReg, Memory::Sequentiality::NSEQ);
-			memory->Write(Memory::AccessSize::Byte, memAddr+2, destReg, Memory::Sequentiality::NSEQ);
-			memory->Write(Memory::AccessSize::Byte, memAddr+3, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr + 1, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr + 3, destReg, Memory::Sequentiality::NSEQ);
 		}
 		else
 		{
@@ -543,7 +570,7 @@ void CPU::ArmSingleDataTransfer(ParamList params)
 			memory->Write(Memory::AccessSize::Word, memAddr, destReg, Memory::Sequentiality::NSEQ);
 		}
 	}
-	
+
 	if (W || !P)
 	{
 		registers.get((Register)Rn) = baseOffset;
