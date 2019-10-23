@@ -726,7 +726,17 @@ void CPU::ArmSingleDataTransfer(ParamList params)
 
 void CPU::ArmUndefined(ParamList params)
 {
-	return;
+	auto pc = registers.get(R15) - 4;
+	auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
+
+	registers.switchMode(SRFlag::ModeBits::UND);
+	
+	registers.get(R14) = pc;
+	SRFlag::set(registers.get(SPSR), SRFlag::v, v);
+	SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
+	registers.get(R15) = 0x04;
+
+	PipelineFlush();
 }
 
 void CPU::ArmBlockDataTransfer(ParamList params)
@@ -850,6 +860,16 @@ void CPU::ArmBranch(ParamList params)
 
 void CPU::ArmSWI(ParamList params)
 {
-	return;
+	auto pc = registers.get(R15) - 4;
+	auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
+
+	registers.switchMode(SRFlag::ModeBits::SVC);
+	
+	registers.get(R14) = pc;
+	SRFlag::set(registers.get(SPSR), SRFlag::v, v);
+	SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
+	registers.get(R15) = 0x08;
+
+	PipelineFlush();
 }
 } // namespace ARM7TDMI
