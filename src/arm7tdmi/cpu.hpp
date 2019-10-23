@@ -24,6 +24,9 @@ private:
 	std::shared_ptr<Memory> memory;
 	std::array<OpCode, 2> pipeline;
 
+	void PipelineFlush();
+
+
 	//ARM Ops and Data
 	ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 

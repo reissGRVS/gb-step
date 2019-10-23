@@ -27,4 +27,22 @@ void CPU::Execute()
 		//TODO: run arm opcode
 	}
 }
+
+void CPU::PipelineFlush()
+{
+	if (SRFlag::get(registers.get(CPSR), SRFlag::thumb))
+	{
+		auto &pc = registers.get(R15);
+		pc &= ~1;
+		pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);
+	}
+	else
+	{
+		auto &pc = registers.get(R15);
+		pc &= ~3;
+		pipeline[0] = memory->Read(Memory::Word, pc, Memory::NSEQ);
+	}
+	
+}
+
 } // namespace ARM7TDMI

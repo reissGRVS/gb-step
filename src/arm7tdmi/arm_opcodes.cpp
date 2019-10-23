@@ -589,6 +589,19 @@ void CPU::ArmBlockDataTransfer(ParamList params)
 
 void CPU::ArmBranch(ParamList params)
 {
+	uint32_t Rn = params[0];
+	if (Rn & BIT_MASK(1))
+	{
+		SRFlag::set(registers.get(CPSR), SRFlag::thumb, 1);
+	}
+	else
+	{
+		SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
+	}
+	
+	registers.get(Register::R15) = registers.get((Register)Rn);
+	PipelineFlush();
+
 	return;
 }
 
