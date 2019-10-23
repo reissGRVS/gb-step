@@ -2,7 +2,6 @@
 
 #define BIT_MASK(N) ((1 << N) - 1)
 
-
 //TODO: TIMINGS
 namespace ARM7TDMI
 {
@@ -503,19 +502,156 @@ void CPU::ArmBranchAndExchange(ParamList params)
 	{
 		SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
 	}
-	
+
 	registers.get(Register::R15) = registers.get((Register)Rn);
 	PipelineFlush();
 }
 
 void CPU::ArmHalfwordDTRegOffset(ParamList params)
 {
-	return;
+	uint32_t Rm = params[0], H = params[1], S = params[2],
+			 Rd = params[4], Rn = params[5], L = params[3], 
+			 W = params[4], U = params[6], P = params[7];
+
+	auto Offset = registers.get((Register)Rm);
+	auto base = registers.get((Register)Rn);
+	auto baseOffset = base;
+
+	if (U)
+	{
+		baseOffset += Offset;
+	}
+	else
+	{
+		baseOffset -= Offset;
+	}
+
+	auto memAddr = base;
+	if (P)
+	{
+		memAddr = baseOffset;
+	}
+
+	auto destReg = registers.get((Register)Rd);
+
+	if (L) //LD
+	{
+		if (H) //HalfWord
+		{
+			//TODO: Addr needs to be on half boundary
+			destReg = memory->Read(Memory::AccessSize::Half, memAddr, Memory::Sequentiality::NSEQ);
+			if (S) //Signed
+			{
+
+				if (destReg >> 15)
+				{
+					destReg *= -1;
+				}
+			}
+		}
+		else //Byte
+		{
+			if (S)
+			{
+				destReg = memory->Read(Memory::AccessSize::Byte, memAddr, Memory::Sequentiality::NSEQ);
+				if (destReg >> 7)
+				{
+					destReg *= -1;
+				}
+			}
+			else
+			{
+				//TODO: Throw warning, should not happen
+			}
+		}
+	}
+	else //STR
+	{
+		if (H) //HalfWord
+		{
+			memory->Write(Memory::AccessSize::Byte, memAddr, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg, Memory::Sequentiality::NSEQ);
+		}
+	}
+
+	if (W || !P)
+	{
+		registers.get((Register)Rn) = baseOffset;
+	}
 }
 
+//TODO: Tidy up data transfers to use common functions, large sections of repetition
 void CPU::ArmHalfwordDTImmOffset(ParamList params)
 {
-	return;
+	uint32_t OffsetLo = params[0], H = params[1], S = params[2],
+			 OffsetHi = params[3], Rd = params[4], Rn = params[5],
+			 L = params[3], W = params[4], U = params[6], P = params[7];
+
+	auto Offset = OffsetLo + (OffsetHi << 4);
+	auto base = registers.get((Register)Rn);
+	auto baseOffset = base;
+
+	if (U)
+	{
+		baseOffset += Offset;
+	}
+	else
+	{
+		baseOffset -= Offset;
+	}
+
+	auto memAddr = base;
+	if (P)
+	{
+		memAddr = baseOffset;
+	}
+
+	auto destReg = registers.get((Register)Rd);
+
+	if (L) //LD
+	{
+		if (H) //HalfWord
+		{
+			//TODO: Addr needs to be on half boundary
+			destReg = memory->Read(Memory::AccessSize::Half, memAddr, Memory::Sequentiality::NSEQ);
+			if (S) //Signed
+			{
+
+				if (destReg >> 15)
+				{
+					destReg *= -1;
+				}
+			}
+		}
+		else //Byte
+		{
+			if (S)
+			{
+				destReg = memory->Read(Memory::AccessSize::Byte, memAddr, Memory::Sequentiality::NSEQ);
+				if (destReg >> 7)
+				{
+					destReg *= -1;
+				}
+			}
+			else
+			{
+				//TODO: Throw warning, should not happen
+			}
+		}
+	}
+	else //STR
+	{
+		if (H) //HalfWord
+		{
+			memory->Write(Memory::AccessSize::Byte, memAddr, destReg, Memory::Sequentiality::NSEQ);
+			memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg, Memory::Sequentiality::NSEQ);
+		}
+	}
+
+	if (W || !P)
+	{
+		registers.get((Register)Rn) = baseOffset;
+	}
 }
 
 void CPU::ArmSingleDataTransfer(ParamList params)
@@ -603,7 +739,7 @@ void CPU::ArmBranch(ParamList params)
 	uint32_t Offset = params[0], L = params[1];
 	Offset <<= 2;
 	int32_t signedOffset = (Offset & BIT_MASK(25));
-	if (Offset >> 25) 
+	if (Offset >> 25)
 	{
 		signedOffset *= -1;
 	}
