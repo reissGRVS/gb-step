@@ -510,7 +510,7 @@ void CPU::ArmBranchAndExchange(ParamList params)
 void CPU::ArmHalfwordDTRegOffset(ParamList params)
 {
 	uint32_t Rm = params[0], H = params[1], S = params[2],
-			 Rd = params[4], Rn = params[5], L = params[3], 
+			 Rd = params[4], Rn = params[5], L = params[3],
 			 W = params[4], U = params[6], P = params[7];
 
 	auto Offset = registers.get((Register)Rm);
@@ -731,7 +731,102 @@ void CPU::ArmUndefined(ParamList params)
 
 void CPU::ArmBlockDataTransfer(ParamList params)
 {
-	return;
+	//TODO: Use of S bit, Use of R15 as base
+
+	std::uint32_t RegList = params[0], Rn = params[1], L = params[2],
+				  W = params[3], S = params[4], U = params[5],
+				  P = params[6];
+
+	auto base = registers.get((Register)Rn);
+	std::vector<Register> toSave;
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		if ((RegList >> i) & BIT_MASK(1))
+		{
+			toSave.emplace_back((Register)i);
+		}
+	}
+	bool transferPC = RegList >> 15 & BIT_MASK(1);
+
+	SRFlag::ModeBits mode; 
+	// R15 not in list and S bit set (User bank transfer)
+	if (S && (!transferPC || !L))
+	{
+		mode = (SRFlag::ModeBits) SRFlag::get(registers.get(CPSR), SRFlag::modeBits);
+    	registers.switchMode(SRFlag::ModeBits::USR);
+	}
+
+	auto addr = base;
+	if (U) //up
+	{
+		if (P) //pre
+		{
+			addr+=4;
+		}
+	}
+	else //down
+	{
+		addr -= 4 * toSave.size();
+		if (!P) //post
+		{
+			addr+=4;
+		}
+	}
+	bool stopWriteback = false;
+	
+	auto writebackVal = base - 4 * toSave.size();
+	if (U)
+	{
+		writebackVal = base + 4 * toSave.size();
+	}
+
+	auto saved = 0;
+	for (auto reg : toSave)
+	{
+		if (L)
+		{
+			if (reg == (Register)Rn) { stopWriteback = true;}
+			registers.get(reg) = memory->Read(Memory::AccessSize::Word, addr, Memory::Sequentiality::NSEQ);
+		}
+		else
+		{
+			if (reg == (Register)Rn)
+			{
+				if (saved == 0)
+				{
+					memory->Write(Memory::AccessSize::Word, addr, base, Memory::Sequentiality::NSEQ);
+				}
+				else
+				{
+					memory->Write(Memory::AccessSize::Word, addr, writebackVal, Memory::Sequentiality::NSEQ);
+				}
+			}
+			else
+			{
+				memory->Write(Memory::AccessSize::Word, addr, registers.get(reg), Memory::Sequentiality::NSEQ);
+			}	
+		}
+		addr+=4;
+		saved++;
+	}
+
+	if (S && L && transferPC)
+	{
+		registers.switchMode(
+			(SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
+	}
+	
+	if (W && !stopWriteback)
+	{
+		registers.get((Register)Rn) = writebackVal;
+	}
+
+	//Change back to previous mode
+	if (S && (!transferPC || !L))
+	{
+    	registers.switchMode(mode);
+	}
+
 }
 
 void CPU::ArmBranch(ParamList params)
