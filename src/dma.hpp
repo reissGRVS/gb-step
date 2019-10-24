@@ -1,4 +1,1 @@
-class DMA
-{
-
-};
+class DMA {};

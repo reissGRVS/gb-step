@@ -1,0 +1,7 @@
+---
+BasedOnStyle: Chromium
+AlignEscapedNewlines: DontAlign
+TabWidth: '4'
+UseTab: ForIndentation
+
+...

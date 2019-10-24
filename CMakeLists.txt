@@ -14,6 +14,9 @@ set(SOURCE_FILES
 	src/arm7tdmi/cpu.cpp
 	)
 
+
+
 # Add executable target with source files listed in SOURCE_FILES variable
 add_executable(gba ${SOURCE_FILES})
+target_compile_options(gba PRIVATE -Wall -Wextra -pedantic -Werror)
 target_link_libraries(gba PRIVATE spdlog::spdlog)

@@ -1,4 +1,1 @@
-class PPU
-{
-
-};
+class PPU {};
