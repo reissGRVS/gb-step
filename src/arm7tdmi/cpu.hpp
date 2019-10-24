@@ -58,7 +58,7 @@ class CPU {
   };
 
   const ParamSegments DataProcessingSegments
-      //  I       Opcode  S       Rn      Rd      Op2
+      //  I         Opcode    S         Rn        Rd        Op2
       = {{25, 25}, {24, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 0}};
   void ArmDataProcessing(ParamList params);
 

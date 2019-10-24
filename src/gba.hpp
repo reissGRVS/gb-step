@@ -23,7 +23,7 @@ class GBA {
 	while (true) {
 	  cpu.Execute();
 
-	  usleep(1000000);
+	  usleep(100000);
 	}
   };
 

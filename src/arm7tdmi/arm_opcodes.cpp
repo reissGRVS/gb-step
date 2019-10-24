@@ -7,10 +7,10 @@
 namespace ARM7TDMI {
 ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs) {
   ParamList params;
-  int startPos = 0;
   for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
-	opcode >>= (it->second - startPos);
-	params.push_back(opcode & BIT_MASK((it->second - it->first + 1)));
+	auto param =
+	    (opcode >> it->second) & BIT_MASK((it->first - it->second + 1));
+	params.push_back(param);
   }
   return params;
 }
@@ -20,15 +20,15 @@ void CPU::Shift(std::uint32_t& value,
                 const std::uint32_t& shiftType,
                 std::uint8_t& carryOut) {
   switch (shiftType) {
-	case 0x00:  // LSL
+	case 0b00:  // LSL
 	{
 	  value <<= (amount - 1);
 	  carryOut = value >> 31;
 	  value <<= 1;
 	  break;
 	}
-	case 0x01:  // LSR
-	case 0x10:  // ASR
+	case 0b01:  // LSR
+	case 0b10:  // ASR
 	{
 	  auto neg = amount >> 31;
 	  if (amount == 0) {
@@ -38,12 +38,12 @@ void CPU::Shift(std::uint32_t& value,
 	  carryOut = amount & 1;
 	  value >>= 1;
 
-	  if (shiftType == 0x10 && neg) {
+	  if (shiftType == 0b10 && neg) {
 		value |= (BIT_MASK(amount) << (32 - amount));
 	  }
 	  break;
 	}
-	case 0x11:  // RR
+	case 0b11:  // RR
 	{
 	  // RRX
 	  if (amount == 0) {
@@ -63,16 +63,19 @@ void CPU::Shift(std::uint32_t& value,
 		value >>= 1;
 		value |= topHalf;
 	  }
-	} break;
-	default:
+	  break;
+	}
+	default:  // Should not be possible
+	{
 	  spdlog::error("CPU::Shift invalid parameters");
 	  break;
+	}
   }
 }
 
 std::function<void()> CPU::ArmOperation(OpCode opcode) {
   switch (opcode >> 26 & BIT_MASK(2)) {
-	case 0x00: {
+	case 0b00: {
 	  if (opcode & (1 << 25)) {
 		return std::bind(&CPU::ArmDataProcessing, this,
 		                 ParseParams(opcode, DataProcessingSegments));
@@ -102,9 +105,10 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 		                 ParseParams(opcode, DataProcessingSegments));
 	  }
 	}
-	case 0x01:  // SDT and Undef
+	case 0b01:  // SDT and Undef
 	{
-	  std::uint32_t undefMask = (0x11 << 25) & (0x1 << 4);
+	  std::uint32_t undefMask = (0b11 << 25) | (0b1 << 4);
+
 	  if ((opcode & undefMask) == undefMask) {
 		return std::bind(&CPU::ArmUndefined, this, ParamList());
 	  } else {
@@ -112,7 +116,7 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 		                 ParseParams(opcode, SingleDataTransferSegments));
 	  }
 	}
-	case 0x10:  // BDT and Branch
+	case 0b10:  // BDT and Branch
 	{
 	  if (opcode & (1 << 25)) {
 		return std::bind(&CPU::ArmBranch, this,
@@ -122,21 +126,25 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 		                 ParseParams(opcode, BlockDataTransferSegments));
 	  }
 	}
-	case 0x11:  // CoProc and SWI
+	case 0b11:  // CoProc and SWI
 	{
 	  const auto swiMask = 0xF000000;
 	  if ((swiMask & opcode) == swiMask) {
 		return std::bind(&CPU::ArmSWI, this, ParamList());
 	  }
 	}
-	default:
-	  return std::bind(&CPU::ArmUndefined, this, ParamList());
+	default: {
+	  spdlog::error("This should be impossible");
+	  exit(-1);
+	}
   }
 }
 
 void CPU::ArmDataProcessing(ParamList params) {
   std::uint32_t Op2 = params[0], Rd = params[1], Rn = params[2], S = params[3],
                 OpCode = params[4], I = params[5];
+  spdlog::debug("DP I:{:X} OpCode:{:X} S:{:X} Rn:{:X} Rd:{:X} Op2:{:X}", I,
+                OpCode, S, I, Rn, Rd, Op2);
 
   std::uint32_t Op1Val = registers.get((Register)Rn);
   auto& dest = registers.get((Register)Rd);
@@ -162,7 +170,7 @@ void CPU::ArmDataProcessing(ParamList params) {
   } else {
 	auto Imm = Op2 & BIT_MASK(8);
 	auto rotate = (Op2 >> 8) * 2;
-	const std::uint32_t ROR = 0x11;
+	const std::uint32_t ROR = 0b11;
 	Shift(Imm, rotate, ROR, carry);
 	Op2Val = Imm;
   }
@@ -261,6 +269,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::TEQ: {
 	  auto result = Op1Val ^ Op2Val;
+	  spdlog::debug("TEQ {} {} {}", Op1Val, Op2Val, result);
 	  SetFlags(1, result, carry);
 	  S = 0;
 	  break;
@@ -315,6 +324,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 }
 
 void CPU::ArmMultiply(ParamList params) {
+  spdlog::debug("MUL");
   std::uint32_t Rm = params[0], Rs = params[1], Rn = params[2], Rd = params[3],
                 S = params[4], A = params[5];
 
@@ -350,6 +360,7 @@ void CPU::ArmMultiply(ParamList params) {
 }
 
 void CPU::ArmMultiplyLong(ParamList params) {
+  spdlog::debug("MULLONG");
   std::uint32_t Rm = params[0], Rs = params[1], RdLo = params[2],
                 RdHi = params[3], S = params[4], A = params[5], U = params[5];
 
@@ -394,6 +405,7 @@ void CPU::ArmMultiplyLong(ParamList params) {
 }
 
 void CPU::ArmSingleDataSwap(ParamList params) {
+  spdlog::debug("SDS");
   std::uint32_t Rm = params[0], Rd = params[1], Rn = params[2], B = params[3];
 
   if (Rm == 15 || Rn == 15 || Rd == 15) {
@@ -426,6 +438,7 @@ void CPU::ArmSingleDataSwap(ParamList params) {
 }
 
 void CPU::ArmBranchAndExchange(ParamList params) {
+  spdlog::debug("BRANCHEXCHANGE");
   std::uint32_t Rn = params[0];
   if (Rn & BIT_MASK(1)) {
 	SRFlag::set(registers.get(CPSR), SRFlag::thumb, 1);
@@ -438,6 +451,7 @@ void CPU::ArmBranchAndExchange(ParamList params) {
 }
 
 void CPU::ArmHalfwordDTRegOffset(ParamList params) {
+  spdlog::debug("HDT");
   std::uint32_t Rm = params[0], H = params[1], S = params[2], Rd = params[4],
                 Rn = params[5], L = params[3], W = params[4], U = params[6],
                 P = params[7];
@@ -503,6 +517,7 @@ void CPU::ArmHalfwordDTRegOffset(ParamList params) {
 // TODO: Tidy up data transfers to use common functions, large sections of
 // repetition
 void CPU::ArmHalfwordDTImmOffset(ParamList params) {
+  spdlog::debug("HDT");
   std::uint32_t OffsetLo = params[0], H = params[1], S = params[2],
                 OffsetHi = params[3], Rd = params[4], Rn = params[5],
                 L = params[3], W = params[4], U = params[6], P = params[7];
@@ -566,6 +581,7 @@ void CPU::ArmHalfwordDTImmOffset(ParamList params) {
 }
 
 void CPU::ArmSingleDataTransfer(ParamList params) {
+  spdlog::debug("SDT");
   std::uint32_t Offset = params[0], Rd = params[1], Rn = params[2],
                 L = params[3], W = params[4], B = params[5], U = params[6],
                 P = params[7], I = params[8];
@@ -628,6 +644,7 @@ void CPU::ArmSingleDataTransfer(ParamList params) {
 }
 
 void CPU::ArmUndefined(ParamList) {
+  spdlog::debug("UND");
   auto pc = registers.get(R15) - 4;
   auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
@@ -643,7 +660,7 @@ void CPU::ArmUndefined(ParamList) {
 
 void CPU::ArmBlockDataTransfer(ParamList params) {
   // TODO: Use of S bit, Use of R15 as base
-
+  spdlog::debug("BDT");
   std::uint32_t RegList = params[0], Rn = params[1], L = params[2],
                 W = params[3], S = params[4], U = params[5], P = params[6];
 
@@ -727,6 +744,7 @@ void CPU::ArmBlockDataTransfer(ParamList params) {
 }
 
 void CPU::ArmBranch(ParamList params) {
+  spdlog::debug("BRANCH");
   std::uint32_t Offset = params[0], L = params[1];
   Offset <<= 2;
   std::int32_t signedOffset = (Offset & BIT_MASK(25));
@@ -740,9 +758,11 @@ void CPU::ArmBranch(ParamList params) {
   }
 
   registers.get(Register::R15) += signedOffset;
+  PipelineFlush();
 }
 
 void CPU::ArmSWI(ParamList) {
+  spdlog::debug("SWI");
   auto pc = registers.get(R15) - 4;
   auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
