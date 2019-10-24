@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include "spdlog/spdlog.h"
 
 namespace ARM7TDMI {
 void CPU::Execute() {
@@ -21,6 +22,7 @@ void CPU::Execute() {
 	// TODO: Fix memory sequentiality
 	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
 	pc += 4;
+	spdlog::debug("{:X} - {:X}", pc - 8, opcode);
 	auto op = ArmOperation(opcode);
 	op();
   }

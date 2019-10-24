@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include "spdlog/spdlog.h"
 
 #define BIT_MASK(N) ((1 << N) - 1)
 
@@ -64,8 +65,8 @@ void CPU::Shift(std::uint32_t& value,
 	  }
 	} break;
 	default:
+	  spdlog::error("CPU::Shift invalid parameters");
 	  break;
-	  // TODO: Complain
   }
 }
 
@@ -151,7 +152,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	if (Op2 >> 4 & BIT_MASK(1))  // Shift amount from register
 	{
 	  if (Op2 >> 7 & BIT_MASK(1)) {
-		// TODO: Complain, should be undef or mul
+		spdlog::error("This instruction should have been UNDEF or MUL");
 	  }
 	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & BIT_MASK(8);
 	}
@@ -320,12 +321,12 @@ void CPU::ArmMultiply(ParamList params) {
   auto& dest = registers.get((Register)Rd);
 
   if (Rd == Rm) {
-	// TODO: Not sure but not valid
+	spdlog::error("Invalid Arm Mult Rd == Rm");
 	return;
   }
 
   if (Rm == 15 || Rs == 15 || Rn == 15 || Rd == 15) {
-	// TODO: Not sure, but this isnt valid!
+	spdlog::error("Invalid Arm Mult Using PC");
 	return;
   }
 
@@ -353,12 +354,12 @@ void CPU::ArmMultiplyLong(ParamList params) {
                 RdHi = params[3], S = params[4], A = params[5], U = params[5];
 
   if (RdLo == Rm || RdHi == Rm || RdLo == RdHi) {
-	// TODO: Not sure but not valid
+	spdlog::error("Invalid Arm Mult Long Rd == Rm");
 	return;
   }
 
   if (Rm == 15 || Rs == 15 || RdHi == 15 || RdLo == 15) {
-	// TODO: Not sure, but this isnt valid!
+	spdlog::error("Invalid Arm Mult Long Using PC");
 	return;
   }
 
@@ -396,7 +397,7 @@ void CPU::ArmSingleDataSwap(ParamList params) {
   std::uint32_t Rm = params[0], Rd = params[1], Rn = params[2], B = params[3];
 
   if (Rm == 15 || Rn == 15 || Rd == 15) {
-	// TODO: Not sure, but this isnt valid!
+	spdlog::error("Invalid Arm SDS Using PC");
 	return;
   }
 
@@ -480,7 +481,7 @@ void CPU::ArmHalfwordDTRegOffset(ParamList params) {
 		  destReg *= -1;
 		}
 	  } else {
-		// TODO: Throw warning, should not happen
+		spdlog::error("Not allowed to do unsigned byte transfer using HDT");
 	  }
 	}
   } else  // STR
@@ -545,7 +546,7 @@ void CPU::ArmHalfwordDTImmOffset(ParamList params) {
 		  destReg *= -1;
 		}
 	  } else {
-		// TODO: Throw warning, should not happen
+		spdlog::error("Not allowed to do unsigned byte transfer using HDT");
 	  }
 	}
   } else  // STR

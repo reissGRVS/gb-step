@@ -17,7 +17,6 @@ Memory::Memory(std::string biosPath, std::string romPath) {
 	size_t length = infile.tellg();
 	infile.seekg(0, infile.beg);
 	if (length > mem.gen.bios.size()) {
-	  // TODO: Log bios too big
 	  spdlog::error("BIOS too big");
 	  exit(-1);
 	}
@@ -48,7 +47,6 @@ uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size) {
 
 uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
   auto page = address >> 24;
-  // TODO: Take size into account
   // TODO: Increment cycles based on AccessType
   switch (page) {
 	case 0x00:

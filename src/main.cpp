@@ -13,7 +13,6 @@ int main(int argc, char* argv[]) {
 
   if (argc != 3) {
 	spdlog::error("Wrong number of args");
-	// TODO: Log wrong number args
 	return -1;
   }
 

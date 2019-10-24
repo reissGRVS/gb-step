@@ -14,7 +14,10 @@
 namespace ARM7TDMI {
 class CPU {
  public:
-  CPU(std::shared_ptr<Memory> memory_) : memory(memory_){};
+  CPU(std::shared_ptr<Memory> memory_) : memory(memory_) {
+	registers.get(Register::R15) = 0;
+	PipelineFlush();
+  };
   void Execute();
   RegisterSet registers;
 

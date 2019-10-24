@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unistd.h>
 #include "arm7tdmi/cpu.hpp"
 #include "dma.hpp"
 #include "memory.hpp"
@@ -18,7 +19,13 @@ class GBA {
       : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
         cpu(memory){};
 
-  void run(){};
+  void run() {
+	while (true) {
+	  cpu.Execute();
+
+	  usleep(1000000);
+	}
+  };
 
  private:
   std::shared_ptr<Memory> memory;
