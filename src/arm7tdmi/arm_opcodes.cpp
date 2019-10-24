@@ -192,17 +192,20 @@ void CPU::ArmDataProcessing(ParamList params) {
   switch ((DPOps)OpCode) {
 	case DPOps::AND: {
 	  dest = Op1Val & Op2Val;
+	  spdlog::debug("	AND {} {} {}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::EOR: {
 	  dest = Op1Val ^ Op2Val;
+	  spdlog::debug("	EOR {} {} {}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::SUB: {
 	  std::uint64_t result = Op1Val - Op2Val;
 	  dest = (uint32_t)result;
+	  spdlog::debug("	SUB {} {} {}", Op1Val, Op2Val, dest);
 	  carry = Op1Val >= Op2Val;
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -211,6 +214,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::RSB: {
 	  std::uint64_t result = Op2Val - Op1Val;
 	  dest = (uint32_t)result;
+	  spdlog::debug("	RSB {} {} {}", Op1Val, Op2Val, dest);
 	  carry = Op2Val >= Op1Val;
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op1Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -220,6 +224,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::ADD: {
 	  std::uint64_t result = Op1Val + Op2Val;
 	  dest = (uint32_t)result;
+	  spdlog::debug("	ADD {} {} {}", Op1Val, Op2Val, dest);
 	  carry = result >> 32;
 	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -230,6 +235,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::ADC: {
 	  std::uint64_t result = Op1Val + Op2Val + carry;
 	  dest = (uint32_t)result;
+	  spdlog::debug("	ADC {} {} {} {}", Op1Val, Op2Val, carry, dest);
 	  auto overflow = ((~(Op1Val ^ Op2Val) & ((Op1Val + Op2Val) ^ Op2Val)) ^
 	                   (~((Op1Val + Op2Val) ^ carry) & (dest ^ carry))) >>
 	                  31;
@@ -241,6 +247,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::SBC: {
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op1Val - Op2Val - Op3Val;
+	  spdlog::debug("	SBC {} {} {} {}", Op1Val, Op2Val, Op3Val, dest);
 	  carry = (Op1Val >= Op2Val) && ((Op1Val - Op2Val) >= (Op3Val));
 	  auto overflow = (((Op1Val ^ Op2Val) & ~((Op1Val - Op2Val) ^ Op2Val)) ^
 	                   ((Op1Val - Op2Val) & ~dest)) >>
@@ -252,6 +259,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::RSC: {
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op2Val - Op1Val - Op3Val;
+	  spdlog::debug("	RSC {} {} {} {}", Op1Val, Op2Val, Op3Val, dest);
 	  carry = (Op2Val >= Op1Val) && ((Op2Val - Op1Val) >= (Op3Val));
 	  auto overflow = (((Op2Val ^ Op1Val) & ~((Op2Val - Op1Val) ^ Op1Val)) ^
 	                   ((Op2Val - Op1Val) & ~dest)) >>
@@ -262,6 +270,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::TST: {
 	  auto result = Op1Val & Op2Val;
+	  spdlog::debug("	CMP {} {} {}", Op1Val, Op2Val, result);
 	  SetFlags(1, result, carry);
 	  S = 0;  // To not trigger SetFlags at bottom
 	  break;
@@ -269,7 +278,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::TEQ: {
 	  auto result = Op1Val ^ Op2Val;
-	  spdlog::debug("TEQ {} {} {}", Op1Val, Op2Val, result);
+	  spdlog::debug("	TEQ {} {} {}", Op1Val, Op2Val, result);
 	  SetFlags(1, result, carry);
 	  S = 0;
 	  break;
@@ -277,6 +286,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::CMP: {
 	  auto result = Op1Val - Op2Val;
+	  spdlog::debug("	CMP {} {} {}", Op1Val, Op2Val, result);
 	  carry = Op1Val >= Op2Val;
 	  SetFlags(1, result, carry);
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
@@ -288,6 +298,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::CMN: {
 	  std::uint64_t resultBig = Op1Val + Op2Val;
 	  std::uint32_t result = (uint32_t)resultBig;
+	  spdlog::debug("	CMN {} {} {}", Op1Val, Op2Val, result);
 	  carry = resultBig >> 32;
 	  SetFlags(1, result, carry);
 	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
@@ -298,21 +309,25 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::ORR: {
 	  dest = Op1Val | Op2Val;
+	  spdlog::debug("	ORR {} {} {}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::MOV: {
 	  dest = Op2Val;
+	  spdlog::debug("	MOV {}", dest);
 	  break;
 	}
 
 	case DPOps::BIC: {
 	  dest = Op2Val & ~Op2Val;
+	  spdlog::debug("	BIC {} {} {}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::MVN: {
 	  dest = ~Op2Val;
+	  spdlog::debug("	MVN {}", dest);
 	  break;
 	}
 
