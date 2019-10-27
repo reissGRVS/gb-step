@@ -61,9 +61,11 @@ class CPU {
       //  I         Opcode    S         Rn        Rd        Op2
       = {{25, 25}, {24, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 0}};
   void ArmDataProcessing(ParamList params);
+  void ArmMRS(bool Ps, std::uint8_t Rd);
+  void ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source);
 
   const ParamSegments MultiplySegments
-      //  A       S       Rd      Rn      Rs     Rm
+      //  A         S         Rd        Rn        Rs      Rm
       = {{21, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 8}, {3, 0}};
   void ArmMultiply(ParamList params);
 
@@ -83,7 +85,7 @@ class CPU {
   void ArmBranchAndExchange(ParamList params);
 
   const ParamSegments HalfwordDTRegOffsetSegments
-      //  P       U       W       L       Rn      Rd      S     H     Rm
+      //  P         U         W         L         Rn       Rd      S     H   Rm
       = {{24, 24}, {23, 23}, {21, 21}, {20, 20}, {19, 16},
          {15, 12}, {6, 6},   {5, 5},   {3, 0}};
   void ArmHalfwordDTRegOffset(ParamList params);

@@ -146,12 +146,62 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 	}
   }
 }
+void CPU::ArmMRS(bool Ps, std::uint8_t Rd) {
+  auto& dest = registers.get((Register)Rd);
+  if (Ps) {
+	dest = registers.get(Register::SPSR);
+	spdlog::debug("	MRS SPSR");
+  } else {
+	dest = registers.get(Register::CPSR);
+	spdlog::debug("	MRS CPSR");
+  }
+}
+
+void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source) {
+  auto value = registers.get((Register)(source & BIT_MASK(4)));
+  if (!flagsOnly) {
+	if (Pd) {
+	  registers.get(Register::SPSR) = value;
+	  spdlog::debug("	MSR SPSR {:X}", value);
+	} else {
+	  registers.get(Register::CPSR) = value;
+	  spdlog::debug("	MSR CPSR {:X}", value);
+	}
+  } else {
+	if (I) {
+	  value = (source & BIT_MASK(8));
+	  value <<= (source >> 8) * 2;
+	}
+	value >>= 28;
+
+	if (Pd) {
+	  SRFlag::set(registers.get(Register::SPSR), SRFlag::flags, value);
+	  spdlog::debug("	MSR SPSR_f {:X}", value);
+	} else {
+	  SRFlag::set(registers.get(Register::CPSR), SRFlag::flags, value);
+	  spdlog::debug("	MSR CPSR_f {:X}", value);
+	}
+  }
+}
 
 void CPU::ArmDataProcessing(ParamList params) {
   std::uint32_t Op2 = params[0], Rd = params[1], Rn = params[2], S = params[3],
                 OpCode = params[4], I = params[5];
+
   spdlog::debug("DP I:{:X} OpCode:{:X} S:{:X} Rn:{:X} Rd:{:X} Op2:{:X}", I,
-                OpCode, S, I, Rn, Rd, Op2);
+                OpCode, S, Rn, Rd, Op2);
+
+  // PSR Transfers
+  if (!S && OpCode >= DPOps::TST && OpCode <= DPOps::CMN) {
+	bool P = (OpCode >> 1) & BIT_MASK(1);
+	if (Rn == 0xF) {
+	  ArmMRS(P, Rd);
+	} else {
+	  bool flagsOnly = !(Rn & BIT_MASK(1));
+	  ArmMSR(I, P, flagsOnly, Op2);
+	}
+	return;
+  }
 
   std::uint32_t Op1Val = registers.get((Register)Rn);
   auto& dest = registers.get((Register)Rd);
@@ -178,7 +228,11 @@ void CPU::ArmDataProcessing(ParamList params) {
 	auto Imm = Op2 & BIT_MASK(8);
 	auto rotate = (Op2 >> 8) * 2;
 	const std::uint32_t ROR = 0b11;
-	Shift(Imm, rotate, ROR, carry);
+	// Maybe this should do RRX as well?
+	if (rotate) {
+	  Shift(Imm, rotate, ROR, carry);
+	}
+
 	Op2Val = Imm;
   }
 
@@ -187,6 +241,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	if (S) {
 	  auto& cpsr = registers.get(CPSR);
 	  std::uint8_t zVal = result == 0;
+	  spdlog::debug("Z set to {}", zVal);
 	  std::uint8_t nVal = result >> 31;
 	  SRFlag::set(cpsr, SRFlag::n, nVal);
 	  SRFlag::set(cpsr, SRFlag::z, zVal);
@@ -199,20 +254,20 @@ void CPU::ArmDataProcessing(ParamList params) {
   switch ((DPOps)OpCode) {
 	case DPOps::AND: {
 	  dest = Op1Val & Op2Val;
-	  spdlog::debug("	AND {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	AND {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::EOR: {
 	  dest = Op1Val ^ Op2Val;
-	  spdlog::debug("	EOR {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	EOR {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::SUB: {
 	  std::uint64_t result = Op1Val - Op2Val;
 	  dest = (uint32_t)result;
-	  spdlog::debug("	SUB {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	SUB {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = Op1Val >= Op2Val;
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -221,7 +276,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::RSB: {
 	  std::uint64_t result = Op2Val - Op1Val;
 	  dest = (uint32_t)result;
-	  spdlog::debug("	RSB {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	RSB {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = Op2Val >= Op1Val;
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op1Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -231,7 +286,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::ADD: {
 	  std::uint64_t result = Op1Val + Op2Val;
 	  dest = (uint32_t)result;
-	  spdlog::debug("	ADD {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	ADD {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = result >> 32;
 	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
@@ -242,7 +297,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::ADC: {
 	  std::uint64_t result = Op1Val + Op2Val + carry;
 	  dest = (uint32_t)result;
-	  spdlog::debug("	ADC {} {} {} {}", Op1Val, Op2Val, carry, dest);
+	  spdlog::debug("	ADC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, carry, dest);
 	  auto overflow = ((~(Op1Val ^ Op2Val) & ((Op1Val + Op2Val) ^ Op2Val)) ^
 	                   (~((Op1Val + Op2Val) ^ carry) & (dest ^ carry))) >>
 	                  31;
@@ -254,7 +309,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::SBC: {
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op1Val - Op2Val - Op3Val;
-	  spdlog::debug("	SBC {} {} {} {}", Op1Val, Op2Val, Op3Val, dest);
+	  spdlog::debug("	SBC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
 	  carry = (Op1Val >= Op2Val) && ((Op1Val - Op2Val) >= (Op3Val));
 	  auto overflow = (((Op1Val ^ Op2Val) & ~((Op1Val - Op2Val) ^ Op2Val)) ^
 	                   ((Op1Val - Op2Val) & ~dest)) >>
@@ -266,7 +321,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::RSC: {
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op2Val - Op1Val - Op3Val;
-	  spdlog::debug("	RSC {} {} {} {}", Op1Val, Op2Val, Op3Val, dest);
+	  spdlog::debug("	RSC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
 	  carry = (Op2Val >= Op1Val) && ((Op2Val - Op1Val) >= (Op3Val));
 	  auto overflow = (((Op2Val ^ Op1Val) & ~((Op2Val - Op1Val) ^ Op1Val)) ^
 	                   ((Op2Val - Op1Val) & ~dest)) >>
@@ -277,7 +332,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::TST: {
 	  auto result = Op1Val & Op2Val;
-	  spdlog::debug("	CMP {} {} {}", Op1Val, Op2Val, result);
+	  spdlog::debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  SetFlags(1, result, carry);
 	  S = 0;  // To not trigger SetFlags at bottom
 	  break;
@@ -285,7 +340,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::TEQ: {
 	  auto result = Op1Val ^ Op2Val;
-	  spdlog::debug("	TEQ {} {} {}", Op1Val, Op2Val, result);
+	  spdlog::debug("	TEQ {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  SetFlags(1, result, carry);
 	  S = 0;
 	  break;
@@ -293,7 +348,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::CMP: {
 	  auto result = Op1Val - Op2Val;
-	  spdlog::debug("	CMP {} {} {}", Op1Val, Op2Val, result);
+	  spdlog::debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  carry = Op1Val >= Op2Val;
 	  SetFlags(1, result, carry);
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
@@ -305,7 +360,7 @@ void CPU::ArmDataProcessing(ParamList params) {
 	case DPOps::CMN: {
 	  std::uint64_t resultBig = Op1Val + Op2Val;
 	  std::uint32_t result = (uint32_t)resultBig;
-	  spdlog::debug("	CMN {} {} {}", Op1Val, Op2Val, result);
+	  spdlog::debug("	CMN {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  carry = resultBig >> 32;
 	  SetFlags(1, result, carry);
 	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
@@ -316,25 +371,25 @@ void CPU::ArmDataProcessing(ParamList params) {
 
 	case DPOps::ORR: {
 	  dest = Op1Val | Op2Val;
-	  spdlog::debug("	ORR {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	ORR {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::MOV: {
 	  dest = Op2Val;
-	  spdlog::debug("	MOV {}", dest);
+	  spdlog::debug("	MOV {:X}", dest);
 	  break;
 	}
 
 	case DPOps::BIC: {
 	  dest = Op2Val & ~Op2Val;
-	  spdlog::debug("	BIC {} {} {}", Op1Val, Op2Val, dest);
+	  spdlog::debug("	BIC {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  break;
 	}
 
 	case DPOps::MVN: {
 	  dest = ~Op2Val;
-	  spdlog::debug("	MVN {}", dest);
+	  spdlog::debug("	MVN {:X}", dest);
 	  break;
 	}
 

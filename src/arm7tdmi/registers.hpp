@@ -70,6 +70,7 @@ const BitLocation thumb = {5, 1};
 const BitLocation fiqDisable = {6, 1};
 const BitLocation irqDisable = {7, 1};
 const BitLocation q = {27, 1};
+const BitLocation flags = {28, 4};
 const BitLocation v = {28, 1};
 const BitLocation c = {29, 1};
 const BitLocation z = {30, 1};

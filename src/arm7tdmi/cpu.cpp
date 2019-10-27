@@ -15,6 +15,8 @@ void CPU::Execute() {
 	exit(0);
   }
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
+	spdlog::debug("Execute THUMB");
+	exit(0);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 
@@ -40,6 +42,8 @@ void CPU::Execute() {
 
 void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
+	spdlog::debug("Flush to THUMB");
+	exit(0);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 	pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);
