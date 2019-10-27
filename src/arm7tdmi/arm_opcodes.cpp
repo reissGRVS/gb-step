@@ -250,6 +250,12 @@ void CPU::ArmDataProcessing(ParamList params) {
 	}
   };
 
+  if (Rd == 15 && S) {
+	registers.switchMode(
+	    (SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
+	S = 0;
+  }
+
   auto& cpsr = registers.get(CPSR);
 
   switch ((DPOps)OpCode) {
