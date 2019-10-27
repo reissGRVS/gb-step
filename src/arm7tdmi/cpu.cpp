@@ -1,11 +1,19 @@
 #include "cpu.hpp"
+#include <iostream>
 #include "spdlog/spdlog.h"
+
+int count = 0;
 
 namespace ARM7TDMI {
 void CPU::Execute() {
   auto opcode = pipeline[0];
+  count++;
   spdlog::debug("{:X} - {:X}", registers.get(R15) - 4, opcode);
 
+  if (registers.get(R15) > 0x4000) {
+	std::cout << "Instructions: " << count << std::endl;
+	exit(0);
+  }
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
 	auto& pc = registers.get(R15);
 	pc &= ~1;

@@ -22,8 +22,6 @@ class GBA {
   void run() {
 	while (true) {
 	  cpu.Execute();
-
-	  usleep(100000);
 	}
   };
 

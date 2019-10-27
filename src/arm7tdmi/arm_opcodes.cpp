@@ -74,6 +74,13 @@ void CPU::Shift(std::uint32_t& value,
 }
 
 std::function<void()> CPU::ArmOperation(OpCode opcode) {
+  if (!registers.conditionCheck((Condition)(opcode >> 28))) {
+	return []() {
+	  spdlog::debug("Condition failed");
+	  return;
+	};
+  }
+
   switch (opcode >> 26 & BIT_MASK(2)) {
 	case 0b00: {
 	  if (opcode & (1 << 25)) {
@@ -453,8 +460,9 @@ void CPU::ArmSingleDataSwap(ParamList params) {
 }
 
 void CPU::ArmBranchAndExchange(ParamList params) {
-  spdlog::debug("BRANCHEXCHANGE");
   std::uint32_t Rn = params[0];
+  spdlog::debug("BRANCHEXCHANGE {:X}", Rn);
+
   if (Rn & BIT_MASK(1)) {
 	SRFlag::set(registers.get(CPSR), SRFlag::thumb, 1);
   } else {
