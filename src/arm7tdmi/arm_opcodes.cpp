@@ -166,6 +166,7 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source) {
 	} else {
 	  registers.get(Register::CPSR) = value;
 	  spdlog::debug("	MSR CPSR {:X}", value);
+	  registers.switchMode((SRFlag::ModeBits)(value & BIT_MASK(5)));
 	}
   } else {
 	if (I) {
@@ -516,17 +517,13 @@ void CPU::ArmSingleDataSwap(ParamList params) {
 
 void CPU::ArmBranchAndExchange(ParamList params) {
   std::uint32_t Rn = params[0];
-  spdlog::debug("BRANCHEXCHANGE {:X}", Rn);
+  auto val = registers.get((Register)Rn);
 
-  if (Rn & BIT_MASK(1)) {
-	SRFlag::set(registers.get(CPSR), SRFlag::thumb, 1);
-  } else {
-	SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
-  }
-
-  registers.get(Register::R15) = registers.get((Register)Rn);
+  spdlog::debug("BRANCHEXCHANGE {:X}", val);
+  SRFlag::set(registers.get(CPSR), SRFlag::thumb, val & BIT_MASK(1));
+  registers.get(Register::R15) = val;
   PipelineFlush();
-}
+}  // namespace ARM7TDMI
 
 void CPU::ArmHalfwordDTRegOffset(ParamList params) {
   spdlog::debug("HDT");

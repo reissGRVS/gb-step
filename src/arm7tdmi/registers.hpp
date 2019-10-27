@@ -77,7 +77,7 @@ const BitLocation z = {30, 1};
 const BitLocation n = {31, 1};
 
 uint8_t get(const std::uint32_t& sr, const BitLocation& flag);
-void set(uint32_t& sr, const BitLocation& flag, std::uint8_t val);
+void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val);
 }  // namespace SRFlag
 
 enum ModeBank {

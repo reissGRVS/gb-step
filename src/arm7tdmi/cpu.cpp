@@ -50,6 +50,7 @@ void CPU::PipelineFlush() {
 	pc += 2;
 	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
   } else {
+	spdlog::debug("Flush to ARM");
 	auto& pc = registers.get(R15);
 	pc &= ~3;
 	pipeline[0] = memory->Read(Memory::Word, pc, Memory::NSEQ);

@@ -9,7 +9,7 @@ uint8_t get(const std::uint32_t& sr, const BitLocation& flag) {
   return (sr >> flag.bit) & mask;
 }
 
-void set(uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
+void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
   std::uint32_t mask = (1 << flag.size) - 1;
   if ((mask & val) != val) {
 	spdlog::warn("Tried to set invalid size of value for bitlocation");
@@ -17,7 +17,7 @@ void set(uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
   }
   mask = ~mask;
   sr &= mask;
-  sr |= val;
+  sr |= (val << flag.bit);
 }
 }  // end  namespace SRFlag
 
