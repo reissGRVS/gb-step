@@ -1,6 +1,7 @@
 #include "cpu.hpp"
 #include <iostream>
 #include "spdlog/spdlog.h"
+#include "utils.hpp"
 
 int count = 0;
 
@@ -57,6 +58,16 @@ void CPU::PipelineFlush() {
 	pc += 4;
 	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
   }
+}
+
+ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs) {
+  ParamList params;
+  for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
+	auto param =
+	    (opcode >> it->second) & BIT_MASK((it->first - it->second + 1));
+	params.push_back(param);
+  }
+  return params;
 }
 
 }  // namespace ARM7TDMI
