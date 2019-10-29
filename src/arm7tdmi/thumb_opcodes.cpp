@@ -85,81 +85,100 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
   switch (opcode >> 13) {
 	case 0b000: {
 	  if (opcode && 0x1800) {
-		// TODO: Op2
+		return std::bind(&CPU::ThumbAddSubtract_P, this,
+		                 ParseParams(opcode, AddSubtractSegments));
 	  } else {
-		// TODO: Op1
+		return std::bind(&CPU::ThumbMoveShiftedReg_P, this,
+		                 ParseParams(opcode, MoveShiftedRegSegments));
 	  }
 	  break;
 	}
 	case 0b001: {
-	  // TODO: Op3
+	  return std::bind(&CPU::ThumbMoveCompAddSubImm_P, this,
+	                   ParseParams(opcode, MoveCompAddSubImmSegments));
 	  break;
 	}
 	case 0b010: {
 	  switch (opcode >> 10 & BIT_MASK(3)) {
 		case 0b000: {
-		  // TODO Op4
+		  return std::bind(&CPU::ThumbALUOps_P, this,
+		                   ParseParams(opcode, ALUOpsSegments));
 		  break;
 		}
 		case 0b001: {
-		  // TODO Op5
+		  return std::bind(&CPU::ThumbHiRegOps_P, this,
+		                   ParseParams(opcode, HiRegOpsSegments));
 		  break;
 		}
 		case 0b010:
 		case 0b011: {
-		  // TODO Op6
+		  return std::bind(&CPU::ThumbPCRelativeLoad_P, this,
+		                   ParseParams(opcode, PCRelativeLoadSegments));
 		  break;
 		}
 		default: {
 		  if (opcode >> 9 & BIT_MASK(1)) {
-			// TODO Op8
+			return std::bind(&CPU::ThumbLSSignExt_P, this,
+			                 ParseParams(opcode, LSSignExtSegments));
 		  } else {
-			// TODO Op7
+			return std::bind(&CPU::ThumbLSRegOff_P, this,
+			                 ParseParams(opcode, LSRegOffSegments));
 		  }
 		}
 	  }
 	}
 	case 0b011: {
-	  // TODO: Op9
+	  return std::bind(&CPU::ThumbLSImmOff_P, this,
+	                   ParseParams(opcode, LSImmOffSegments));
 	  break;
 	}
 	case 0b100: {
 	  if (opcode >> 12 & BIT_MASK(1)) {
-		// TODO: Op11
+		return std::bind(&CPU::ThumbSPRelativeLS_P, this,
+		                 ParseParams(opcode, SPRelativeLSSegments));
 	  } else {
-		// TODO: Op10
+		return std::bind(&CPU::ThumbLSHalf_P, this,
+		                 ParseParams(opcode, LSHalfSegments));
 	  }
 	  break;
 	}
 	case 0b101: {
 	  if (opcode >> 12 & BIT_MASK(1)) {
 		if (opcode >> 8 & BIT_MASK(4)) {
-		  // TODO: Op14
+		  return std::bind(&CPU::ThumbPushPopReg_P, this,
+		                   ParseParams(opcode, PushPopRegSegments));
 		} else {
-		  // TODO: Op13
+		  return std::bind(&CPU::ThumbOffsetSP_P, this,
+		                   ParseParams(opcode, OffsetSPSegments));
 		}
 	  } else {
-		// TODO: Op12
+		return std::bind(&CPU::ThumbLoadAddress_P, this,
+		                 ParseParams(opcode, LoadAddressSegments));
 	  }
 	  break;
 	}
 	case 0b110: {
 	  if (opcode >> 12 & BIT_MASK(1)) {
 		if ((opcode >> 8 & BIT_MASK(4)) == BIT_MASK(4)) {
-		  // TODO: Op17
+		  return std::bind(&CPU::ThumbSWI_P, this,
+		                   ParseParams(opcode, SWISegments));
 		} else {
-		  // TODO: Op16
+		  return std::bind(&CPU::ThumbCondBranch_P, this,
+		                   ParseParams(opcode, CondBranchSegments));
 		}
 	  } else {
-		// TODO: Op15
+		return std::bind(&CPU::ThumbMultipleLS_P, this,
+		                 ParseParams(opcode, MultipleLSSegments));
 	  }
 	  break;
 	}
 	case 0b111: {
 	  if (opcode >> 12 & BIT_MASK(1)) {
-		// TODO: Op19
+		return std::bind(&CPU::ThumbLongBranchLink_P, this,
+		                 ParseParams(opcode, LongBranchLinkSegments));
 	  } else {
-		// TODO: Op18
+		return std::bind(&CPU::ThumbUncondBranch_P, this,
+		                 ParseParams(opcode, UncondBranchSegments));
 	  }
 	  break;
 	}
@@ -227,7 +246,7 @@ void CPU::ThumbLoadAddress_P(ParamList params) {
 }
 
 void CPU::ThumbOffsetSP_P(ParamList params) {
-  std::uint16_t SWord7 = params[0], S = params[1],
+  std::uint16_t SWord7 = params[0], S = params[1];
 }
 
 void CPU::ThumbPushPopReg_P(ParamList params) {
