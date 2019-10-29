@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.5.1)  # CMake version check
+cmake_minimum_required(VERSION 3.10.0)  # CMake version check
 project(gba)               # Create project "simple_example"
-set(CMAKE_CXX_STANDARD 14)            # Enable c++14 standard
+set(CMAKE_CXX_STANDARD 17)            # Enable c++17 standard
 if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()

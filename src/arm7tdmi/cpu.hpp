@@ -35,87 +35,96 @@ class CPU {
              const std::uint32_t& shiftType,
              std::uint8_t& carryOut);
 
+  std::function<void()> ThumbOperation(OpCode opcode);
   std::function<void()> ArmOperation(OpCode opcode);
   // ARM Operations
 
-  enum DPOps {
-	AND,
-	EOR,
-	SUB,
-	RSB,
-	ADD,
-	ADC,
-	SBC,
-	RSC,
-	TST,
-	TEQ,
-	CMP,
-	CMN,
-	ORR,
-	MOV,
-	BIC,
-	MVN
-  };
-
-  const ParamSegments DataProcessingSegments
-      //  I         Opcode    S         Rn        Rd        Op2
-      = {{25, 25}, {24, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 0}};
-  void ArmDataProcessing(ParamList params);
+  void ArmDataProcessingP(ParamList params);
+  void ArmDataProcessing(std::uint32_t I,
+                         std::uint32_t OpCode,
+                         std::uint32_t S,
+                         std::uint32_t Rn,
+                         std::uint32_t Rd,
+                         std::uint32_t Op2);
   void ArmMRS(bool Ps, std::uint8_t Rd);
   void ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source);
 
-  const ParamSegments MultiplySegments
-      //  A         S         Rd        Rn        Rs      Rm
-      = {{21, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 8}, {3, 0}};
-  void ArmMultiply(ParamList params);
+  void ArmMultiplyP(ParamList params);
+  void ArmMultiply(std::uint32_t A,
+                   std::uint32_t S,
+                   std::uint32_t Rd,
+                   std::uint32_t Rn,
+                   std::uint32_t Rs,
+                   std::uint32_t Rm);
 
-  const ParamSegments MultiplyLongSegments
-      //  U       A       S       RdHi    RdLo    Rn     Rm
-      = {{22, 22}, {21, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 8}, {3, 0}};
-  void ArmMultiplyLong(ParamList params);
+  void ArmMultiplyLongP(ParamList params);
+  void ArmMultiplyLong(std::uint32_t U,
+                       std::uint32_t A,
+                       std::uint32_t S,
+                       std::uint32_t RdHi,
+                       std::uint32_t RdLo,
+                       std::uint32_t Rs,
+                       std::uint32_t Rm);
 
-  const ParamSegments SingleDataSwapSegments
-      //  B       Rn      Rd      Rm
-      = {{22, 22}, {19, 16}, {15, 12}, {3, 0}};
-  void ArmSingleDataSwap(ParamList params);
+  void ArmSingleDataSwapP(ParamList params);
+  void ArmSingleDataSwap(std::uint32_t B,
+                         std::uint32_t Rn,
+                         std::uint32_t Rd,
+                         std::uint32_t Rm);
 
-  const ParamSegments BranchAndExchangeSegments
-      //  Rn
-      = {{3, 0}};
-  void ArmBranchAndExchange(ParamList params);
+  void ArmBranchAndExchangeP(ParamList params);
+  void ArmBranchAndExchange(std::uint32_t Rn);
 
-  const ParamSegments HalfwordDTRegOffsetSegments
-      //  P         U         W         L         Rn       Rd      S     H   Rm
-      = {{24, 24}, {23, 23}, {21, 21}, {20, 20}, {19, 16},
-         {15, 12}, {6, 6},   {5, 5},   {3, 0}};
-  void ArmHalfwordDTRegOffset(ParamList params);
+  void ArmHalfwordDTRegOffsetP(ParamList params);
+  void ArmHalfwordDTRegOffset(std::uint32_t P,
+                              std::uint32_t U,
+                              std::uint32_t W,
+                              std::uint32_t L,
+                              std::uint32_t Rn,
+                              std::uint32_t Rd,
+                              std::uint32_t S,
+                              std::uint32_t H,
+                              std::uint32_t Rm);
 
-  const ParamSegments HalfwordDTImmOffsetSegments
-      //  P       U       W       L       Rn      Rd      Offset S     H Offset
-      = {{24, 24}, {23, 23}, {21, 21}, {20, 20}, {19, 16},
-         {15, 12}, {11, 8},  {6, 6},   {5, 5},   {3, 0}};
-  void ArmHalfwordDTImmOffset(ParamList params);
+  void ArmHalfwordDTImmOffsetP(ParamList params);
+  void ArmHalfwordDTImmOffset(std::uint32_t P,
+                              std::uint32_t U,
+                              std::uint32_t W,
+                              std::uint32_t L,
+                              std::uint32_t Rn,
+                              std::uint32_t Rd,
+                              std::uint32_t OffsetHi,
+                              std::uint32_t S,
+                              std::uint32_t H,
+                              std::uint32_t OffsetLo);
 
-  const ParamSegments SingleDataTransferSegments
-      //  I       P       U       B       W       L       Rn      Rd      Offset
-      = {{25, 25}, {24, 24}, {23, 23}, {22, 22}, {21, 21},
-         {20, 20}, {19, 16}, {15, 12}, {11, 0}};
-  void ArmSingleDataTransfer(ParamList params);
-
+  void ArmSingleDataTransferP(ParamList params);
+  void ArmSingleDataTransfer(std::uint32_t I,
+                             std::uint32_t P,
+                             std::uint32_t U,
+                             std::uint32_t B,
+                             std::uint32_t W,
+                             std::uint32_t L,
+                             std::uint32_t Rn,
+                             std::uint32_t Rd,
+                             std::uint32_t Offset);
   // No Params
-  void ArmUndefined(ParamList params);
+  void ArmUndefinedP(ParamList params);
+  void ArmUndefined();
 
-  const ParamSegments BlockDataTransferSegments
-      //  P       U       S       W       L       Rn      RegList
-      = {{24, 24}, {23, 23}, {22, 22}, {21, 21}, {20, 20}, {19, 16}, {15, 0}};
-  void ArmBlockDataTransfer(ParamList params);
+  void ArmBlockDataTransferP(ParamList params);
+  void ArmBlockDataTransfer(std::uint32_t P,
+                            std::uint32_t U,
+                            std::uint32_t S,
+                            std::uint32_t W,
+                            std::uint32_t L,
+                            std::uint32_t Rn,
+                            std::uint32_t RegList);
 
-  const ParamSegments BranchSegments
-      //  L       Offset
-      = {{24, 24}, {23, 0}};
-  void ArmBranch(ParamList params);
-
+  void ArmBranchP(ParamList params);
+  void ArmBranch(std::uint32_t L, std::uint32_t Offset);
   // No Params
-  void ArmSWI(ParamList params);
+  void ArmSWIP(ParamList params);
+  void ArmSWI();
 };
 }  // namespace ARM7TDMI
