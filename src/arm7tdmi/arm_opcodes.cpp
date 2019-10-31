@@ -214,25 +214,6 @@ void CPU::ArmDataProcessing_P(ParamList params) {
   ArmDataProcessing(I, OpCode, S, Rn, Rd, Op2);
 }
 
-enum DPOps {
-  AND,
-  EOR,
-  SUB,
-  RSB,
-  ADD,
-  ADC,
-  SBC,
-  RSC,
-  TST,
-  TEQ,
-  CMP,
-  CMN,
-  ORR,
-  MOV,
-  BIC,
-  MVN
-};
-
 void CPU::ArmDataProcessing(std::uint32_t I,
                             std::uint32_t OpCode,
                             std::uint32_t S,

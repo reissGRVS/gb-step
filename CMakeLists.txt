@@ -10,6 +10,7 @@ set(SOURCE_FILES
 	src/main.cpp
 	src/memory.cpp	
 	src/arm7tdmi/arm_opcodes.cpp
+	src/arm7tdmi/thumb_opcodes.cpp
 	src/arm7tdmi/registers.cpp
 	src/arm7tdmi/cpu.cpp
 	)

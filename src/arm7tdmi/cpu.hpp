@@ -27,7 +27,6 @@ class CPU {
 
   void PipelineFlush();
 
-  // ARM Ops and Data
   ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 
   void Shift(std::uint32_t& value,
@@ -35,6 +34,7 @@ class CPU {
              const std::uint32_t& shiftType,
              std::uint8_t& carryOut);
 
+  // Thumb Operations
   std::function<void()> ThumbOperation(OpCode opcode);
 
   void ThumbMoveShiftedReg_P(ParamList params);
@@ -60,6 +60,24 @@ class CPU {
   std::function<void()> ArmOperation(OpCode opcode);
   // ARM Operations
 
+  enum DPOps {
+	AND,
+	EOR,
+	SUB,
+	RSB,
+	ADD,
+	ADC,
+	SBC,
+	RSC,
+	TST,
+	TEQ,
+	CMP,
+	CMN,
+	ORR,
+	MOV,
+	BIC,
+	MVN
+  };
   void ArmDataProcessing_P(ParamList params);
   void ArmDataProcessing(std::uint32_t I,
                          std::uint32_t OpCode,
