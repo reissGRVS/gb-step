@@ -10,14 +10,14 @@ void CPU::Execute() {
   auto opcode = pipeline[0];
   count++;
   spdlog::debug("{:X} - {:X}", registers.get(R15) - 4, opcode);
-
+  if (!(count % 1000)) {
+	spdlog::info("{:X}", count);
+  }
   if (registers.get(R15) > 0x4000) {
 	std::cout << "Instructions: " << count << std::endl;
 	exit(0);
   }
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::debug("Execute THUMB");
-	exit(0);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 
@@ -26,7 +26,7 @@ void CPU::Execute() {
 	pc += 2;
 	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
 
-	// TODO: run thumb opcode
+	ThumbOperation(opcode)();
   } else {
 	auto& pc = registers.get(R15);
 	pc &= ~3;
@@ -36,15 +36,16 @@ void CPU::Execute() {
 	pc += 4;
 	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
 
-	auto op = ArmOperation(opcode);
-	op();
+	ArmOperation(opcode)();
   }
+
+  auto LR = registers.get(R14);
+  spdlog::debug("LR: {:X}", LR);
 }
 
 void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
 	spdlog::debug("Flush to THUMB");
-	exit(0);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 	pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);

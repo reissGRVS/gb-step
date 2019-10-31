@@ -15,7 +15,7 @@ void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
 	spdlog::warn("Tried to set invalid size of value for bitlocation");
 	return;
   }
-  mask = ~mask;
+  mask = ~(mask << flag.bit);
   sr &= mask;
   sr |= (val << flag.bit);
 }
@@ -76,35 +76,41 @@ std::uint32_t& RegisterSet::get(ModeBank mode, Register reg) {
 bool RegisterSet::conditionCheck(Condition cond) {
   switch (cond) {
 	case EQ:
-	  return SRFlag::get(CPSR, SRFlag::z);
+	  return SRFlag::get(registers.CPSR, SRFlag::z);
 	case NE:
-	  return !SRFlag::get(CPSR, SRFlag::z);
+	  return !SRFlag::get(registers.CPSR, SRFlag::z);
 	case CS:
-	  return SRFlag::get(CPSR, SRFlag::c);
+	  return SRFlag::get(registers.CPSR, SRFlag::c);
 	case CC:
-	  return !SRFlag::get(CPSR, SRFlag::c);
+	  return !SRFlag::get(registers.CPSR, SRFlag::c);
 	case MI:
-	  return SRFlag::get(CPSR, SRFlag::n);
+	  return SRFlag::get(registers.CPSR, SRFlag::n);
 	case PL:
-	  return !SRFlag::get(CPSR, SRFlag::n);
+	  return !SRFlag::get(registers.CPSR, SRFlag::n);
 	case VS:
-	  return SRFlag::get(CPSR, SRFlag::v);
+	  return SRFlag::get(registers.CPSR, SRFlag::v);
 	case VC:
-	  return !SRFlag::get(CPSR, SRFlag::v);
+	  return !SRFlag::get(registers.CPSR, SRFlag::v);
 	case HI:
-	  return SRFlag::get(CPSR, SRFlag::c) && !SRFlag::get(CPSR, SRFlag::z);
+	  return SRFlag::get(registers.CPSR, SRFlag::c) &&
+	         !SRFlag::get(registers.CPSR, SRFlag::z);
 	case LS:
-	  return !SRFlag::get(CPSR, SRFlag::c) && SRFlag::get(CPSR, SRFlag::z);
+	  return !SRFlag::get(registers.CPSR, SRFlag::c) &&
+	         SRFlag::get(registers.CPSR, SRFlag::z);
 	case GE:
-	  return SRFlag::get(CPSR, SRFlag::n) == SRFlag::get(CPSR, SRFlag::v);
+	  return SRFlag::get(registers.CPSR, SRFlag::n) ==
+	         SRFlag::get(registers.CPSR, SRFlag::v);
 	case LT:
-	  return SRFlag::get(CPSR, SRFlag::n) != SRFlag::get(CPSR, SRFlag::v);
+	  return SRFlag::get(registers.CPSR, SRFlag::n) !=
+	         SRFlag::get(registers.CPSR, SRFlag::v);
 	case GT:
-	  return SRFlag::get(CPSR, SRFlag::n) == SRFlag::get(CPSR, SRFlag::v) &&
-	         !SRFlag::get(CPSR, SRFlag::z);
+	  return SRFlag::get(registers.CPSR, SRFlag::n) ==
+	             SRFlag::get(registers.CPSR, SRFlag::v) &&
+	         !SRFlag::get(registers.CPSR, SRFlag::z);
 	case LE:
-	  return SRFlag::get(CPSR, SRFlag::n) != SRFlag::get(CPSR, SRFlag::v) &&
-	         SRFlag::get(CPSR, SRFlag::z);
+	  return SRFlag::get(registers.CPSR, SRFlag::n) !=
+	             SRFlag::get(registers.CPSR, SRFlag::v) ||
+	         SRFlag::get(registers.CPSR, SRFlag::z);
 	case AL:
 	  return true;
 	case NV:

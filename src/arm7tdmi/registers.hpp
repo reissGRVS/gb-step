@@ -110,8 +110,8 @@ class RegisterSet {
 	std::array<std::uint32_t, 5> GPR_FIQ{};  // R8-12 FIQ
 	std::array<std::uint32_t, 6> SP{};       // R13 All modes
 	std::array<std::uint32_t, 6> LR{};       // R14 All modes
-	std::uint32_t PC;                        // R15
-	std::uint32_t CPSR;
+	std::uint32_t PC{};                      // R15
+	std::uint32_t CPSR{0x1F};
 	std::array<std::uint32_t, 5> SPSR{};  // System/Usr mode has no SPSR
   } registers;
 };

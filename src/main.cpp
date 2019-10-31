@@ -6,7 +6,7 @@
 #include "spdlog/spdlog.h"
 
 int main(int argc, char* argv[]) {
-  spdlog::set_level(spdlog::level::debug);  // Set global log level to info
+  spdlog::set_level(spdlog::level::info);  // Set global log level to info
   spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");
 
   spdlog::info("Launching");

@@ -176,7 +176,7 @@ void CPU::ArmMRS(bool Ps, std::uint8_t Rd) {
 	spdlog::debug("	MRS SPSR");
   } else {
 	dest = registers.get(Register::CPSR);
-	spdlog::debug("	MRS CPSR");
+	spdlog::debug("	MRS CPSR {:X}", dest);
   }
 }
 
@@ -272,8 +272,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
                          const std::uint8_t& carry) {
 	if (S) {
 	  auto& cpsr = registers.get(CPSR);
+
 	  std::uint8_t zVal = result == 0;
-	  spdlog::debug("Z set to {}", zVal);
 	  std::uint8_t nVal = result >> 31;
 	  SRFlag::set(cpsr, SRFlag::n, nVal);
 	  SRFlag::set(cpsr, SRFlag::z, zVal);
@@ -434,7 +434,6 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	default:
 	  break;
   }
-
   SetFlags(S, dest, carry);
 }
 
@@ -623,7 +622,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 	memAddr = baseOffset;
   }
 
-  auto destReg = registers.get((Register)Rd);
+  auto& destReg = registers.get((Register)Rd);
 
   if (L)  // LD
   {
@@ -702,7 +701,7 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 	memAddr = baseOffset;
   }
 
-  auto destReg = registers.get((Register)Rd);
+  auto& destReg = registers.get((Register)Rd);
 
   if (L)  // LD
   {
@@ -764,7 +763,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
                                 std::uint32_t Offset) {
   if (I) {
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-	auto& Rm = registers.get((Register)(Offset & BIT_MASK(4)));
+	auto Rm = registers.get((Register)(Offset & BIT_MASK(4)));
 	auto shiftType = Offset >> 5 & BIT_MASK(2);
 	auto shiftAmount = Offset >> 7;
 	Shift(Rm, shiftAmount, shiftType, carry);
@@ -785,7 +784,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	memAddr = baseOffset;
   }
 
-  auto destReg = registers.get((Register)Rd);
+  auto& destReg = registers.get((Register)Rd);
 
   if (L) {
 	if (B) {
@@ -794,6 +793,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	} else {
 	  // TODO: Check word boundary addr LD behaviour, seems complicated pg 49
 	  // or 55 of pdf
+
 	  destReg = memory->Read(Memory::AccessSize::Word, memAddr,
 	                         Memory::Sequentiality::NSEQ);
 	}
@@ -946,8 +946,8 @@ void CPU::ArmBranch(std::uint32_t L, std::uint32_t Offset) {
   }
 
   if (L) {
-	// TODO: Adjust for prefetch
-	registers.get(Register::R14) = registers.get(Register::R15) & ~BIT_MASK(2);
+	registers.get(Register::R14) =
+	    (registers.get(Register::R15) - 4) & ~BIT_MASK(2);
   }
 
   registers.get(Register::R15) += signedOffset;
