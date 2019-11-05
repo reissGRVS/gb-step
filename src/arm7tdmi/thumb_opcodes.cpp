@@ -222,7 +222,6 @@ void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
 	  break;
 	case 0b01:
 	  dpOp = DPOps::CMP;
-	  S = 0;
 	  break;
 	case 0b10:
 	  dpOp = DPOps::ADD;
@@ -241,12 +240,8 @@ void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
 void CPU::ThumbALUOps_P(ParamList params) {
   std::uint16_t Rd = params[0], Rs = params[1], Op = params[2];
   spdlog::debug("THUMB ALU");
-  std::uint32_t S = 1;
 
-  if (Op == DPOps::TST || Op == DPOps::CMP || Op == DPOps::CMN) {
-	S = 0;
-  }
-  ArmDataProcessing(0, Op, S, Rd, Rd, Rs);
+  ArmDataProcessing(0, Op, 1, Rd, Rd, Rs);
 }
 
 void CPU::ThumbHiRegOps_P(ParamList params) {
@@ -261,12 +256,14 @@ void CPU::ThumbHiRegOps_P(ParamList params) {
 	ArmBranchAndExchange(Hs);
   } else {
 	std::uint32_t dpOp;
+	auto S = 0;
 	switch (Op) {
 	  case 0b00:
 		dpOp = DPOps::ADD;
 		break;
 	  case 0b01:
 		dpOp = DPOps::CMP;
+		S = 1;
 		break;
 	  case 0b10:
 		dpOp = DPOps::MOV;
@@ -275,7 +272,7 @@ void CPU::ThumbHiRegOps_P(ParamList params) {
 		spdlog::error("ThumbMoveCompAddSubImm failure");
 		exit(-1);
 	}
-	ArmDataProcessing(0, dpOp, 0, Hd, Hd, Hs);
+	ArmDataProcessing(0, dpOp, S, Hd, Hd, Hs);
   }
 }
 

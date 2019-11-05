@@ -41,6 +41,8 @@ void PPU::Execute(std::uint32_t ticks) {
 
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
+		  auto dispCnt = getHalf(DISPCNT);
+		  spdlog::info("VBlank {:X}", dispCnt);
 		  screen.render(fb);
 
 		  // Set VBlank flag and Request Interrupt
@@ -83,7 +85,6 @@ void PPU::Execute(std::uint32_t ticks) {
 void PPU::fetchScanline() {
   auto vCount = getHalf(VCOUNT);
   auto bgMode = 3;
-  spdlog::info("fetchScanline {:X} line {}", vram_start, vCount);
 
   switch (bgMode) {
 	case 3: {

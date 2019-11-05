@@ -65,6 +65,7 @@ std::uint32_t& RegisterSet::get(ModeBank mode, Register reg) {
   } else if (reg == Register::SPSR) {
 	if (mode == ModeBank::SYS) {
 	  spdlog::error("Tried to get SPSR in SYS mode");
+	  exit(-1);
 	}
 	return registers.SPSR[(uint8_t)mode - 1];
   } else {

@@ -1,9 +1,9 @@
 #include "memory.hpp"
-
 #include <fstream>
 #include <iostream>
 
 #include "spdlog/spdlog.h"
+#include "utils.hpp"
 
 Memory::Memory(std::string biosPath, std::string romPath) {
   // Read BIOS
@@ -101,7 +101,18 @@ void Memory::WriteToSize(std::uint8_t* byte,
 void Memory::Write(AccessSize size,
                    std::uint32_t address,
                    std::uint32_t value,
-                   Sequentiality) {
+                   Sequentiality seq) {
+  if (address == IF && seq != Sequentiality::PPU) {
+	auto ifOldPtr =
+	    reinterpret_cast<std::uint16_t*>(&mem.gen.ioreg[address & ioreg_mask]);
+	auto ifOld = *ifOldPtr;
+	std::uint16_t ifNew = value;
+
+	spdlog::info("old {:X} new {:X}", ifOld, ifNew);
+	BIT_CLEAR(*ifOldPtr, 0);
+
+	return;
+  }
   auto page = address >> 24;
 
   switch (page) {

@@ -15,9 +15,16 @@ namespace ARM7TDMI {
 class CPU {
  public:
   CPU(std::shared_ptr<Memory> memory_) : memory(memory_) {
-	registers.get(Register::R15) = 0;
+	// Skip BIOS
+	registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
+	registers.get(ModeBank::IRQ, Register::R13) = 0x03007FA0;
+	registers.get(Register::R13) = 0x03007F00;
+	registers.switchMode(SRFlag::ModeBits::USR);
+	registers.get(Register::R15) = 0x08000000;
+
 	PipelineFlush();
   };
+
   std::uint32_t Execute();
   RegisterSet registers;
 
@@ -26,6 +33,7 @@ class CPU {
   std::array<OpCode, 2> pipeline;
 
   void PipelineFlush();
+  void HandleInterruptRequests();
 
   ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 

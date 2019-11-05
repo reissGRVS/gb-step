@@ -242,7 +242,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
   // TODO: Deal with R15 operand edge case
   if (!I) {
-	auto& Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
+	auto Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
 	auto shiftType = Op2 >> 5 & NBIT_MASK(2);
 	auto shiftAmount = Op2 >> 7;
 
@@ -761,6 +761,8 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
                                 std::uint32_t Rn,
                                 std::uint32_t Rd,
                                 std::uint32_t Offset) {
+  spdlog::debug("SDT I{} P{} U{} B{} W{} L{} Rn{} Rd{} Offset{}", I, P, U, B, W,
+                L, Rn, Rd, Offset);
   if (I) {
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	auto Rm = registers.get((Register)(Offset & NBIT_MASK(4)));
@@ -801,12 +803,6 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	if (B) {
 	  memory->Write(Memory::AccessSize::Byte, memAddr, destReg,
 	                Memory::Sequentiality::NSEQ);
-	  memory->Write(Memory::AccessSize::Byte, memAddr + 1, destReg,
-	                Memory::Sequentiality::NSEQ);
-	  memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg,
-	                Memory::Sequentiality::NSEQ);
-	  memory->Write(Memory::AccessSize::Byte, memAddr + 3, destReg,
-	                Memory::Sequentiality::NSEQ);
 	} else {
 	  // TODO: Check word boundary addr
 	  memory->Write(Memory::AccessSize::Word, memAddr, destReg,
@@ -825,13 +821,10 @@ void CPU::ArmUndefined_P(ParamList) {
 
 void CPU::ArmUndefined() {
   spdlog::debug("UND");
-  auto pc = registers.get(R15) - 4;
-  auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
   registers.switchMode(SRFlag::ModeBits::UND);
 
-  registers.get(R14) = pc;
-  SRFlag::set(registers.get(SPSR), SRFlag::v, v);
+  registers.get(R14) = registers.get(R15) - 4;
   SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
   registers.get(R15) = 0x04;
 
@@ -960,13 +953,10 @@ void CPU::ArmSWI_P(ParamList) {
 
 void CPU::ArmSWI() {
   spdlog::debug("SWI");
-  auto pc = registers.get(R15) - 4;
-  auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
   registers.switchMode(SRFlag::ModeBits::SVC);
+  registers.get(R14) = registers.get(R15) - 4;
 
-  registers.get(R14) = pc;
-  SRFlag::set(registers.get(SPSR), SRFlag::v, v);
   SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
   registers.get(R15) = 0x08;
 

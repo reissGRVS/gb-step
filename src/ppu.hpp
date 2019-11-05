@@ -27,8 +27,4 @@ class PPU {
                       VISIBLE_LINES = 160, VBLANK_LINES = 68,
                       TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
                       CYCLES_PER_VBLANK = CYCLES_PER_LINE * VBLANK_LINES;
-
-  const std::uint32_t DISPSTAT = 0x4000004;
-  const std::uint32_t VCOUNT = 0x4000006;
-  const std::uint32_t IF = 0x4000006;
 };
