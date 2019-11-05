@@ -2,6 +2,7 @@
 #include <string>
 
 #include "gba.hpp"
+#include "platform/sfml/window.hpp"
 
 #include "spdlog/spdlog.h"
 
@@ -16,9 +17,10 @@ int main(int argc, char* argv[]) {
 	return -1;
   }
 
-  GBAConfig cfg;
-  cfg.biosPath = argv[1];
-  cfg.romPath = argv[2];
+  WindowSFML window;
+  std::string biosPath = argv[1];
+  std::string romPath = argv[2];
+  GBAConfig cfg{biosPath, romPath, window};
 
   GBA gba(cfg);
   gba.run();

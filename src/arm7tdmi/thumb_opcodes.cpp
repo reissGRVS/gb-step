@@ -1,6 +1,6 @@
+#include "../utils.hpp"
 #include "cpu.hpp"
 #include "spdlog/spdlog.h"
-#include "utils.hpp"
 
 // TODO: TIMINGS
 namespace ARM7TDMI {

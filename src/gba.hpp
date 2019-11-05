@@ -5,11 +5,13 @@
 #include "dma.hpp"
 #include "memory.hpp"
 #include "ppu.hpp"
+#include "screen.hpp"
 #include "timer.hpp"
 
 struct GBAConfig {
   std::string biosPath;
   std::string romPath;
+  Screen& screen;
   // TODO: Add interfaces for io here
 };
 

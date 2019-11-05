@@ -1,7 +1,7 @@
 #include "cpu.hpp"
 #include <iostream>
+#include "../utils.hpp"
 #include "spdlog/spdlog.h"
-#include "utils.hpp"
 
 int count = 0;
 
