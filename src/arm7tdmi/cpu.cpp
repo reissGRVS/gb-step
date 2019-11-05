@@ -6,7 +6,7 @@
 int count = 0;
 
 namespace ARM7TDMI {
-void CPU::Execute() {
+std::uint32_t CPU::Execute() {
   auto opcode = pipeline[0];
   count++;
   spdlog::debug("{:X} - {:X}", registers.get(R15) - 4, opcode);
@@ -41,6 +41,7 @@ void CPU::Execute() {
 
   auto LR = registers.get(R14);
   spdlog::debug("LR: {:X}", LR);
+  return 1;
 }
 
 void CPU::PipelineFlush() {
@@ -65,7 +66,7 @@ ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs) {
   ParamList params;
   for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
 	auto param =
-	    (opcode >> it->second) & BIT_MASK((it->first - it->second + 1));
+	    (opcode >> it->second) & NBIT_MASK((it->first - it->second + 1));
 	params.push_back(param);
   }
   return params;

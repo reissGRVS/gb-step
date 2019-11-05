@@ -99,7 +99,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b010: {
-	  switch (opcode >> 10 & BIT_MASK(3)) {
+	  switch (opcode >> 10 & NBIT_MASK(3)) {
 		case 0b000: {
 		  return std::bind(&CPU::ThumbALUOps_P, this,
 		                   ParseParams(opcode, ALUOpsSegments));
@@ -117,7 +117,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 		  break;
 		}
 		default: {
-		  if (opcode >> 9 & BIT_MASK(1)) {
+		  if (opcode >> 9 & NBIT_MASK(1)) {
 			return std::bind(&CPU::ThumbLSSignExt_P, this,
 			                 ParseParams(opcode, LSSignExtSegments));
 		  } else {
@@ -133,7 +133,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b100: {
-	  if (opcode >> 12 & BIT_MASK(1)) {
+	  if (opcode >> 12 & NBIT_MASK(1)) {
 		return std::bind(&CPU::ThumbSPRelativeLS_P, this,
 		                 ParseParams(opcode, SPRelativeLSSegments));
 	  } else {
@@ -143,8 +143,8 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b101: {
-	  if (opcode >> 12 & BIT_MASK(1)) {
-		if (opcode >> 8 & BIT_MASK(4)) {
+	  if (opcode >> 12 & NBIT_MASK(1)) {
+		if (opcode >> 8 & NBIT_MASK(4)) {
 		  return std::bind(&CPU::ThumbPushPopReg_P, this,
 		                   ParseParams(opcode, PushPopRegSegments));
 		} else {
@@ -158,8 +158,8 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b110: {
-	  if (opcode >> 12 & BIT_MASK(1)) {
-		if ((opcode >> 8 & BIT_MASK(4)) == BIT_MASK(4)) {
+	  if (opcode >> 12 & NBIT_MASK(1)) {
+		if ((opcode >> 8 & NBIT_MASK(4)) == NBIT_MASK(4)) {
 		  return std::bind(&CPU::ThumbSWI_P, this,
 		                   ParseParams(opcode, SWISegments));
 		} else {
@@ -173,7 +173,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b111: {
-	  if (opcode >> 12 & BIT_MASK(1)) {
+	  if (opcode >> 12 & NBIT_MASK(1)) {
 		return std::bind(&CPU::ThumbLongBranchLink_P, this,
 		                 ParseParams(opcode, LongBranchLinkSegments));
 	  } else {
@@ -315,7 +315,7 @@ void CPU::ThumbLSHalf_P(ParamList params) {
                 L = params[3];
   spdlog::debug("THUMB LS Half");
   auto OffsetHi = Offset5 >> 3;
-  auto OffsetLo = (Offset5 << 1) & BIT_MASK(4);
+  auto OffsetLo = (Offset5 << 1) & NBIT_MASK(4);
   ArmHalfwordDTImmOffset(1, 1, 0, L, Rb, Rd, OffsetHi, 0, 1, OffsetLo);
 }
 
@@ -372,7 +372,7 @@ void CPU::ThumbCondBranch_P(ParamList params) {
 	return;
   }
 
-  std::int16_t offset = (SOffset8 & BIT_MASK(7)) << 1;
+  std::int16_t offset = (SOffset8 & NBIT_MASK(7)) << 1;
   if (SOffset8 >> 7) {
 	offset -= 1 << 8;
   }
@@ -401,7 +401,7 @@ void CPU::ThumbSWI_P(ParamList) {
 void CPU::ThumbUncondBranch_P(ParamList params) {
   std::uint16_t Offset11 = params[0];
   spdlog::debug("THUMB Uncond Branch ");
-  std::int16_t offset = (Offset11 & BIT_MASK(10)) << 1;
+  std::int16_t offset = (Offset11 & NBIT_MASK(10)) << 1;
   if (Offset11 >> 10) {
 	offset -= 1 << 12;
   }
@@ -420,7 +420,7 @@ void CPU::ThumbLongBranchLink_P(ParamList params) {
 	pc = lr;
 	lr = temp | 1;
   } else {
-	std::int32_t signedOffset = ((Offset & BIT_MASK(10)) << 12);
+	std::int32_t signedOffset = ((Offset & NBIT_MASK(10)) << 12);
 	if (Offset >> 10) {
 	  signedOffset -= 1 << 22;
 	}

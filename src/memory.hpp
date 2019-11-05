@@ -10,7 +10,7 @@ class Memory {
  public:
   Memory(std::string biosPath, std::string romPath);
 
-  enum Sequentiality { NSEQ, SEQ };
+  enum Sequentiality { NSEQ, SEQ, PPU };
 
   enum AccessSize { Byte = 0xFF, Half = 0xFFFF, Word = 0xFFFFFFFF };
 

@@ -18,7 +18,7 @@ class CPU {
 	registers.get(Register::R15) = 0;
 	PipelineFlush();
   };
-  void Execute();
+  std::uint32_t Execute();
   RegisterSet registers;
 
  private:

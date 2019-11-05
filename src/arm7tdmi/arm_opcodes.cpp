@@ -62,7 +62,7 @@ void CPU::Shift(std::uint32_t& value,
 	  value >>= 1;
 
 	  if (shiftType == 0b10 && neg) {
-		value |= (BIT_MASK(amount) << (32 - amount));
+		value |= (NBIT_MASK(amount) << (32 - amount));
 	  }
 	  break;
 	}
@@ -104,7 +104,7 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 	};
   }
 
-  switch (opcode >> 26 & BIT_MASK(2)) {
+  switch (opcode >> 26 & NBIT_MASK(2)) {
 	case 0b00: {
 	  if (opcode & (1 << 25)) {
 		return std::bind(&CPU::ArmDataProcessing_P, this,
@@ -181,7 +181,7 @@ void CPU::ArmMRS(bool Ps, std::uint8_t Rd) {
 }
 
 void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source) {
-  auto value = registers.get((Register)(source & BIT_MASK(4)));
+  auto value = registers.get((Register)(source & NBIT_MASK(4)));
   if (!flagsOnly) {
 	if (Pd) {
 	  registers.get(Register::SPSR) = value;
@@ -189,11 +189,11 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source) {
 	} else {
 	  registers.get(Register::CPSR) = value;
 	  spdlog::debug("	MSR CPSR {:X}", value);
-	  registers.switchMode((SRFlag::ModeBits)(value & BIT_MASK(5)));
+	  registers.switchMode((SRFlag::ModeBits)(value & NBIT_MASK(5)));
 	}
   } else {
 	if (I) {
-	  value = (source & BIT_MASK(8));
+	  value = (source & NBIT_MASK(8));
 	  value <<= (source >> 8) * 2;
 	}
 	value >>= 28;
@@ -225,11 +225,11 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
   // PSR Transfers
   if (!S && OpCode >= DPOps::TST && OpCode <= DPOps::CMN) {
-	bool P = (OpCode >> 1) & BIT_MASK(1);
+	bool P = (OpCode >> 1) & NBIT_MASK(1);
 	if (Rn == 0xF) {
 	  ArmMRS(P, Rd);
 	} else {
-	  bool flagsOnly = !(Rn & BIT_MASK(1));
+	  bool flagsOnly = !(Rn & NBIT_MASK(1));
 	  ArmMSR(I, P, flagsOnly, Op2);
 	}
 	return;
@@ -242,22 +242,22 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
   // TODO: Deal with R15 operand edge case
   if (!I) {
-	auto& Rm = registers.get((Register)(Op2 & BIT_MASK(4)));
-	auto shiftType = Op2 >> 5 & BIT_MASK(2);
+	auto& Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
+	auto shiftType = Op2 >> 5 & NBIT_MASK(2);
 	auto shiftAmount = Op2 >> 7;
 
-	if (Op2 >> 4 & BIT_MASK(1))  // Shift amount from register
+	if (Op2 >> 4 & NBIT_MASK(1))  // Shift amount from register
 	{
-	  if (Op2 >> 7 & BIT_MASK(1)) {
+	  if (Op2 >> 7 & NBIT_MASK(1)) {
 		spdlog::error("This instruction should have been UNDEF or MUL");
 	  }
-	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & BIT_MASK(8);
+	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & NBIT_MASK(8);
 	}
 
 	Shift(Rm, shiftAmount, shiftType, carry);
 	Op2Val = Rm;
   } else {
-	auto Imm = Op2 & BIT_MASK(8);
+	auto Imm = Op2 & NBIT_MASK(8);
 	auto rotate = (Op2 >> 8) * 2;
 	const std::uint32_t ROR = 0b11;
 	// Maybe this should do RRX as well?
@@ -585,7 +585,7 @@ void CPU::ArmBranchAndExchange(std::uint32_t Rn) {
   auto val = registers.get((Register)Rn);
 
   spdlog::debug("BRANCHEXCHANGE {:X}", val);
-  SRFlag::set(registers.get(CPSR), SRFlag::thumb, val & BIT_MASK(1));
+  SRFlag::set(registers.get(CPSR), SRFlag::thumb, val & NBIT_MASK(1));
   registers.get(Register::R15) = val;
   PipelineFlush();
 }
@@ -763,8 +763,8 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
                                 std::uint32_t Offset) {
   if (I) {
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-	auto Rm = registers.get((Register)(Offset & BIT_MASK(4)));
-	auto shiftType = Offset >> 5 & BIT_MASK(2);
+	auto Rm = registers.get((Register)(Offset & NBIT_MASK(4)));
+	auto shiftType = Offset >> 5 & NBIT_MASK(2);
 	auto shiftAmount = Offset >> 7;
 	Shift(Rm, shiftAmount, shiftType, carry);
 	Offset = Rm;
@@ -856,11 +856,11 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
   auto base = registers.get((Register)Rn);
   std::vector<Register> toSave;
   for (uint8_t i = 0; i < 16; i++) {
-	if ((RegList >> i) & BIT_MASK(1)) {
+	if ((RegList >> i) & NBIT_MASK(1)) {
 	  toSave.emplace_back((Register)i);
 	}
   }
-  bool transferPC = RegList >> 15 & BIT_MASK(1);
+  bool transferPC = RegList >> 15 & NBIT_MASK(1);
 
   SRFlag::ModeBits mode;
   // R15 not in list and S bit set (User bank transfer)
@@ -940,14 +940,14 @@ void CPU::ArmBranch_P(ParamList params) {
 
 void CPU::ArmBranch(std::uint32_t L, std::uint32_t Offset) {
   Offset <<= 2;
-  std::int32_t signedOffset = (Offset & BIT_MASK(25));
+  std::int32_t signedOffset = (Offset & NBIT_MASK(25));
   if (Offset >> 25) {
 	signedOffset *= -1;
   }
 
   if (L) {
 	registers.get(Register::R14) =
-	    (registers.get(Register::R15) - 4) & ~BIT_MASK(2);
+	    (registers.get(Register::R15) - 4) & ~NBIT_MASK(2);
   }
 
   registers.get(Register::R15) += signedOffset;

@@ -19,11 +19,13 @@ class GBA {
  public:
   GBA(GBAConfig cfg)
       : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
-        cpu(memory){};
+        cpu(memory),
+        ppu(memory, cfg.screen){};
 
   void run() {
 	while (true) {
-	  cpu.Execute();
+	  auto ticks = cpu.Execute();
+	  ppu.Execute(ticks);
 	}
   };
 
