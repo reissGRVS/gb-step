@@ -10,13 +10,10 @@ std::uint32_t CPU::Execute() {
   HandleInterruptRequests();
   auto opcode = pipeline[0];
   count++;
-  spdlog::debug("{:X} - {:X}", registers.get(R15) - 4, opcode);
-  if (registers.get(R15) < (unsigned int)0x1000) {
-	spdlog::debug("count {:X}", count);
-	exit(1);
-  }
 
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
+	spdlog::debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 2,
+	              opcode);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 
@@ -27,6 +24,8 @@ std::uint32_t CPU::Execute() {
 
 	ThumbOperation(opcode)();
   } else {
+	spdlog::debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 4,
+	              opcode);
 	auto& pc = registers.get(R15);
 	pc &= ~3;
 
@@ -38,6 +37,7 @@ std::uint32_t CPU::Execute() {
 	ArmOperation(opcode)();
   }
 
+  spdlog::debug("********************************");
   return 1;
 }
 

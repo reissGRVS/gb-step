@@ -45,9 +45,13 @@ void CPU::Shift(std::uint32_t& value,
   switch (shiftType) {
 	case 0b00:  // LSL
 	{
-	  value <<= (amount - 1);
-	  carryOut = value >> 31;
-	  value <<= 1;
+	  if (amount) {
+		value <<= (amount - 1);
+		carryOut = value >> 31;
+		value <<= 1;
+	  } else {
+		carryOut = value >> 31;
+	  }
 	  break;
 	}
 	case 0b01:  // LSR
@@ -420,7 +424,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::BIC: {
-	  dest = Op2Val & ~Op2Val;
+	  dest = Op1Val & ~Op2Val;
 	  spdlog::debug("	BIC {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  break;
 	}
@@ -434,6 +438,11 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	default:
 	  break;
   }
+
+  if (Rd == 15) {
+	PipelineFlush();
+  }
+
   SetFlags(S, dest, carry);
 }
 
@@ -591,10 +600,10 @@ void CPU::ArmBranchAndExchange(std::uint32_t Rn) {
 }
 
 void CPU::ArmHalfwordDTRegOffset_P(ParamList params) {
-  spdlog::debug("HDT");
-  std::uint32_t Rm = params[0], H = params[1], S = params[2], Rd = params[4],
-                Rn = params[5], L = params[3], W = params[4], U = params[6],
-                P = params[7];
+  spdlog::debug("HDT Reg");
+  std::uint32_t Rm = params[0], H = params[1], S = params[2], Rd = params[3],
+                Rn = params[4], L = params[5], W = params[6], U = params[7],
+                P = params[8];
   ArmHalfwordDTRegOffset(P, U, W, L, Rn, Rd, S, H, Rm);
 }
 
@@ -668,11 +677,11 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 // TODO: Tidy up data transfers to use common functions, large sections of
 // repetition
 void CPU::ArmHalfwordDTImmOffset_P(ParamList params) {
-  spdlog::debug("HDT");
+  spdlog::debug("HDT Imm");
   const std::uint32_t OffsetLo = params[0], H = params[1], S = params[2],
                       OffsetHi = params[3], Rd = params[4], Rn = params[5],
-                      L = params[3], W = params[4], U = params[6],
-                      P = params[7];
+                      L = params[6], W = params[7], U = params[8],
+                      P = params[9];
   ArmHalfwordDTImmOffset(P, U, W, L, Rn, Rd, OffsetHi, S, H, OffsetLo);
 }
 
@@ -686,6 +695,9 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
                                  std::uint32_t S,
                                  std::uint32_t H,
                                  std::uint32_t OffsetLo) {
+  spdlog::debug(
+      "HDT Imm P{} U{} W{} L{} Rn{} Rd{} OffsetHi{} S{} H{} OffsetLo{}", P, U,
+      W, L, Rn, Rd, OffsetHi, S, H, OffsetLo);
   auto Offset = OffsetLo + (OffsetHi << 4);
   auto base = registers.get((Register)Rn);
   auto baseOffset = base;
@@ -847,6 +859,8 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
                                std::uint32_t Rn,
                                std::uint32_t RegList) {
   auto base = registers.get((Register)Rn);
+  spdlog::debug("BDT P{:X} U{:X} S{:X} W{:X} L{:X} Rn{:X} RegList{:X}", P, U, S,
+                W, L, Rn, RegList);
   std::vector<Register> toSave;
   for (uint8_t i = 0; i < 16; i++) {
 	if ((RegList >> i) & NBIT_MASK(1)) {
@@ -933,9 +947,10 @@ void CPU::ArmBranch_P(ParamList params) {
 
 void CPU::ArmBranch(std::uint32_t L, std::uint32_t Offset) {
   Offset <<= 2;
+  spdlog::debug("BRANCH L{:X} Offset:{:X}", L, Offset);
   std::int32_t signedOffset = (Offset & NBIT_MASK(25));
   if (Offset >> 25) {
-	signedOffset *= -1;
+	signedOffset -= (1 << 25);
   }
 
   if (L) {

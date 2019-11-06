@@ -84,7 +84,7 @@ const ParamSegments LongBranchLinkSegments
 std::function<void()> CPU::ThumbOperation(OpCode opcode) {
   switch (opcode >> 13) {
 	case 0b000: {
-	  if (opcode && 0x1800) {
+	  if ((opcode & 0x1800) == 0x1800) {
 		return std::bind(&CPU::ThumbAddSubtract_P, this,
 		                 ParseParams(opcode, AddSubtractSegments));
 	  } else {
@@ -345,10 +345,10 @@ void CPU::ThumbPushPopReg_P(ParamList params) {
   if (R) {
 	if (L) {
 	  // Add PC to RList
-	  RList |= 15 << 1;
+	  BIT_SET(RList, 15);
 	} else {
 	  // Add LR to RList
-	  RList |= 14 << 1;
+	  BIT_SET(RList, 14);
 	}
   }
   // STMDB or LDMIA
@@ -406,9 +406,10 @@ void CPU::ThumbUncondBranch_P(ParamList params) {
   PipelineFlush();
 }
 
+#include <unistd.h>
 void CPU::ThumbLongBranchLink_P(ParamList params) {
   std::uint16_t Offset = params[0], H = params[1];
-  spdlog::debug("THUMB Long Branch ");
+  spdlog::debug("THUMB Long Branch");
   auto& lr = registers.get(Register::R14);
   auto& pc = registers.get(Register::R15);
   if (H) {
@@ -416,6 +417,7 @@ void CPU::ThumbLongBranchLink_P(ParamList params) {
 	auto temp = pc - 2;
 	pc = lr;
 	lr = temp | 1;
+	PipelineFlush();
   } else {
 	std::int32_t signedOffset = ((Offset & NBIT_MASK(10)) << 12);
 	if (Offset >> 10) {

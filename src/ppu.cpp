@@ -38,17 +38,19 @@ void PPU::Execute(std::uint32_t ticks) {
 		auto vCount = getHalf(VCOUNT);
 		vCount++;
 		setHalf(VCOUNT, vCount);
+		spdlog::debug("HBlank Line {}", vCount);
 
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
-		  auto dispCnt = getHalf(DISPCNT);
-		  spdlog::info("VBlank {:X}", dispCnt);
+
 		  screen.render(fb);
 
 		  // Set VBlank flag and Request Interrupt
 		  auto dispStat = getHalf(DISPSTAT);
 		  BIT_SET(dispStat, 0);
+		  spdlog::debug("VBlank {:X}", dispStat);
 		  setHalf(DISPSTAT, dispStat);
+
 		  auto intReq = getHalf(IF);
 		  BIT_SET(intReq, 0);
 		  setHalf(DISPSTAT, intReq);
@@ -74,6 +76,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		}
 		if (vCount >= TOTAL_LINES) {
 		  setHalf(VCOUNT, 0);
+		  spdlog::debug("VCount cleared");
 		  state = Visible;
 		}
 	  }

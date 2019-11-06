@@ -1,4 +1,5 @@
 #include "memory.hpp"
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 
@@ -50,9 +51,15 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
   // TODO: Increment cycles based on AccessType
   switch (page) {
 	case 0x00:
-	  return ReadToSize(&mem.gen.bios[address & bios_mask], size);
-	case 0x01:
-	  return 0;  // not used
+	  if ((address & page_mask) < bios_size) {
+		return ReadToSize(&mem.gen.bios[address & bios_mask], size);
+	  } else {
+		spdlog::error("Reading from Invalid BIOS memory");
+		exit(-1);
+	  }
+	case 0x01: {
+	  spdlog::error("Reading from Unused memory");
+	}
 	case 0x02:
 	  return ReadToSize(&mem.gen.wramb[address & wramb_mask], size);
 	case 0x03:
@@ -101,18 +108,7 @@ void Memory::WriteToSize(std::uint8_t* byte,
 void Memory::Write(AccessSize size,
                    std::uint32_t address,
                    std::uint32_t value,
-                   Sequentiality seq) {
-  if (address == IF && seq != Sequentiality::PPU) {
-	auto ifOldPtr =
-	    reinterpret_cast<std::uint16_t*>(&mem.gen.ioreg[address & ioreg_mask]);
-	auto ifOld = *ifOldPtr;
-	std::uint16_t ifNew = value;
-
-	spdlog::info("old {:X} new {:X}", ifOld, ifNew);
-	BIT_CLEAR(*ifOldPtr, 0);
-
-	return;
-  }
+                   Sequentiality) {
   auto page = address >> 24;
 
   switch (page) {

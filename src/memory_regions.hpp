@@ -2,10 +2,11 @@
 #include <cstdint>
 
 #define REGION_INFO(NAME, SIZE, START, MASK) \
-  static const std::int32_t NAME##_size = SIZE; \
-  static const std::int32_t NAME##_start = START; \
-  static const std::int32_t NAME##_mask = MASK;
+  static const std::uint32_t NAME##_size = SIZE; \
+  static const std::uint32_t NAME##_start = START; \
+  static const std::uint32_t NAME##_mask = MASK;
 
+static const std::uint32_t page_mask = 0xFFFFFF;
 REGION_INFO(bios, 0x04000, 0x0000000, 0x03FFF)
 REGION_INFO(wramb, 0x40000, 0x2000000, 0x3FFFF)
 REGION_INFO(wramc, 0x08000, 0x3000000, 0x07FFF)
