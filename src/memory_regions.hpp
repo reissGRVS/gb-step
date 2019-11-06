@@ -19,6 +19,9 @@ REGION_INFO(rom, 0x2000000, 0x8000000, 0x1FFFFFF)
 const std::uint32_t DISPCNT = 0x4000000;
 const std::uint32_t DISPSTAT = 0x4000004;
 const std::uint32_t VCOUNT = 0x4000006;
+
+const std::uint32_t KEYINPUT = 0x4000130;
+
 const std::uint32_t IE = 0x4000200;
 const std::uint32_t IF = 0x4000202;
 const std::uint32_t IME = 0x4000208;

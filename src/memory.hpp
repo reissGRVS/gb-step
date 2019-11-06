@@ -1,14 +1,14 @@
 #pragma once
 
-#include "memory_regions.hpp"
-
 #include <array>
 #include <cstdint>
 #include <memory>
+#include "joypad.hpp"
+#include "memory_regions.hpp"
 
 class Memory {
  public:
-  Memory(std::string biosPath, std::string romPath);
+  Memory(std::string biosPath, std::string romPath, Joypad& joypad);
 
   enum Sequentiality { NSEQ, SEQ, PPU };
 
@@ -28,6 +28,7 @@ class Memory {
 
   // https://problemkaputt.de/gbatek.htm#gbamemorymap
 
+  Joypad& joypad;
   struct MemoryMap {
 	struct {
 	  std::array<std::uint8_t, bios_size> bios{};

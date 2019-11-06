@@ -12,13 +12,14 @@ struct GBAConfig {
   std::string biosPath;
   std::string romPath;
   Screen& screen;
+  Joypad& joypad;
   // TODO: Add interfaces for io here
 };
 
 class GBA {
  public:
   GBA(GBAConfig cfg)
-      : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath)),
+      : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath, cfg.joypad)),
         cpu(memory),
         ppu(memory, cfg.screen){};
 

@@ -13,6 +13,7 @@ WindowSFML::WindowSFML()
 
 void WindowSFML::render(const Framebuffer& fb) {
   translateFramebuffer(fb);
+  joypad.keyUpdate();
   background.update(sfFramebuffer.data());
   window.clear();
   window.draw(b);

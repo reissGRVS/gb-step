@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
   WindowSFML window;
   std::string biosPath = argv[1];
   std::string romPath = argv[2];
-  GBAConfig cfg{biosPath, romPath, window};
+  GBAConfig cfg{biosPath, romPath, window, window.joypad};
 
   GBA gba(cfg);
   gba.run();

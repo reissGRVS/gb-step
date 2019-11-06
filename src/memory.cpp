@@ -6,7 +6,8 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-Memory::Memory(std::string biosPath, std::string romPath) {
+Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
+    : joypad(joypad) {
   // Read BIOS
   {
 	std::ifstream infile(biosPath);
@@ -48,6 +49,11 @@ uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size) {
 
 uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
   auto page = address >> 24;
+
+  if (address == KEYINPUT) {
+	return joypad.getKeyStatus();
+  }
+
   // TODO: Increment cycles based on AccessType
   switch (page) {
 	case 0x00:
