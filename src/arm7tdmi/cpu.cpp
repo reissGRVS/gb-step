@@ -38,10 +38,11 @@ std::uint32_t CPU::Execute() {
 	ArmOperation(opcode)();
   }
 
-  //   if (registers.get(R1) == 0 && registers.get(R2) == 2 &&
-  //       registers.get(R3) == 5) {
+  //   if (registers.get(R1) == 0 && registers.get(R2) == 1 &&
+  //       registers.get(R3) == 3) {
   // 	slow = true;
   //   }
+
   if (slow) {
 	usleep(100000);
 	spdlog::set_level(spdlog::level::debug);

@@ -49,8 +49,6 @@ void CPU::Shift(std::uint32_t& value,
 		value <<= (amount - 1);
 		carryOut = value >> 31;
 		value <<= 1;
-	  } else {
-		carryOut = value >> 31;
 	  }
 	  break;
 	}
@@ -408,7 +406,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  spdlog::debug("	CMN {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  carry = resultBig >> 32;
 	  SetFlags(1, result, carry);
-	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
+	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ result)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
 	  S = 0;
 	  break;
