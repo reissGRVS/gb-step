@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include <unistd.h>
 #include <iostream>
 #include "../utils.hpp"
 #include "spdlog/spdlog.h"
@@ -37,7 +38,16 @@ std::uint32_t CPU::Execute() {
 	ArmOperation(opcode)();
   }
 
-  spdlog::debug("********************************");
+  //   if (registers.get(R1) == 0 && registers.get(R2) == 2 &&
+  //       registers.get(R3) == 5) {
+  // 	slow = true;
+  //   }
+  if (slow) {
+	usleep(100000);
+	spdlog::set_level(spdlog::level::debug);
+	spdlog::debug("********************************");
+  }
+
   return 1;
 }
 

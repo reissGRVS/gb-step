@@ -57,16 +57,16 @@ void CPU::Shift(std::uint32_t& value,
 	case 0b01:  // LSR
 	case 0b10:  // ASR
 	{
-	  auto neg = amount >> 31;
+	  auto neg = value >> 31;
 	  if (amount == 0) {
 		amount = 32;
 	  }
 	  value >>= (amount - 1);
-	  carryOut = amount & 1;
+	  carryOut = value & 1;
 	  value >>= 1;
-
-	  if (shiftType == 0b10 && neg) {
-		value |= (NBIT_MASK(amount) << (32 - amount));
+	  if (neg) {
+		std::uint32_t mask = (NBIT_MASK(amount) << (32 - amount));
+		value |= mask;
 	  }
 	  break;
 	}
@@ -98,7 +98,7 @@ void CPU::Shift(std::uint32_t& value,
 	  break;
 	}
   }
-}
+}  // namespace ARM7TDMI
 
 std::function<void()> CPU::ArmOperation(OpCode opcode) {
   if (!registers.conditionCheck((Condition)(opcode >> 28))) {
@@ -307,7 +307,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::SUB: {
-	  std::uint64_t result = Op1Val - Op2Val;
+	  auto result = (std::uint64_t)Op1Val - Op2Val;
 	  dest = (uint32_t)result;
 	  spdlog::debug("	SUB {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = Op1Val >= Op2Val;
@@ -316,7 +316,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  break;
 	}
 	case DPOps::RSB: {
-	  std::uint64_t result = Op2Val - Op1Val;
+	  auto result = (std::uint64_t)Op2Val - Op1Val;
 	  dest = (uint32_t)result;
 	  spdlog::debug("	RSB {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = Op2Val >= Op1Val;
@@ -326,7 +326,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::ADD: {
-	  std::uint64_t result = Op1Val + Op2Val;
+	  auto result = (std::uint64_t)Op1Val + Op2Val;
 	  dest = (uint32_t)result;
 	  spdlog::debug("	ADD {:X} {:X} {:X}", Op1Val, Op2Val, dest);
 	  carry = result >> 32;
@@ -337,7 +337,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	// TODO: Revisit all flag logic
 	case DPOps::ADC: {
-	  std::uint64_t result = Op1Val + Op2Val + carry;
+	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+	  auto result = (std::uint64_t)Op1Val + Op2Val + carry;
 	  dest = (uint32_t)result;
 	  spdlog::debug("	ADC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, carry, dest);
 	  auto overflow = ((~(Op1Val ^ Op2Val) & ((Op1Val + Op2Val) ^ Op2Val)) ^
@@ -349,6 +350,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::SBC: {
+	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op1Val - Op2Val - Op3Val;
 	  spdlog::debug("	SBC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
@@ -361,6 +363,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::RSC: {
+	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op2Val - Op1Val - Op3Val;
 	  spdlog::debug("	RSC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
@@ -400,7 +403,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	}
 
 	case DPOps::CMN: {
-	  std::uint64_t resultBig = Op1Val + Op2Val;
+	  auto resultBig = (std::uint64_t)Op1Val + Op2Val;
 	  std::uint32_t result = (uint32_t)resultBig;
 	  spdlog::debug("	CMN {:X} {:X} {:X}", Op1Val, Op2Val, result);
 	  carry = resultBig >> 32;
@@ -869,7 +872,7 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
   }
   bool transferPC = RegList >> 15 & NBIT_MASK(1);
 
-  SRFlag::ModeBits mode;
+  SRFlag::ModeBits mode = SRFlag::ModeBits::USR;
   // R15 not in list and S bit set (User bank transfer)
   if (S && (!transferPC || !L)) {
 	mode = (SRFlag::ModeBits)SRFlag::get(registers.get(CPSR), SRFlag::modeBits);

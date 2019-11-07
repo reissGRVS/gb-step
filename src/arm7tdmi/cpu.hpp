@@ -16,6 +16,7 @@ class CPU {
  public:
   CPU(std::shared_ptr<Memory> memory_) : memory(memory_) {
 	// Skip BIOS
+
 	registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
 	registers.get(ModeBank::IRQ, Register::R13) = 0x03007FA0;
 	registers.get(Register::R13) = 0x03007F00;
@@ -29,6 +30,7 @@ class CPU {
   RegisterSet registers;
 
  private:
+  bool slow = false;
   std::shared_ptr<Memory> memory;
   std::array<OpCode, 2> pipeline;
 
