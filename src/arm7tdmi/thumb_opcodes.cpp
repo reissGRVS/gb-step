@@ -397,10 +397,10 @@ void CPU::ThumbSWI_P(ParamList) {
 
 void CPU::ThumbUncondBranch_P(ParamList params) {
   std::uint16_t Offset11 = params[0];
-  spdlog::debug("THUMB Uncond Branch ");
+  spdlog::debug("THUMB Uncond Branch {:b}", Offset11);
   std::int16_t offset = (Offset11 & NBIT_MASK(10)) << 1;
   if (Offset11 >> 10) {
-	offset -= 1 << 12;
+	offset -= 1 << 11;
   }
   registers.get(Register::R15) += offset;
   PipelineFlush();
