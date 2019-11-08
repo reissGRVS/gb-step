@@ -847,9 +847,19 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	} else {
 	  // TODO: Check word boundary addr LD behaviour, seems complicated pg 49
 	  // or 55 of pdf
-
-	  destReg = memory->Read(Memory::AccessSize::Word, memAddr,
-	                         Memory::Sequentiality::NSEQ);
+	  auto wordBoundaryOffset = memAddr % 4;
+	  auto value =
+	      memory->Read(Memory::AccessSize::Word, memAddr - wordBoundaryOffset,
+	                   Memory::Sequentiality::NSEQ);
+	  if (wordBoundaryOffset) {
+		std::uint8_t emptyCarry = 0;
+		const std::uint32_t ROR = 0b11;
+		spdlog::debug("Word Boundary Offset {} for value {:X}",
+		              wordBoundaryOffset, value);
+		Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
+	  }
+	  spdlog::debug("R{:X} <- {:X}", Rd, value);
+	  destReg = value;
 	}
   } else {
 	if (B) {
