@@ -669,9 +669,9 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
-	if (W) {
-	  registers.get((Register)Rn) = baseOffset;
-	}
+  }
+  if (W || !P) {
+	registers.get((Register)Rn) = baseOffset;
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -710,10 +710,6 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 	  memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg,
 	                Memory::Sequentiality::NSEQ);
 	}
-  }
-
-  if (!P) {
-	registers.get((Register)Rn) = baseOffset;
   }
 }
 
@@ -754,9 +750,9 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
-	if (W) {
-	  registers.get((Register)Rn) = baseOffset;
-	}
+  }
+  if (W || !P) {
+	registers.get((Register)Rn) = baseOffset;
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -795,10 +791,6 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 	  memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg,
 	                Memory::Sequentiality::NSEQ);
 	}
-  }
-
-  if (!P) {
-	registers.get((Register)Rn) = baseOffset;
   }
 }
 
@@ -842,9 +834,10 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
-	if (W) {
-	  registers.get((Register)Rn) = baseOffset;
-	}
+  }
+
+  if (W || !P) {
+	registers.get((Register)Rn) = baseOffset;
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -879,13 +872,6 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	  memory->Write(Memory::AccessSize::Word, memAddr, destReg,
 	                Memory::Sequentiality::NSEQ);
 	}
-  }
-
-  if (W) {
-	spdlog::debug(">>>>>>>>>>>>>>> WRITE BACK LDR");
-  }
-  if (!P) {
-	registers.get((Register)Rn) = baseOffset;
   }
 }
 
