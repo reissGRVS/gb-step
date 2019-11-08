@@ -42,7 +42,8 @@ class CPU {
   void Shift(std::uint32_t& value,
              const std::uint32_t amount,
              const std::uint32_t& shiftType,
-             std::uint8_t& carryOut);
+             std::uint8_t& carryOut,
+             bool regProvidedAmount);
 
   // Thumb Operations
   std::function<void()> ThumbOperation(OpCode opcode);

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "../utils.hpp"
 #include "cpu.hpp"
 #include "spdlog/spdlog.h"
@@ -41,7 +42,8 @@ const ParamSegments BranchSegments{{24, 24}, {23, 0}};
 void CPU::Shift(std::uint32_t& value,
                 std::uint32_t amount,
                 const std::uint32_t& shiftType,
-                std::uint8_t& carryOut) {
+                std::uint8_t& carryOut,
+                bool regProvidedAmount) {
   switch (shiftType) {
 	case 0b00:  // LSL
 	{
@@ -56,13 +58,30 @@ void CPU::Shift(std::uint32_t& value,
 	case 0b10:  // ASR
 	{
 	  auto neg = value >> 31;
-	  if (amount == 0) {
-		amount = 32;
+
+	  if (amount > 32) {
+		if (neg && 0b10) {
+		  value = NBIT_MASK(32);
+		  carryOut = 1;
+		} else {
+		  value = 0;
+		  carryOut = 0;
+		}
 	  }
+
+	  if (amount == 0) {
+		if (regProvidedAmount) {
+		  spdlog::debug("Reg provided amount");
+		  return;
+		} else {
+		  amount = 32;
+		}
+	  }
+
 	  value >>= (amount - 1);
 	  carryOut = value & 1;
 	  value >>= 1;
-	  if (neg) {
+	  if (neg && shiftType == 0b10) {
 		std::uint32_t mask = (NBIT_MASK(amount) << (32 - amount));
 		value |= mask;
 	  }
@@ -196,7 +215,13 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source) {
   } else {
 	if (I) {
 	  value = (source & NBIT_MASK(8));
-	  value <<= (source >> 8) * 2;
+	  auto rotate = (source >> 8) * 2;
+	  const std::uint32_t ROR = 0b11;
+	  // Maybe this should do RRX as well?
+	  uint8_t carry = 0;
+	  if (rotate) {
+		Shift(value, rotate, ROR, carry, false);
+	  }
 	}
 	value >>= 28;
 
@@ -242,7 +267,6 @@ void CPU::ArmDataProcessing(std::uint32_t I,
   auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
   std::uint32_t Op2Val = 0;
 
-  // TODO: Deal with R15 operand edge case
   if (!I) {
 	auto Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
 	auto shiftType = Op2 >> 5 & NBIT_MASK(2);
@@ -253,10 +277,17 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  if (Op2 >> 7 & NBIT_MASK(1)) {
 		spdlog::error("This instruction should have been UNDEF or MUL");
 	  }
+	  // If also using R15 to specify shift + 4 to Rm
+	  if ((Op2 & NBIT_MASK(4)) == 15) {
+		spdlog::debug("PC: {:X}", Rm);
+		Rm += 4;
+	  }
 	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & NBIT_MASK(8);
+	  Shift(Rm, shiftAmount, shiftType, carry, true);
+	} else {
+	  Shift(Rm, shiftAmount, shiftType, carry, false);
 	}
 
-	Shift(Rm, shiftAmount, shiftType, carry);
 	Op2Val = Rm;
   } else {
 	auto Imm = Op2 & NBIT_MASK(8);
@@ -264,7 +295,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	const std::uint32_t ROR = 0b11;
 	// Maybe this should do RRX as well?
 	if (rotate) {
-	  Shift(Imm, rotate, ROR, carry);
+	  Shift(Imm, rotate, ROR, carry, false);
 	}
 
 	Op2Val = Imm;
@@ -280,6 +311,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  SRFlag::set(cpsr, SRFlag::n, nVal);
 	  SRFlag::set(cpsr, SRFlag::z, zVal);
 	  SRFlag::set(cpsr, SRFlag::c, carry);
+	  spdlog::debug("Carry set to: {}", carry);
 	}
   };
 
@@ -495,7 +527,7 @@ void CPU::ArmMultiplyLong_P(ParamList params) {
   spdlog::debug("MULLONG");
   const std::uint32_t Rm = params[0], Rs = params[1], RdLo = params[2],
                       RdHi = params[3], S = params[4], A = params[5],
-                      U = params[5];
+                      U = params[6];
   ArmMultiplyLong(U, A, S, RdHi, RdLo, Rs, Rm);
 }
 
@@ -506,6 +538,8 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
                           std::uint32_t RdLo,
                           std::uint32_t Rs,
                           std::uint32_t Rm) {
+  spdlog::debug("MULLONG Rm {} Rs {} RdHi {} RdLo {} U {} A {} S {}", Rm, Rs,
+                RdHi, RdLo, U, A, S);
   if (RdLo == Rm || RdHi == Rm || RdLo == RdHi) {
 	spdlog::error("Invalid Arm Mult Long Rd == Rm");
 	return;
@@ -528,10 +562,14 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 	result += op3;
   }
 
-  if (U) {
-	result += op1 * op2;
+  if (!U) {
+	// UNSIGNED
+	result += (uint64_t)op1 * op2;
   } else {
-	result += (int32_t)op1 * (int32_t)op2;
+	// SIGNED
+	int32_t signed_op1 = op1;
+	int32_t signed_op2 = op2;
+	result += (int64_t)signed_op1 * signed_op2;
   }
 
   registers.get((Register)RdLo) = (uint32_t)result;
@@ -539,8 +577,9 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 
   if (S) {
 	auto& cpsr = registers.get(CPSR);
-	std::uint8_t zVal = result == 0;
-	std::uint8_t nVal = result >> 63;
+	std::uint8_t zVal = result == (int64_t)0;
+	std::uint8_t nVal = result < 0;
+
 	SRFlag::set(cpsr, SRFlag::n, nVal);
 	SRFlag::set(cpsr, SRFlag::z, zVal);
   }
@@ -781,7 +820,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	auto Rm = registers.get((Register)(Offset & NBIT_MASK(4)));
 	auto shiftType = Offset >> 5 & NBIT_MASK(2);
 	auto shiftAmount = Offset >> 7;
-	Shift(Rm, shiftAmount, shiftType, carry);
+	Shift(Rm, shiftAmount, shiftType, carry, false);
 	Offset = Rm;
   }
 
