@@ -669,6 +669,9 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
+	if (W) {
+	  registers.get((Register)Rn) = baseOffset;
+	}
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -709,7 +712,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 	}
   }
 
-  if (W || !P) {
+  if (!P) {
 	registers.get((Register)Rn) = baseOffset;
   }
 }
@@ -751,6 +754,9 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
+	if (W) {
+	  registers.get((Register)Rn) = baseOffset;
+	}
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -791,7 +797,7 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 	}
   }
 
-  if (W || !P) {
+  if (!P) {
 	registers.get((Register)Rn) = baseOffset;
   }
 }
@@ -836,6 +842,9 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
   auto memAddr = base;
   if (P) {
 	memAddr = baseOffset;
+	if (W) {
+	  registers.get((Register)Rn) = baseOffset;
+	}
   }
 
   auto& destReg = registers.get((Register)Rd);
@@ -872,7 +881,10 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	}
   }
 
-  if (W || !P) {
+  if (W) {
+	spdlog::debug(">>>>>>>>>>>>>>> WRITE BACK LDR");
+  }
+  if (!P) {
 	registers.get((Register)Rn) = baseOffset;
   }
 }
