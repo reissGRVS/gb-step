@@ -57,8 +57,8 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
   // TODO: Increment cycles based on AccessType
   switch (page) {
 	case 0x00:
-	  if ((address & page_mask) < bios_size) {
-		return ReadToSize(&mem.gen.bios[address & bios_mask], size);
+	  if ((address & PAGE_MASK) < BIOS_SIZE) {
+		return ReadToSize(&mem.gen.bios[address & BIOS_MASK], size);
 	  } else {
 		spdlog::error("Reading from Invalid BIOS memory");
 		exit(-1);
@@ -67,25 +67,29 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	  spdlog::error("Reading from Unused memory");
 	}
 	case 0x02:
-	  return ReadToSize(&mem.gen.wramb[address & wramb_mask], size);
+	  return ReadToSize(&mem.gen.wramb[address & WRAMB_MASK], size);
 	case 0x03:
-	  return ReadToSize(&mem.gen.wramc[address & wramc_mask], size);
+	  return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
-	  return ReadToSize(&mem.gen.ioreg[address & ioreg_mask], size);
+	  return ReadToSize(&mem.gen.ioreg[address & IOREG_MASK], size);
 	case 0x05:
-	  return ReadToSize(&mem.disp.pram[address & pram_mask], size);
+	  return ReadToSize(&mem.disp.pram[address & PRAM_MASK], size);
 	case 0x06:
-	  return ReadToSize(&mem.disp.vram[address & vram_mask], size);
+	  return ReadToSize(&mem.disp.vram[address & VRAM_MASK], size);
 	case 0x07:
-	  return ReadToSize(&mem.disp.oam[address & oam_mask], size);
+	  return ReadToSize(&mem.disp.oam[address & OAM_MASK], size);
 	case 0x08:
 	case 0x09:
 	case 0x0A:
 	case 0x0B:
 	case 0x0C:
 	case 0x0D:
-	  return ReadToSize(&mem.ext.rom[address & rom_mask], size);
+	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
 	default:
+	  if (page > 0x12) {
+		spdlog::error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
+		exit(-1);
+	  }
 	  return 0;
   }
 }
@@ -119,22 +123,22 @@ void Memory::Write(AccessSize size,
 
   switch (page) {
 	case 0x02:
-	  WriteToSize(&mem.gen.wramb[address & wramb_mask], value, size);
+	  WriteToSize(&mem.gen.wramb[address & WRAMB_MASK], value, size);
 	  break;
 	case 0x03:
-	  WriteToSize(&mem.gen.wramc[address & wramc_mask], value, size);
+	  WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
 	  break;
 	case 0x04:
-	  WriteToSize(&mem.gen.ioreg[address & ioreg_mask], value, size);
+	  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
 	  break;
 	case 0x05:
-	  WriteToSize(&mem.disp.pram[address & pram_mask], value, size);
+	  WriteToSize(&mem.disp.pram[address & PRAM_MASK], value, size);
 	  break;
 	case 0x06:
-	  WriteToSize(&mem.disp.vram[address & vram_mask], value, size);
+	  WriteToSize(&mem.disp.vram[address & VRAM_MASK], value, size);
 	  break;
 	case 0x07:
-	  WriteToSize(&mem.disp.oam[address & oam_mask], value, size);
+	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
 	  break;
 	default:
 	  break;

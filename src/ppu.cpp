@@ -87,22 +87,35 @@ void PPU::Execute(std::uint32_t ticks) {
 
 void PPU::fetchScanline() {
   auto vCount = getHalf(VCOUNT);
-  auto bgMode = 3;
+  auto dispCnt = getHalf(DISPCNT);
+  auto bgMode = dispCnt & NBIT_MASK(3);
+  auto frame = dispCnt >> 3 * NBIT_MASK(1);
 
-  switch (bgMode) {
-	case 3: {
-	  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
-	       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
-		fb[pixel] = getHalf(vram_start + pixel);
-	  }
-	  break;
+  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
+       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
+	switch (bgMode) {
+	  case 3: {
+		fb[pixel] = getHalf(VRAM_START + pixel * 2);
+	  } break;
+	  case 4: {
+		auto colorID = getByte(VRAM_START + (frame * 0xA000) + pixel);
+		fb[pixel] = getBgColorFromPallete(colorID);
+	  } break;
+	  default:
+		spdlog::error("Unsupported bgMode");
+		break;
+		// TODO: complain
 	}
-	default:
-	  spdlog::error("Unsupported bgMode");
-	  break;
-	  // TODO: complain
   }
   return;
+}
+std::uint16_t PPU::getBgColorFromPallete(const std::uint32_t& colorID) {
+  return getHalf(colorID * 2 + PRAM_START);
+}
+
+std::uint8_t PPU::getByte(const std::uint32_t& address) {
+  return memory->Read(Memory::AccessSize::Byte, address,
+                      Memory::Sequentiality::PPU);
 }
 
 std::uint16_t PPU::getHalf(const std::uint32_t& address) {

@@ -31,21 +31,21 @@ class Memory {
   Joypad& joypad;
   struct MemoryMap {
 	struct {
-	  std::array<std::uint8_t, bios_size> bios{};
-	  std::array<std::uint8_t, wramb_size> wramb{};
-	  std::array<std::uint8_t, wramc_size> wramc{};
-	  std::array<std::uint8_t, ioreg_size> ioreg{};
+	  std::array<std::uint8_t, BIOS_SIZE> bios{};
+	  std::array<std::uint8_t, WRAMB_SIZE> wramb{};
+	  std::array<std::uint8_t, WRAMC_SIZE> wramc{};
+	  std::array<std::uint8_t, IOREG_SIZE> ioreg{};
 	} gen;
 
 	struct {
-	  std::array<std::uint8_t, pram_size> pram{};
-	  std::array<std::uint8_t, vram_size> vram{};
-	  std::array<std::uint8_t, oam_size> oam{};
+	  std::array<std::uint8_t, PRAM_SIZE> pram{};
+	  std::array<std::uint8_t, VRAM_SIZE> vram{};
+	  std::array<std::uint8_t, OAM_SIZE> oam{};
 	} disp;
 
 	struct {
 	  // TODO: Make this as small as possible when rom is loaded?
-	  std::array<std::uint8_t, rom_size> rom{};
+	  std::array<std::uint8_t, ROM_SIZE> rom{};
 	} ext;
   } mem;
 };

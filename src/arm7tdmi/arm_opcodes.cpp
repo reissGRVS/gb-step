@@ -705,9 +705,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
   {
 	if (H)  // HalfWord
 	{
-	  memory->Write(Memory::AccessSize::Byte, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
-	  memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg,
+	  memory->Write(Memory::AccessSize::Half, memAddr, destReg,
 	                Memory::Sequentiality::NSEQ);
 	}
   }
@@ -786,9 +784,7 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
   {
 	if (H)  // HalfWord
 	{
-	  memory->Write(Memory::AccessSize::Byte, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
-	  memory->Write(Memory::AccessSize::Byte, memAddr + 2, destReg,
+	  memory->Write(Memory::AccessSize::Half, memAddr, destReg,
 	                Memory::Sequentiality::NSEQ);
 	}
   }
