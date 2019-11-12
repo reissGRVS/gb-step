@@ -60,7 +60,7 @@ void CPU::Shift(std::uint32_t& value,
 	  auto neg = value >> 31;
 
 	  if (amount > 32) {
-		if (neg && 0b10) {
+		if (neg && shiftType == 0b10) {
 		  value = NBIT_MASK(32);
 		  carryOut = 1;
 		} else {
