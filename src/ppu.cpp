@@ -38,7 +38,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		auto vCount = getHalf(VCOUNT);
 		vCount++;
 		setHalf(VCOUNT, vCount);
-		spdlog::debug("HBlank Line {}", vCount);
+		spdlog::get("std")->debug("HBlank Line {}", vCount);
 
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
@@ -48,7 +48,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  // Set VBlank flag and Request Interrupt
 		  auto dispStat = getHalf(DISPSTAT);
 		  BIT_SET(dispStat, 0);
-		  spdlog::debug("VBlank {:X}", dispStat);
+		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
 		  setHalf(DISPSTAT, dispStat);
 
 		  auto intReq = getHalf(IF);
@@ -76,7 +76,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		}
 		if (vCount >= TOTAL_LINES) {
 		  setHalf(VCOUNT, 0);
-		  spdlog::debug("VCount cleared");
+		  spdlog::get("std")->debug("VCount cleared");
 		  state = Visible;
 		}
 	  }
@@ -94,15 +94,19 @@ void PPU::fetchScanline() {
   for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
        pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
 	switch (bgMode) {
+		case 0:
+		case 1:
+		case 2:
 	  case 3: {
 		fb[pixel] = getHalf(VRAM_START + pixel * 2);
 	  } break;
-	  case 4: {
+	  case 4:
+		case 5: {
 		auto colorID = getByte(VRAM_START + (frame * 0xA000) + pixel);
 		fb[pixel] = getBgColorFromPallete(colorID);
 	  } break;
 	  default:
-		spdlog::error("Unsupported bgMode");
+		spdlog::get("std")->error("Unsupported bgMode");
 		break;
 		// TODO: complain
 	}

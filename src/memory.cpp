@@ -12,14 +12,14 @@ Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
   {
 	std::ifstream infile(biosPath);
 	if (!infile.is_open()) {
-	  spdlog::error("BIOS not found at supplied path");
+	  spdlog::get("std")->error("BIOS not found at supplied path");
 	  exit(-1);
 	}
 	infile.seekg(0, infile.end);
 	size_t length = infile.tellg();
 	infile.seekg(0, infile.beg);
 	if (length > mem.gen.bios.size()) {
-	  spdlog::error("BIOS too big");
+	  spdlog::get("std")->error("BIOS too big");
 	  exit(-1);
 	}
 	infile.read(reinterpret_cast<char*>(mem.gen.bios.data()), length);
@@ -28,14 +28,14 @@ Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
   {
 	std::ifstream infile(romPath);
 	if (!infile.is_open()) {
-	  spdlog::error("ROM not found at supplied path");
+	  spdlog::get("std")->error("ROM not found at supplied path");
 	  exit(-1);
 	}
 	infile.seekg(0, infile.end);
 	size_t length = infile.tellg();
 	infile.seekg(0, infile.beg);
 	if (length > mem.ext.rom.size()) {
-	  spdlog::error("ROM too big");
+	  spdlog::get("std")->error("ROM too big");
 	  exit(-1);
 	}
 	infile.read(reinterpret_cast<char*>(mem.ext.rom.data()), length);
@@ -60,11 +60,11 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	  if ((address & PAGE_MASK) < BIOS_SIZE) {
 		return ReadToSize(&mem.gen.bios[address & BIOS_MASK], size);
 	  } else {
-		spdlog::error("Reading from Invalid BIOS memory");
+		spdlog::get("std")->error("Reading from Invalid BIOS memory");
 		exit(-1);
 	  }
 	case 0x01: {
-	  spdlog::error("Reading from Unused memory");
+	  spdlog::get("std")->error("Reading from Unused memory");
 	}
 	case 0x02:
 	  return ReadToSize(&mem.gen.wramb[address & WRAMB_MASK], size);
@@ -87,7 +87,7 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
 	default:
 	  if (page > 0x12) {
-		spdlog::error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
+		spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
 		exit(-1);
 	  }
 	  return 0;

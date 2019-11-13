@@ -8,12 +8,17 @@ int count = 0;
 
 namespace ARM7TDMI {
 std::uint32_t CPU::Execute() {
+
+	#ifndef NDEBUG
+	debugger->checkForBreakpoint();
+	#endif
+
   HandleInterruptRequests();
   auto opcode = pipeline[0];
   count++;
 
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 2,
+	spdlog::get("std")->debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 2,
 	              opcode);
 	auto& pc = registers.get(R15);
 	pc &= ~1;
@@ -25,7 +30,7 @@ std::uint32_t CPU::Execute() {
 
 	ThumbOperation(opcode)();
   } else {
-	spdlog::debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 4,
+	spdlog::get("std")->debug("{:X} - PC:{:X} - Op:{:X}", count, registers.get(R15) - 4,
 	              opcode);
 	auto& pc = registers.get(R15);
 	pc &= ~3;
@@ -36,18 +41,6 @@ std::uint32_t CPU::Execute() {
 	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
 
 	ArmOperation(opcode)();
-  }
-
-  //   if (registers.get(R2) == 0x80000001) {
-  // 	slow = true;
-  //   }
-  //   if (registers.get(R15) == 0x08000d3c)
-  // 	slow = true;
-  if (slow) {
-	usleep(100000);
-	spdlog::set_level(spdlog::level::debug);
-	spdlog::debug("R4 {:X} R5 {:X}", registers.get(R4), registers.get(R5));
-	spdlog::debug("********************************");
   }
 
   return 1;
@@ -66,7 +59,7 @@ void CPU::HandleInterruptRequests() {
       memory->Read(Memory::AccessSize::Half, IME, Memory::Sequentiality::NSEQ);
 
   if (ime && (ie & irf)) {
-	spdlog::info("IRQ Successful");
+	spdlog::get("std")->info("IRQ Successful");
 	registers.switchMode(SRFlag::ModeBits::IRQ);
 
 	if (SRFlag::get(cpsr, SRFlag::thumb)) {
@@ -84,14 +77,14 @@ void CPU::HandleInterruptRequests() {
 
 void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::debug("Flush to THUMB");
+	spdlog::get("std")->debug("Flush to THUMB");
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 	pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);
 	pc += 2;
 	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
   } else {
-	spdlog::debug("Flush to ARM");
+	spdlog::get("std")->debug("Flush to ARM");
 	auto& pc = registers.get(R15);
 	pc &= ~3;
 	pipeline[0] = memory->Read(Memory::Word, pc, Memory::NSEQ);

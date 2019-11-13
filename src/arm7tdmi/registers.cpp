@@ -12,7 +12,7 @@ uint8_t get(const std::uint32_t& sr, const BitLocation& flag) {
 void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
   std::uint32_t mask = (1 << flag.size) - 1;
   if ((mask & val) != val) {
-	spdlog::warn("Tried to set invalid size of value for bitlocation");
+	spdlog::get("std")->warn("Tried to set invalid size of value for bitlocation");
 	return;
   }
   mask = ~(mask << flag.bit);
@@ -38,7 +38,7 @@ ModeBank getModeBank(SRFlag::ModeBits modeBits) {
 	case SRFlag::ModeBits::SYS:
 	  return ModeBank::SYS;
 	default:
-	  spdlog::error("Invalid modeBits passed");
+	  spdlog::get("std")->error("Invalid modeBits passed");
 	  exit(-1);
   }
 }
@@ -64,12 +64,12 @@ std::uint32_t& RegisterSet::get(ModeBank mode, Register reg) {
 	return registers.CPSR;
   } else if (reg == Register::SPSR) {
 	if (mode == ModeBank::SYS) {
-	  spdlog::error("Tried to get SPSR in SYS mode");
+	  spdlog::get("std")->error("Tried to get SPSR in SYS mode");
 	  exit(-1);
 	}
 	return registers.SPSR[(uint8_t)mode - 1];
   } else {
-	spdlog::error("Invalid call to register get");
+	spdlog::get("std")->error("Invalid call to register get");
 	exit(-1);
   }
 }
@@ -117,7 +117,7 @@ bool RegisterSet::conditionCheck(Condition cond) {
 	case NV:
 	  return false;
 	default:
-	  spdlog::error("Out of range register condition check");
+	  spdlog::get("std")->error("Out of range register condition check");
 	  return false;
   }
 }
