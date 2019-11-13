@@ -7,15 +7,16 @@
 #include <utility>
 #include <vector>
 
+#include "../debugger.hpp"
 #include "../memory.hpp"
 #include "registers.hpp"
 #include "types.hpp"
-#include "../debugger.hpp"
 
 namespace ARM7TDMI {
 class CPU {
  public:
-  CPU(std::shared_ptr<Memory> memory_, std::unique_ptr<Debugger> debugger_) : memory(memory_), debugger(std::move(debugger_)) {
+  CPU(std::shared_ptr<Memory> memory_, std::shared_ptr<Debugger> debugger_)
+      : memory(memory_), debugger(std::move(debugger_)) {
 	// Skip BIOS
 
 	registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
@@ -28,12 +29,13 @@ class CPU {
   };
 
   std::uint32_t Execute();
+  RegisterView viewRegisters();
   RegisterSet registers;
 
  private:
   bool slow = false;
   std::shared_ptr<Memory> memory;
-  std::unique_ptr<Debugger> debugger;
+  std::shared_ptr<Debugger> debugger;
   std::array<OpCode, 2> pipeline;
 
   void PipelineFlush();

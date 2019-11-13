@@ -93,6 +93,7 @@ ModeBank getModeBank(SRFlag::ModeBits modeBits);
 
 class RegisterSet {
  public:
+  std::uint32_t view(Register reg);
   std::uint32_t& get(Register reg);
 
   std::uint32_t& get(ModeBank mode, Register reg);

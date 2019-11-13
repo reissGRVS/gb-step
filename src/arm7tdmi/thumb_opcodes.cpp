@@ -1,6 +1,6 @@
-#include "../utils.hpp"
-#include "cpu.hpp"
+#include "arm7tdmi/cpu.hpp"
 #include "spdlog/spdlog.h"
+#include "utils.hpp"
 
 // TODO: TIMINGS
 namespace ARM7TDMI {
@@ -184,7 +184,8 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	}
 
 	default:
-	  spdlog::get("std")->error("Invalid Thumb Instruction: This should never happen");
+	  spdlog::get("std")->error(
+	      "Invalid Thumb Instruction: This should never happen");
 	  exit(-1);
 	  break;
   }
@@ -288,8 +289,9 @@ void CPU::ThumbLSRegOff_P(ParamList params) {
   std::uint16_t Rd = params[0], Rb = params[1], Ro = params[2], B = params[3],
                 L = params[4];
 
-  spdlog::get("std")->debug("THUMB LS RegOff - Rd {:X}, Rb {:X}, Ro {:X}, B{:X}, L{:X}", Rd,
-                Rb, Ro, B, L);
+  spdlog::get("std")->debug(
+      "THUMB LS RegOff - Rd {:X}, Rb {:X}, Ro {:X}, B{:X}, L{:X}", Rd, Rb, Ro,
+      B, L);
   ArmSingleDataTransfer(1, 1, 1, B, 0, L, Rb, Rd, Ro);
 }
 

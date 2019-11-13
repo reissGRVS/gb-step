@@ -6,8 +6,11 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
-    : joypad(joypad) {
+Memory::Memory(std::string biosPath,
+               std::string romPath,
+               Joypad& joypad,
+               std::shared_ptr<Debugger> debugger)
+    : joypad(joypad), debugger(debugger) {
   // Read BIOS
   {
 	std::ifstream infile(biosPath);
@@ -65,6 +68,7 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	  }
 	case 0x01: {
 	  spdlog::get("std")->error("Reading from Unused memory");
+	  break;
 	}
 	case 0x02:
 	  return ReadToSize(&mem.gen.wramb[address & WRAMB_MASK], size);
@@ -86,12 +90,11 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
 	default:
-	  if (page > 0x12) {
-		spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
-		exit(-1);
-	  }
-	  return 0;
+	  break;
   }
+
+  spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
+  exit(-1);
 }
 
 void Memory::WriteToSize(std::uint8_t* byte,
@@ -120,6 +123,9 @@ void Memory::Write(AccessSize size,
                    std::uint32_t value,
                    Sequentiality) {
   auto page = address >> 24;
+#ifndef NDEBUG
+  debugger->notifyMemoryWrite(address);
+#endif
 
   switch (page) {
 	case 0x02:

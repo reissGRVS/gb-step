@@ -12,4 +12,6 @@ using ParamSegments = std::vector<BitSegment>;
 // Params should be stored from LSB to MSB
 using ParamList = std::vector<std::uint32_t>;
 
+using RegisterView = std::array<std::uint64_t, 16>;
+
 }  // namespace ARM7TDMI

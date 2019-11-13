@@ -1,4 +1,4 @@
-#include "registers.hpp"
+#include "arm7tdmi/registers.hpp"
 #include "spdlog/spdlog.h"
 
 namespace ARM7TDMI {
@@ -12,7 +12,8 @@ uint8_t get(const std::uint32_t& sr, const BitLocation& flag) {
 void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val) {
   std::uint32_t mask = (1 << flag.size) - 1;
   if ((mask & val) != val) {
-	spdlog::get("std")->warn("Tried to set invalid size of value for bitlocation");
+	spdlog::get("std")->warn(
+	    "Tried to set invalid size of value for bitlocation");
 	return;
   }
   mask = ~(mask << flag.bit);
@@ -43,6 +44,9 @@ ModeBank getModeBank(SRFlag::ModeBits modeBits) {
   }
 }
 
+std::uint32_t RegisterSet::view(Register reg) {
+  return get(currentBank, reg);
+}
 std::uint32_t& RegisterSet::get(Register reg) {
   return get(currentBank, reg);
 }

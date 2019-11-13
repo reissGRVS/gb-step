@@ -1,7 +1,7 @@
 #include <unistd.h>
-#include "../utils.hpp"
-#include "cpu.hpp"
+#include "arm7tdmi/cpu.hpp"
 #include "spdlog/spdlog.h"
+#include "utils.hpp"
 
 // TODO: TIMINGS
 namespace ARM7TDMI {
@@ -182,6 +182,9 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 	  const auto swiMask = 0xF000000;
 	  if ((swiMask & opcode) == swiMask) {
 		return std::bind(&CPU::ArmSWI_P, this, ParamList());
+	  } else {
+		spdlog::get("std")->error("Attempting CoProc???");
+		exit(-1);
 	  }
 	}
 	default: {
@@ -247,8 +250,9 @@ void CPU::ArmDataProcessing(std::uint32_t I,
                             std::uint32_t Rn,
                             std::uint32_t Rd,
                             std::uint32_t Op2) {
-  spdlog::get("std")->debug("DP I:{:X} OpCode:{:X} S:{:X} Rn:{:X} Rd:{:X} Op2:{:X}", I,
-                OpCode, S, Rn, Rd, Op2);
+  spdlog::get("std")->debug(
+      "DP I:{:X} OpCode:{:X} S:{:X} Rn:{:X} Rd:{:X} Op2:{:X}", I, OpCode, S, Rn,
+      Rd, Op2);
 
   // PSR Transfers
   if (!S && OpCode >= DPOps::TST && OpCode <= DPOps::CMN) {
@@ -275,7 +279,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	if (Op2 >> 4 & NBIT_MASK(1))  // Shift amount from register
 	{
 	  if (Op2 >> 7 & NBIT_MASK(1)) {
-		spdlog::get("std")->error("This instruction should have been UNDEF or MUL");
+		spdlog::get("std")->error(
+		    "This instruction should have been UNDEF or MUL");
 	  }
 	  // If also using R15 to specify shift + 4 to Rm
 	  if ((Op2 & NBIT_MASK(4)) == 15) {
@@ -370,7 +375,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  auto result = (std::uint64_t)Op1Val + Op2Val + carry;
 	  dest = (uint32_t)result;
-	  spdlog::get("std")->debug("	ADC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, carry, dest);
+	  spdlog::get("std")->debug("	ADC {:X} {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            carry, dest);
 	  auto overflow = ((~(Op1Val ^ Op2Val) & ((Op1Val + Op2Val) ^ Op2Val)) ^
 	                   (~((Op1Val + Op2Val) ^ carry) & (dest ^ carry))) >>
 	                  31;
@@ -383,7 +389,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op1Val - Op2Val - Op3Val;
-	  spdlog::get("std")->debug("	SBC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
+	  spdlog::get("std")->debug("	SBC {:X} {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            Op3Val, dest);
 	  carry = (Op1Val >= Op2Val) && ((Op1Val - Op2Val) >= (Op3Val));
 	  auto overflow = (((Op1Val ^ Op2Val) & ~((Op1Val - Op2Val) ^ Op2Val)) ^
 	                   ((Op1Val - Op2Val) & ~dest)) >>
@@ -396,7 +403,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  std::uint32_t Op3Val = carry ^ 1;
 	  dest = Op2Val - Op1Val - Op3Val;
-	  spdlog::get("std")->debug("	RSC {:X} {:X} {:X} {:X}", Op1Val, Op2Val, Op3Val, dest);
+	  spdlog::get("std")->debug("	RSC {:X} {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            Op3Val, dest);
 	  carry = (Op2Val >= Op1Val) && ((Op2Val - Op1Val) >= (Op3Val));
 	  auto overflow = (((Op2Val ^ Op1Val) & ~((Op2Val - Op1Val) ^ Op1Val)) ^
 	                   ((Op2Val - Op1Val) & ~dest)) >>
@@ -407,7 +415,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::TST: {
 	  auto result = Op1Val & Op2Val;
-	  spdlog::get("std")->debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val, result);
+	  spdlog::get("std")->debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            result);
 	  SetFlags(1, result, carry);
 	  S = 0;  // To not trigger SetFlags at bottom
 	  break;
@@ -415,7 +424,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::TEQ: {
 	  auto result = Op1Val ^ Op2Val;
-	  spdlog::get("std")->debug("	TEQ {:X} {:X} {:X}", Op1Val, Op2Val, result);
+	  spdlog::get("std")->debug("	TEQ {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            result);
 	  SetFlags(1, result, carry);
 	  S = 0;
 	  break;
@@ -423,7 +433,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::CMP: {
 	  auto result = Op1Val - Op2Val;
-	  spdlog::get("std")->debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val, result);
+	  spdlog::get("std")->debug("	CMP {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            result);
 	  carry = Op1Val >= Op2Val;
 	  SetFlags(1, result, carry);
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
@@ -435,7 +446,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	case DPOps::CMN: {
 	  auto resultBig = (std::uint64_t)Op1Val + Op2Val;
 	  std::uint32_t result = (uint32_t)resultBig;
-	  spdlog::get("std")->debug("	CMN {:X} {:X} {:X}", Op1Val, Op2Val, result);
+	  spdlog::get("std")->debug("	CMN {:X} {:X} {:X}", Op1Val, Op2Val,
+	                            result);
 	  carry = resultBig >> 32;
 	  SetFlags(1, result, carry);
 	  auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ result)) >> 31;
@@ -538,8 +550,9 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
                           std::uint32_t RdLo,
                           std::uint32_t Rs,
                           std::uint32_t Rm) {
-  spdlog::get("std")->debug("MULLONG Rm {} Rs {} RdHi {} RdLo {} U {} A {} S {}", Rm, Rs,
-                RdHi, RdLo, U, A, S);
+  spdlog::get("std")->debug(
+      "MULLONG Rm {} Rs {} RdHi {} RdLo {} U {} A {} S {}", Rm, Rs, RdHi, RdLo,
+      U, A, S);
   if (RdLo == Rm || RdHi == Rm || RdLo == RdHi) {
 	spdlog::get("std")->error("Invalid Arm Mult Long Rd == Rm");
 	return;
@@ -698,7 +711,8 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 		  destReg *= -1;
 		}
 	  } else {
-		spdlog::get("std")->error("Not allowed to do unsigned byte transfer using HDT");
+		spdlog::get("std")->error(
+		    "Not allowed to do unsigned byte transfer using HDT");
 	  }
 	}
   } else  // STR
@@ -777,7 +791,8 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 		  destReg *= -1;
 		}
 	  } else {
-		spdlog::get("std")->error("Not allowed to do unsigned byte transfer using HDT");
+		spdlog::get("std")->error(
+		    "Not allowed to do unsigned byte transfer using HDT");
 	  }
 	}
   } else  // STR
@@ -807,8 +822,8 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
                                 std::uint32_t Rn,
                                 std::uint32_t Rd,
                                 std::uint32_t Offset) {
-  spdlog::get("std")->debug("SDT I{} P{} U{} B{} W{} L{} Rn{} Rd{} Offset{}", I, P, U, B, W,
-                L, Rn, Rd, Offset);
+  spdlog::get("std")->debug("SDT I{} P{} U{} B{} W{} L{} Rn{} Rd{} Offset{}", I,
+                            P, U, B, W, L, Rn, Rd, Offset);
   if (I) {
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	auto Rm = registers.get((Register)(Offset & NBIT_MASK(4)));
@@ -853,7 +868,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 		std::uint8_t emptyCarry = 0;
 		const std::uint32_t ROR = 0b11;
 		spdlog::get("std")->debug("Word Boundary Offset {} for value {:X}",
-		              wordBoundaryOffset, value);
+		                          wordBoundaryOffset, value);
 		Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
 	  }
 	  spdlog::get("std")->debug("R{:X} <- {:X}", Rd, value);
@@ -903,8 +918,9 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
                                std::uint32_t Rn,
                                std::uint32_t RegList) {
   auto base = registers.get((Register)Rn);
-  spdlog::get("std")->debug("BDT P{:X} U{:X} S{:X} W{:X} L{:X} Rn{:X} RegList{:X}", P, U, S,
-                W, L, Rn, RegList);
+  spdlog::get("std")->debug(
+      "BDT P{:X} U{:X} S{:X} W{:X} L{:X} Rn{:X} RegList{:X}", P, U, S, W, L, Rn,
+      RegList);
   std::vector<Register> toSave;
   for (uint8_t i = 0; i < 16; i++) {
 	if ((RegList >> i) & NBIT_MASK(1)) {
@@ -1011,7 +1027,6 @@ void CPU::ArmSWI_P(ParamList) {
 }
 
 void CPU::ArmSWI() {
-	
   spdlog::get("std")->debug("SWI");
 
   registers.switchMode(SRFlag::ModeBits::SVC);

@@ -1,5 +1,5 @@
-#include "window.hpp"
-#include "../../utils.hpp"
+#include "platform/sfml/window.hpp"
+#include "utils.hpp"
 
 WindowSFML::WindowSFML()
     : window(sf::VideoMode(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE),

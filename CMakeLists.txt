@@ -8,7 +8,8 @@ endif()
 # Add main.cpp file of project root directory as source file
 set(SOURCE_FILES
 	src/main.cpp
-	src/memory.cpp	
+	src/memory.cpp
+	src/debugger.cpp
 	src/ppu.cpp
 	src/joypad.cpp
 	src/arm7tdmi/arm_opcodes.cpp
@@ -23,7 +24,7 @@ add_executable(gba ${SOURCE_FILES})
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 find_package(SFML 2 REQUIRED graphics window system audio)
-include_directories(${SFML_INCLUDE_DIR})
+include_directories(${SFML_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
-target_compile_options(gba PRIVATE -O3 -Wall -Wextra -pedantic -Werror)
+target_compile_options(gba PRIVATE -O3 -Wall -Wextra -pedantic -Werror -fmax-errors=10)
 target_link_libraries(gba PRIVATE ${SFML_LIBRARIES} ${SFML_DEPENDENCIES} spdlog::spdlog)

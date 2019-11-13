@@ -1,11 +1,17 @@
 #pragma once
 #include <cstdint>
+#include <unordered_map>
 
 #define REGION_INFO(NAME, SIZE, START, MASK) \
   static const std::uint32_t NAME##_SIZE = SIZE; \
   static const std::uint32_t NAME##_START = START; \
   static const std::uint32_t NAME##_MASK = MASK;
 
+#define IOREG_INFO(NAME, ADDRESS) \
+  static const std::uint32_t NAME = ADDRESS; \
+  static const std::string NAME##_STR = #NAME;
+
+static std::string IOREG_NAMES[0x400] = {};
 static const std::uint32_t PAGE_MASK = 0xFFFFFF;
 REGION_INFO(BIOS, 0x04000, 0x0000000, 0x03FFF)
 REGION_INFO(WRAMB, 0x40000, 0x2000000, 0x3FFFF)
@@ -16,12 +22,10 @@ REGION_INFO(VRAM, 0x18000, 0x6000000, 0x1FFFF)
 REGION_INFO(OAM, 0x00400, 0x7000000, 0x003FF)
 REGION_INFO(ROM, 0x2000000, 0x8000000, 0x1FFFFFF)
 
-const std::uint32_t DISPCNT = 0x4000000;
-const std::uint32_t DISPSTAT = 0x4000004;
-const std::uint32_t VCOUNT = 0x4000006;
-
-const std::uint32_t KEYINPUT = 0x4000130;
-
-const std::uint32_t IE = 0x4000200;
-const std::uint32_t IF = 0x4000202;
-const std::uint32_t IME = 0x4000208;
+IOREG_INFO(DISPCNT, 0x4000000)
+IOREG_INFO(DISPSTAT, 0x4000004)
+IOREG_INFO(VCOUNT, 0x4000006)
+IOREG_INFO(KEYINPUT, 0x4000130)
+IOREG_INFO(IE, 0x4000200)
+IOREG_INFO(IF, 0x4000202)
+IOREG_INFO(IME, 0x4000208)
