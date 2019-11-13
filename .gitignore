@@ -2,3 +2,5 @@ build
 roms
 .vscode
 *.out
+debug
+release
