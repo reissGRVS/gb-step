@@ -13,6 +13,8 @@ void Joypad::keyUpdate() {
   leftBump = sf::Keyboard::isKeyPressed(sf::Keyboard::O);
   select = sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
   start = sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
+
+  bp = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
 }
 
 std::uint16_t Joypad::getKeyStatus() {
@@ -41,3 +43,15 @@ std::uint16_t Joypad::getKeyStatus() {
 
   return keyStatus;
 }
+
+bool Joypad::a;
+bool Joypad::b;
+bool Joypad::select;
+bool Joypad::start;
+bool Joypad::right;
+bool Joypad::left;
+bool Joypad::up;
+bool Joypad::down;
+bool Joypad::rightBump;
+bool Joypad::leftBump;
+bool Joypad::bp;

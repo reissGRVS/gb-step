@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <optional>
 #include <string>
+#include "joypad.hpp"
 
 Debugger::debugOp Debugger::stringToOp(std::string str) {
   if (str == "step" || str == "s")
@@ -139,6 +140,11 @@ void Debugger::checkForBreakpoint(ARM7TDMI::RegisterView view_) {
 	steps_till_next_break--;
   }
 
+  if (Joypad::getKey(Joypad::KEY::BP)) {
+	onBreakpoint();
+	return;
+  }
+
   // REGISTER BASED BREAKPOINTS
   if (!noRegBP) {
 	bool regMatch = true;
@@ -159,7 +165,6 @@ void Debugger::checkForBreakpoint(ARM7TDMI::RegisterView view_) {
   if (memoryBreakpoint) {
 	std::cout << "MEMORY BREAKPOINT" << std::endl;
 	onBreakpoint();
-	exit(-1);
 	return;
   }
 }

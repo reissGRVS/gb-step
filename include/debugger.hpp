@@ -22,23 +22,23 @@ class Debugger {
 	noOp
   };
 
-  debugOp stringToOp(std::string str);
-
-  std::vector<std::string> getUserInputTokens();
-
-  void printMemoryBPs();
-  void printRegView();
-  void onBreakpoint();
   void checkForBreakpoint(ARM7TDMI::RegisterView view_);
-  void clearBreakpoints();
+
   void notifyMemoryWrite(std::uint32_t address);
 
+ private:
+  debugOp stringToOp(std::string str);
+  std::vector<std::string> getUserInputTokens();
+
+  void onBreakpoint();
+  void printMemoryBPs();
+  void printRegView();
+  void clearBreakpoints();
   void setRun();
   void setStep(int x);
   void addBreakpointCondition(std::string condition);
   void toggleLoggingLevel();
 
- private:
   int steps_till_next_break = 1;
   bool debugLogging = false;
   bool noRegBP = true;
