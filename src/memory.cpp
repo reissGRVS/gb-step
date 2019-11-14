@@ -6,11 +6,8 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-Memory::Memory(std::string biosPath,
-               std::string romPath,
-               Joypad& joypad,
-               std::shared_ptr<Debugger> debugger)
-    : joypad(joypad), debugger(debugger) {
+Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
+    : joypad(joypad) {
   // Read BIOS
   {
 	std::ifstream infile(biosPath);
@@ -124,7 +121,8 @@ void Memory::Write(AccessSize size,
                    Sequentiality) {
   auto page = address >> 24;
 #ifndef NDEBUG
-  debugger->notifyMemoryWrite(address);
+  PublishWriteCallback(address);
+  // TODO: Notify debugger
 #endif
 
   switch (page) {
@@ -149,4 +147,9 @@ void Memory::Write(AccessSize size,
 	default:
 	  break;
   }
+}
+
+void Memory::SetPublishWriteCallback(
+    std::function<void(std::uint32_t)> callback) {
+  PublishWriteCallback = callback;
 }

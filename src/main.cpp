@@ -16,13 +16,6 @@ int main(int argc, char* argv[]) {
   spdlog::set_pattern("%v");
   spdlog::info("Launching");
 
-#ifndef NDEBUG
-  spdlog::info("Debug mode");
-  auto debugger = std::make_shared<Debugger>();
-#else
-  std::shared_ptr<Debugger> debugger;
-#endif
-
   if (argc != 3) {
 	spdlog::error("Wrong number of args");
 	return -1;
@@ -31,7 +24,7 @@ int main(int argc, char* argv[]) {
   WindowSFML window;
   std::string biosPath = argv[1];
   std::string romPath = argv[2];
-  GBAConfig cfg{biosPath, romPath, window, window.joypad, std::move(debugger)};
+  GBAConfig cfg{biosPath, romPath, window, window.joypad};
   GBA gba(std::move(cfg));
   gba.run();
 }

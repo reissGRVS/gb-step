@@ -1,7 +1,9 @@
 #pragma once
 
 #include <unistd.h>
+#include <functional>
 #include "arm7tdmi/cpu.hpp"
+#include "debugger.hpp"
 #include "dma.hpp"
 #include "memory.hpp"
 #include "ppu.hpp"
@@ -13,22 +15,25 @@ struct GBAConfig {
   std::string romPath;
   Screen& screen;
   Joypad& joypad;
-  std::shared_ptr<Debugger> debugger;
   // TODO: Add interfaces for io here
 };
 
 class GBA {
  public:
   GBA(GBAConfig cfg)
-      : memory(std::make_shared<Memory>(cfg.biosPath,
-                                        cfg.romPath,
-                                        cfg.joypad,
-                                        cfg.debugger)),
-        cpu(memory, std::move(cfg.debugger)),
-        ppu(memory, cfg.screen){};
+      : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath, cfg.joypad)),
+        cpu(memory),
+        ppu(memory, cfg.screen),
+        debugger(memory) {
+	memory->SetPublishWriteCallback(std::bind(
+	    &Debugger::NotifyMemoryWrite, &debugger, std::placeholders::_1));
+  };
 
   void run() {
 	while (true) {
+#ifndef NDEBUG
+	  debugger.CheckForBreakpoint(cpu.ViewState());
+#endif
 	  auto ticks = cpu.Execute();
 	  ppu.Execute(ticks);
 	}
@@ -38,6 +43,7 @@ class GBA {
   std::shared_ptr<Memory> memory;
   ARM7TDMI::CPU cpu;
   PPU ppu;
+  Debugger debugger;
   Timer timer;
   DMA dma;
 };

@@ -8,18 +8,15 @@ int count = 0;
 
 namespace ARM7TDMI {
 std::uint32_t CPU::Execute() {
-#ifndef NDEBUG
-  debugger->checkForBreakpoint(viewRegisters());
-#endif
-
   HandleInterruptRequests();
   auto opcode = pipeline[0];
   count++;
+  auto& pc = registers.get(R15);
 
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::get("std")->debug("{:X} - PC:{:X} - Op:{:X}", count,
-	                          registers.get(R15) - 2, opcode);
-	auto& pc = registers.get(R15);
+	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", pc - 2, opcode);
+	backtrace.addOpPCPair(pc - 2, opcode);
+
 	pc &= ~1;
 
 	pipeline[0] = pipeline[1];
@@ -29,9 +26,10 @@ std::uint32_t CPU::Execute() {
 
 	ThumbOperation(opcode)();
   } else {
-	spdlog::get("std")->debug("{:X} - PC:{:X} - Op:{:X}", count,
-	                          registers.get(R15) - 4, opcode);
-	auto& pc = registers.get(R15);
+	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", registers.get(R15) - 4,
+	                          opcode);
+	backtrace.addOpPCPair(pc - 2, opcode);
+
 	pc &= ~3;
 
 	pipeline[0] = pipeline[1];
@@ -42,15 +40,18 @@ std::uint32_t CPU::Execute() {
 	ArmOperation(opcode)();
   }
 
+  spdlog::get("std")->debug("************************");
   return 1;
 }
 
-RegisterView CPU::viewRegisters() {
-  RegisterView view;
+StateView CPU::ViewState() {
+  RegisterView regView;
   for (int i = 0; i < 16; i++) {
-	view[i] = registers.view((Register)i);
+	regView[i] = registers.view((Register)i);
   }
-  return view;
+
+  StateView stateView{regView, backtrace};
+  return stateView;
 }
 
 void CPU::HandleInterruptRequests() {

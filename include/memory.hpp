@@ -2,20 +2,17 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 
-#include "debugger.hpp"
 #include "joypad.hpp"
 #include "memory_regions.hpp"
 
 class Memory {
  public:
-  Memory(std::string biosPath,
-         std::string romPath,
-         Joypad& joypad,
-         std::shared_ptr<Debugger> debugger);
+  Memory(std::string biosPath, std::string romPath, Joypad& joypad);
 
-  enum Sequentiality { NSEQ, SEQ, PPU };
+  enum Sequentiality { NSEQ, SEQ, PPU, DEBUG };
 
   enum AccessSize { Byte = 0xFF, Half = 0xFFFF, Word = 0xFFFFFFFF };
 
@@ -27,14 +24,15 @@ class Memory {
              std::uint32_t value,
              Sequentiality type);
 
+  void SetPublishWriteCallback(std::function<void(std::uint32_t)> callback);
+
  private:
-    std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
+  std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
   void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
 
   // https://problemkaputt.de/gbatek.htm#gbamemorymap
-
+  std::function<void(std::uint32_t)> PublishWriteCallback;
   Joypad& joypad;
-  std::shared_ptr<Debugger> debugger;
   struct MemoryMap {
 	struct {
 	  std::array<std::uint8_t, BIOS_SIZE> bios{};
