@@ -194,7 +194,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 void CPU::ThumbMoveShiftedReg_P(ParamList params) {
   std::uint16_t Rd = params[0], Rs = params[1], Offset5 = params[2],
                 Op = params[3];
-  spdlog::get("std")->debug("THUMB MSR");
+  spdlog::get("std")->trace("THUMB MSR");
   if (Op == 0b11) {
 	spdlog::get("std")->error("Invalid op for Thumb MSR");
 	exit(-1);
@@ -207,14 +207,14 @@ void CPU::ThumbMoveShiftedReg_P(ParamList params) {
 void CPU::ThumbAddSubtract_P(ParamList params) {
   std::uint16_t Rd = params[0], Rs = params[1], Rn = params[2], Op = params[3],
                 I = params[4];
-  spdlog::get("std")->debug("THUMB AddSub ");
+  spdlog::get("std")->trace("THUMB AddSub ");
   auto dpOp = static_cast<std::uint32_t>(Op ? DPOps::SUB : DPOps::ADD);
   ArmDataProcessing(I, dpOp, 1, Rs, Rd, Rn);
 }
 
 void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
   std::uint16_t Offset8 = params[0], Rd = params[1], Op = params[2];
-  spdlog::get("std")->debug("THUMB MoveCompAddSub");
+  spdlog::get("std")->trace("THUMB MoveCompAddSub");
   std::uint32_t dpOp;
   std::uint32_t S = 1;
   switch (Op) {
@@ -240,16 +240,56 @@ void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
 
 void CPU::ThumbALUOps_P(ParamList params) {
   std::uint16_t Rd = params[0], Rs = params[1], Op = params[2];
-  spdlog::get("std")->debug("THUMB ALU");
+  spdlog::get("std")->trace("THUMB ALU");
 
-  ArmDataProcessing(0, Op, 1, Rd, Rd, Rs);
+  switch (Op) {
+	case 0b0010: {
+	  // LSL
+	  std::uint16_t Op2 = (Rs << 8) + (0b001 << 4) + Rd;
+	  ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+	  break;
+	}
+	case 0b0011: {
+	  // LSR
+	  std::uint16_t Op2 = (Rs << 8) + (0b011 << 4) + Rd;
+	  ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+	  break;
+	}
+	case 0b0100: {
+	  // ASR
+	  std::uint16_t Op2 = (Rs << 8) + (0b101 << 4) + Rd;
+	  ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+	  break;
+	}
+	case 0b0111: {
+	  // ROR
+	  std::uint16_t Op2 = (Rs << 8) + (0b111 << 4) + Rd;
+	  ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+	  break;
+	}
+	case 0b1001: {
+	  // NEG
+	  ArmDataProcessing(0, DPOps::RSB, 1, Rs, Rd, 0);
+	  break;
+	}
+	case 0b1101: {
+	  // MUL
+	  ArmMultiply(0, 1, Rd, 0, Rd, Rs);
+	  break;
+	}
+	default: {
+	  // Directly mapped ops
+	  ArmDataProcessing(0, Op, 1, Rd, Rd, Rs);
+	  break;
+	}
+  }
 }
 
 void CPU::ThumbHiRegOps_P(ParamList params) {
   std::uint16_t Rd = params[0], Rs = params[1], H2 = params[2], H1 = params[3],
                 Op = params[4];
   // TODO: Detect unhandled cases for this Op and complain
-  spdlog::get("std")->debug("THUMB Hi");
+  spdlog::get("std")->trace("THUMB Hi");
   auto Hd = Rd + (H1 << 3);
   auto Hs = Rs + (H2 << 3);
 
@@ -278,7 +318,7 @@ void CPU::ThumbHiRegOps_P(ParamList params) {
 }
 
 void CPU::ThumbPCRelativeLoad_P(ParamList params) {
-  spdlog::get("std")->debug("THUMB PC Load");
+  spdlog::get("std")->trace("THUMB PC Load");
   std::uint16_t Word8 = params[0], Rd = params[1];
   auto offsetFix = (registers.get(R15)) % 4;
   ArmSingleDataTransfer(0, 1, 1, 0, 0, 1, Register::R15, Rd,
@@ -289,21 +329,21 @@ void CPU::ThumbLSRegOff_P(ParamList params) {
   std::uint16_t Rd = params[0], Rb = params[1], Ro = params[2], B = params[3],
                 L = params[4];
 
-  spdlog::get("std")->debug(
+  spdlog::get("std")->trace(
       "THUMB LS RegOff - Rd {:X}, Rb {:X}, Ro {:X}, B{:X}, L{:X}", Rd, Rb, Ro,
       B, L);
   ArmSingleDataTransfer(1, 1, 1, B, 0, L, Rb, Rd, Ro);
 }
 
 void CPU::ThumbLSSignExt_P(ParamList params) {
-  spdlog::get("std")->debug("THUMB LS SignExt");
+  spdlog::get("std")->trace("THUMB LS SignExt");
   std::uint16_t Rd = params[0], Rb = params[1], Ro = params[2], S = params[3],
                 H = params[4];
   ArmHalfwordDTRegOffset(1, 1, 0, S & H, Rb, Rd, S, H, Ro);
 }
 
 void CPU::ThumbLSImmOff_P(ParamList params) {
-  spdlog::get("std")->debug("THUMB LS Imm Off");
+  spdlog::get("std")->trace("THUMB LS Imm Off");
   std::uint16_t Rd = params[0], Rb = params[1], Offset5 = params[2],
                 L = params[3], B = params[4];
   ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset5);
@@ -312,7 +352,7 @@ void CPU::ThumbLSImmOff_P(ParamList params) {
 void CPU::ThumbLSHalf_P(ParamList params) {
   std::uint16_t Rd = params[0], Rb = params[1], Offset5 = params[2],
                 L = params[3];
-  spdlog::get("std")->debug("THUMB LS Half");
+  spdlog::get("std")->trace("THUMB LS Half");
   auto OffsetHi = Offset5 >> 3;
   auto OffsetLo = (Offset5 << 1) & NBIT_MASK(4);
   ArmHalfwordDTImmOffset(1, 1, 0, L, Rb, Rd, OffsetHi, 0, 1, OffsetLo);
@@ -320,13 +360,13 @@ void CPU::ThumbLSHalf_P(ParamList params) {
 
 void CPU::ThumbSPRelativeLS_P(ParamList params) {
   std::uint16_t Word8 = params[0], Rd = params[1], L = params[2];
-  spdlog::get("std")->debug("THUMB SP Relative LS ");
+  spdlog::get("std")->trace("THUMB SP Relative LS ");
   ArmSingleDataTransfer(0, 1, 1, 0, 0, L, Register::R13, Rd, Word8 << 2);
 }
 
 void CPU::ThumbLoadAddress_P(ParamList params) {
   std::uint16_t Word8 = params[0], Rd = params[1], SP = params[2];
-  spdlog::get("std")->debug("THUMB Load Addr");
+  spdlog::get("std")->trace("THUMB Load Addr");
   std::uint32_t Rn = SP ? Register::R13 : Register::R15;
   const auto ROR30 = (0xF << 8);
   ArmDataProcessing(1, DPOps::ADD, 0, Rn, Rd, ROR30 + Word8);
@@ -334,7 +374,7 @@ void CPU::ThumbLoadAddress_P(ParamList params) {
 
 void CPU::ThumbOffsetSP_P(ParamList params) {
   std::uint16_t SWord7 = params[0], S = params[1];
-  spdlog::get("std")->debug("THUMB Offset SP");
+  spdlog::get("std")->trace("THUMB Offset SP");
   auto dpOp = static_cast<std::uint32_t>(S ? DPOps::SUB : DPOps::ADD);
   const auto ROR30 = (0xF << 8);
   ArmDataProcessing(1, dpOp, 1, Register::R13, Register::R13, ROR30 + SWord7);
@@ -343,7 +383,7 @@ void CPU::ThumbOffsetSP_P(ParamList params) {
 void CPU::ThumbPushPopReg_P(ParamList params) {
   std::uint16_t RList = params[0], R = params[1], L = params[2];
   // TODO: Check if direction correct, stack should be full descending
-  spdlog::get("std")->debug("THUMB PushPop");
+  spdlog::get("std")->trace("THUMB PushPop");
   if (R) {
 	if (L) {
 	  // Add PC to RList
@@ -358,16 +398,16 @@ void CPU::ThumbPushPopReg_P(ParamList params) {
 }
 
 void CPU::ThumbMultipleLS_P(ParamList params) {
-  spdlog::get("std")->debug("THUMB Multi LS");
+  spdlog::get("std")->trace("THUMB Multi LS");
   std::uint16_t RList = params[0], Rb = params[1], L = params[2];
   ArmBlockDataTransfer(0, 1, 0, 1, L, Rb, RList);
 }
 
 void CPU::ThumbCondBranch_P(ParamList params) {
   std::uint16_t SOffset8 = params[0], Cond = params[1];
-  spdlog::get("std")->debug("THUMB Cond Branch");
+  spdlog::get("std")->trace("THUMB Cond Branch");
   if (!registers.conditionCheck((Condition)(Cond))) {
-	spdlog::get("std")->debug("Condition failed");
+	spdlog::get("std")->trace("Condition failed");
 	return;
   }
 
@@ -376,13 +416,13 @@ void CPU::ThumbCondBranch_P(ParamList params) {
 	offset -= 1 << 8;
   }
   auto& pc = registers.get(Register::R15);
-  spdlog::get("std")->debug("PC {:X}, Offset {}", pc, offset);
+  spdlog::get("std")->trace("PC {:X}, Offset {}", pc, offset);
   pc += offset;
   PipelineFlush();
 }
 
 void CPU::ThumbSWI_P(ParamList) {
-  spdlog::get("std")->debug("THUMB SWI");
+  spdlog::get("std")->trace("THUMB SWI");
   auto pc = registers.get(R15) - 2;
   auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
@@ -399,7 +439,7 @@ void CPU::ThumbSWI_P(ParamList) {
 
 void CPU::ThumbUncondBranch_P(ParamList params) {
   std::uint16_t Offset11 = params[0];
-  spdlog::get("std")->debug("THUMB Uncond Branch {:b}", Offset11);
+  spdlog::get("std")->trace("THUMB Uncond Branch {:b}", Offset11);
   std::int16_t offset = (Offset11 & NBIT_MASK(10)) << 1;
   if (Offset11 >> 10) {
 	offset -= 1 << 11;
@@ -411,7 +451,7 @@ void CPU::ThumbUncondBranch_P(ParamList params) {
 #include <unistd.h>
 void CPU::ThumbLongBranchLink_P(ParamList params) {
   std::uint16_t Offset = params[0], H = params[1];
-  spdlog::get("std")->debug("THUMB Long Branch");
+  spdlog::get("std")->trace("THUMB Long Branch");
   auto& lr = registers.get(Register::R14);
   auto& pc = registers.get(Register::R15);
   if (H) {
@@ -425,7 +465,7 @@ void CPU::ThumbLongBranchLink_P(ParamList params) {
 	if (Offset >> 10) {
 	  signedOffset -= 1 << 22;
 	}
-	spdlog::get("std")->debug("soffset {}", signedOffset);
+	spdlog::get("std")->trace("soffset {}", signedOffset);
 	lr = pc + signedOffset;
   }
 }

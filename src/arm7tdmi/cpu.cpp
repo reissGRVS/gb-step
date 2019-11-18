@@ -10,7 +10,6 @@ namespace ARM7TDMI {
 std::uint32_t CPU::Execute() {
   HandleInterruptRequests();
   auto opcode = pipeline[0];
-  count++;
   auto& pc = registers.get(R15);
 
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
@@ -28,7 +27,7 @@ std::uint32_t CPU::Execute() {
   } else {
 	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", registers.get(R15) - 4,
 	                          opcode);
-	backtrace.addOpPCPair(pc - 2, opcode);
+	backtrace.addOpPCPair(pc - 4, opcode);
 
 	pc &= ~3;
 
@@ -40,7 +39,7 @@ std::uint32_t CPU::Execute() {
 	ArmOperation(opcode)();
   }
 
-  spdlog::get("std")->debug("************************");
+  spdlog::get("std")->trace("************************");
   return 1;
 }
 
@@ -85,14 +84,14 @@ void CPU::HandleInterruptRequests() {
 
 void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::get("std")->debug("Flush to THUMB");
+	spdlog::get("std")->trace("Flush to THUMB");
 	auto& pc = registers.get(R15);
 	pc &= ~1;
 	pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);
 	pc += 2;
 	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
   } else {
-	spdlog::get("std")->debug("Flush to ARM");
+	spdlog::get("std")->trace("Flush to ARM");
 	auto& pc = registers.get(R15);
 	pc &= ~3;
 	pipeline[0] = memory->Read(Memory::Word, pc, Memory::NSEQ);

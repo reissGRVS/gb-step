@@ -51,7 +51,7 @@ class Debugger {
 
   std::shared_ptr<Memory> memory;
   int steps_till_next_break = 1;
-  bool debugLogging = false;
+  spdlog::level::level_enum logLevel = spdlog::level::level_enum::info;
   bool noRegBP = true;
   bool memoryBreakpoint = false;
   ARM7TDMI::StateView view;

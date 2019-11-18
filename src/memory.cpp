@@ -122,7 +122,6 @@ void Memory::Write(AccessSize size,
   auto page = address >> 24;
 #ifndef NDEBUG
   PublishWriteCallback(address);
-  // TODO: Notify debugger
 #endif
 
   switch (page) {

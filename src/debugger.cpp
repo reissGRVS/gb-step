@@ -230,6 +230,7 @@ void Debugger::CheckForBreakpoint(ARM7TDMI::StateView view_) {
   if (memoryBreakpoint) {
 	std::cout << "MEMORY BREAKPOINT" << std::endl;
 	OnBreakpoint();
+	memoryBreakpoint = false;
 	return;
   }
 }
@@ -260,7 +261,7 @@ void Debugger::AddBreakpointCondition(std::string condition) {
   auto tokens = SplitString(condition, '=');
   if (tokens.size() > 1 && condition.at(0) == 'R' && tokens[0].size() > 1) {
 	auto reg = GetIntSafe(tokens[0].substr(1));
-	auto val = GetIntSafe(tokens[1]);
+	auto val = GetIntSafe(tokens[1], 16);
 	if (reg.has_value() && val.has_value()) {
 	  noRegBP = false;
 	  regWatchedValues[reg.value()] = val.value();
@@ -276,13 +277,16 @@ void Debugger::AddBreakpointCondition(std::string condition) {
 }
 
 void Debugger::ToggleLoggingLevel() {
-  if (debugLogging) {
+  if (logLevel == spdlog::level::level_enum::trace) {
 	std::cout << "Toggled to INFO log level" << std::endl;
-	spdlog::set_level(spdlog::level::info);
-	debugLogging = false;
-  } else {
+	logLevel = spdlog::level::level_enum::info;
+  } else if (logLevel == spdlog::level::level_enum::info) {
 	std::cout << "Toggled to DEBUG log level" << std::endl;
-	spdlog::set_level(spdlog::level::debug);
-	debugLogging = true;
+	logLevel = spdlog::level::level_enum::debug;
+  } else {
+	std::cout << "Toggled to TRACE log level" << std::endl;
+	logLevel = spdlog::level::level_enum::trace;
   }
+
+  spdlog::set_level(logLevel);
 }
