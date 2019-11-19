@@ -681,63 +681,9 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
                                  std::uint32_t H,
                                  std::uint32_t Rm) {
   auto Offset = registers.get((Register)Rm);
-  auto base = registers.get((Register)Rn);
-  auto baseOffset = base;
-
-  if (U) {
-	baseOffset += Offset;
-  } else {
-	baseOffset -= Offset;
-  }
-
-  auto memAddr = base;
-  if (P) {
-	memAddr = baseOffset;
-  }
-  if (W || !P) {
-	registers.get((Register)Rn) = baseOffset;
-  }
-
-  auto& destReg = registers.get((Register)Rd);
-
-  if (L)  // LD
-  {
-	if (H)  // HalfWord
-	{
-	  // TODO: Addr needs to be on half boundary
-	  destReg = memory->Read(Memory::AccessSize::Half, memAddr,
-	                         Memory::Sequentiality::NSEQ);
-	  if (S)  // Signed
-	  {
-		if (destReg >> 15) {
-		  destReg |= NBIT_MASK(16) << 16;
-		}
-	  }
-	} else  // Byte
-	{
-	  if (S) {
-		destReg = memory->Read(Memory::AccessSize::Byte, memAddr,
-		                       Memory::Sequentiality::NSEQ);
-		if (destReg >> 7) {
-		  destReg |= NBIT_MASK(24) << 8;
-		}
-	  } else {
-		spdlog::get("std")->error(
-		    "Not allowed to do unsigned byte transfer using HDT");
-	  }
-	}
-  } else  // STR
-  {
-	if (H)  // HalfWord
-	{
-	  memory->Write(Memory::AccessSize::Half, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
-	}
-  }
+  ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
 
-// TODO: Tidy up data transfers to use common functions, large sections of
-// repetition
 void CPU::ArmHalfwordDTImmOffset_P(ParamList params) {
   spdlog::get("std")->trace("HDT Imm");
   const std::uint32_t OffsetLo = params[0], H = params[1], S = params[2],
@@ -761,6 +707,18 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
       "HDT Imm P{} U{} W{} L{} Rn{} Rd{} OffsetHi{} S{} H{} OffsetLo{}", P, U,
       W, L, Rn, Rd, OffsetHi, S, H, OffsetLo);
   auto Offset = OffsetLo + (OffsetHi << 4);
+  ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
+}
+
+void CPU::ArmHalfwordDT(std::uint32_t P,
+                        std::uint32_t U,
+                        std::uint32_t W,
+                        std::uint32_t L,
+                        std::uint32_t Rn,
+                        std::uint32_t Rd,
+                        std::uint32_t S,
+                        std::uint32_t H,
+                        std::uint32_t Offset) {
   auto base = registers.get((Register)Rn);
   auto baseOffset = base;
 

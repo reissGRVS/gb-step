@@ -130,6 +130,15 @@ class CPU {
   void ArmBranchAndExchange_P(ParamList params);
   void ArmBranchAndExchange(std::uint32_t Rn);
 
+  void ArmHalfwordDT(std::uint32_t P,
+                     std::uint32_t U,
+                     std::uint32_t W,
+                     std::uint32_t L,
+                     std::uint32_t Rn,
+                     std::uint32_t Rd,
+                     std::uint32_t S,
+                     std::uint32_t H,
+                     std::uint32_t Offset);
   void ArmHalfwordDTRegOffset_P(ParamList params);
   void ArmHalfwordDTRegOffset(std::uint32_t P,
                               std::uint32_t U,
