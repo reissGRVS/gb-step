@@ -89,21 +89,26 @@ void CPU::Shift(std::uint32_t& value,
 	}
 	case 0b11:  // RR
 	{
+	  if (amount > 0u) {
+		amount = amount % 32;
+		if (amount == 0)
+		  amount = 32;
+	  }
+
 	  // RRX
-	  if (amount == 0) {
+	  if (amount == 0 && !regProvidedAmount) {
 		auto carryCopy = carryOut;
 		carryOut = value & 1;
 		value >>= 1;
 		if (carryCopy) {
 		  value |= 1 << 31;
 		}
-	  }
-	  // ROR
-	  else {
+	  } else if (regProvidedAmount && amount == 0) {
+		break;
+	  } else {
 		auto topHalf = value << (32 - amount);
-
 		value >>= (amount - 1);
-		carryOut = amount & 1;
+		carryOut = value & 1;
 		value >>= 1;
 		value |= topHalf;
 	  }
@@ -115,7 +120,7 @@ void CPU::Shift(std::uint32_t& value,
 	  break;
 	}
   }
-}  // namespace ARM7TDMI
+}
 
 std::function<void()> CPU::ArmOperation(OpCode opcode) {
   if (!registers.conditionCheck((Condition)(opcode >> 28))) {
