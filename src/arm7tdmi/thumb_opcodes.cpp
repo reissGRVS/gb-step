@@ -269,7 +269,7 @@ void CPU::ThumbALUOps_P(ParamList params) {
 	}
 	case 0b1001: {
 	  // NEG
-	  ArmDataProcessing(0, DPOps::RSB, 1, Rs, Rd, 0);
+	  ArmDataProcessing(1, DPOps::RSB, 1, Rs, Rd, 0);
 	  break;
 	}
 	case 0b1101: {
