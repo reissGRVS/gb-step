@@ -710,7 +710,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 	  if (S)  // Signed
 	  {
 		if (destReg >> 15) {
-		  destReg *= -1;
+		  destReg |= NBIT_MASK(16) << 16;
 		}
 	  }
 	} else  // Byte
@@ -719,7 +719,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 		destReg = memory->Read(Memory::AccessSize::Byte, memAddr,
 		                       Memory::Sequentiality::NSEQ);
 		if (destReg >> 7) {
-		  destReg *= -1;
+		  destReg |= NBIT_MASK(24) << 8;
 		}
 	  } else {
 		spdlog::get("std")->error(
@@ -790,7 +790,7 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 	  if (S)  // Signed
 	  {
 		if (destReg >> 15) {
-		  destReg *= -1;
+		  destReg |= NBIT_MASK(16) << 16;
 		}
 	  }
 	} else  // Byte
@@ -799,7 +799,7 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 		destReg = memory->Read(Memory::AccessSize::Byte, memAddr,
 		                       Memory::Sequentiality::NSEQ);
 		if (destReg >> 7) {
-		  destReg *= -1;
+		  destReg |= NBIT_MASK(24) << 8;
 		}
 	  } else {
 		spdlog::get("std")->error(

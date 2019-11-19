@@ -339,14 +339,14 @@ void CPU::ThumbLSSignExt_P(ParamList params) {
   spdlog::get("std")->trace("THUMB LS SignExt");
   std::uint16_t Rd = params[0], Rb = params[1], Ro = params[2], S = params[3],
                 H = params[4];
-  ArmHalfwordDTRegOffset(1, 1, 0, S & H, Rb, Rd, S, H, Ro);
+  ArmHalfwordDTRegOffset(1, 1, 0, S | H, Rb, Rd, S, H, Ro);
 }
 
 void CPU::ThumbLSImmOff_P(ParamList params) {
   spdlog::get("std")->trace("THUMB LS Imm Off");
   std::uint16_t Rd = params[0], Rb = params[1], Offset5 = params[2],
                 L = params[3], B = params[4];
-  ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset5);
+  ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset5 << 2);
 }
 
 void CPU::ThumbLSHalf_P(ParamList params) {
