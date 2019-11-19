@@ -267,6 +267,12 @@ void CPU::ArmDataProcessing(std::uint32_t I,
   }
 
   std::uint32_t Op1Val = registers.get((Register)Rn);
+
+  // If using PC, bit 1 is cleared
+  if (Rn == 15) {
+	BIT_CLEAR(Op1Val, 1);
+  }
+
   auto& dest = registers.get((Register)Rd);
   auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
   std::uint32_t Op2Val = 0;
