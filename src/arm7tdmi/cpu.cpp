@@ -103,8 +103,7 @@ void CPU::PipelineFlush() {
 ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs) {
   ParamList params;
   for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
-	auto param =
-	    (opcode >> it->second) & NBIT_MASK((it->first - it->second + 1));
+	auto param = BIT_RANGE(opcode, it->second, it->first);
 	params.push_back(param);
   }
   return params;

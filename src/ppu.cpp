@@ -87,10 +87,10 @@ void PPU::Execute(std::uint32_t ticks) {
 
 void PPU::BG0Line() {
   auto bg0Cnt = getHalf(BG0CNT);
-  auto bgTileBase = VRAM_START + ((bg0Cnt << 2) & NBIT_MASK(2)) * 0x4000u;
-  auto colorDepth = ((bg0Cnt << 7) & NBIT_MASK(1)) ? 8u : 4u;
+  auto bgTileBase = VRAM_START + BIT_RANGE(bg0Cnt, 2, 3) * 0x4000u;
+  auto colorDepth = BIT_RANGE(bg0Cnt, 7, 7) ? 8u : 4u;
   auto pixelsPerByte = 8u / colorDepth;
-  auto bgMapBase = VRAM_START + ((bg0Cnt << 8) & NBIT_MASK(5)) * 0x800u;
+  auto bgMapBase = VRAM_START + BIT_RANGE(bg0Cnt, 8, 12) * 0x800u;
 
   std::uint32_t PIXELS_PER_TILE_LINE = 8;
   std::uint32_t TILE_DATA_ROWS = 8;
@@ -130,8 +130,8 @@ void PPU::BG0Line() {
 void PPU::fetchScanline() {
   auto vCount = getHalf(VCOUNT);
   auto dispCnt = getHalf(DISPCNT);
-  auto bgMode = dispCnt & NBIT_MASK(3);
-  auto frame = dispCnt >> 3 * NBIT_MASK(1);
+  auto bgMode = BIT_RANGE(dispCnt, 0, 2);
+  auto frame = BIT_RANGE(dispCnt, 3, 3);
 
   for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
        pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {

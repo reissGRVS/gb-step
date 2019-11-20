@@ -130,7 +130,7 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 	};
   }
 
-  switch (opcode >> 26 & NBIT_MASK(2)) {
+  switch (BIT_RANGE(opcode, 26, 27)) {
 	case 0b00: {
 	  if (opcode & (1 << 25)) {
 		return std::bind(&CPU::ArmDataProcessing_P, this,
@@ -261,7 +261,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
   // PSR Transfers
   if (!S && OpCode >= DPOps::TST && OpCode <= DPOps::CMN) {
-	bool P = (OpCode >> 1) & NBIT_MASK(1);
+	bool P = BIT_RANGE(OpCode, 1, 1);
 	if (Rn == 0xF) {
 	  ArmMRS(P, Rd);
 	} else {
@@ -284,12 +284,12 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
   if (!I) {
 	auto Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
-	auto shiftType = Op2 >> 5 & NBIT_MASK(2);
-	auto shiftAmount = Op2 >> 7;
+	auto shiftType = BIT_RANGE(Op2, 5, 6);
+	auto shiftAmount = BIT_RANGE(Op2, 7, 11);
 
-	if (Op2 >> 4 & NBIT_MASK(1))  // Shift amount from register
+	if (BIT_RANGE(Op2, 4, 4))  // Shift amount from register
 	{
-	  if (Op2 >> 7 & NBIT_MASK(1)) {
+	  if (BIT_RANGE(Op2, 7, 7)) {
 		spdlog::get("std")->error(
 		    "This instruction should have been UNDEF or MUL");
 	  }
@@ -323,7 +323,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  auto& cpsr = registers.get(CPSR);
 
 	  std::uint8_t zVal = result == 0;
-	  std::uint8_t nVal = result >> 31;
+	  std::uint8_t nVal = BIT_RANGE(result, 31, 31);
 	  SRFlag::set(cpsr, SRFlag::n, nVal);
 	  SRFlag::set(cpsr, SRFlag::z, zVal);
 	  SRFlag::set(cpsr, SRFlag::c, carry);
@@ -795,9 +795,9 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
                             P, U, B, W, L, Rn, Rd, Offset);
   if (I) {
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-	auto Rm = registers.get((Register)(Offset & NBIT_MASK(4)));
-	auto shiftType = Offset >> 5 & NBIT_MASK(2);
-	auto shiftAmount = Offset >> 7;
+	auto Rm = registers.get((Register)(BIT_RANGE(Offset, 0, 3)));
+	auto shiftType = BIT_RANGE(Offset, 5, 6);
+	auto shiftAmount = BIT_RANGE(Offset, 7, 11);
 	Shift(Rm, shiftAmount, shiftType, carry, false);
 	Offset = Rm;
   }
@@ -896,7 +896,7 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
 	  toSave.emplace_back((Register)i);
 	}
   }
-  bool transferPC = RegList >> 15 & NBIT_MASK(1);
+  bool transferPC = BIT_RANGE(RegList, 15, 15);
 
   SRFlag::ModeBits mode = SRFlag::ModeBits::USR;
   // R15 not in list and S bit set (User bank transfer)

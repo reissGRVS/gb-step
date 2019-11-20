@@ -82,7 +82,7 @@ const ParamSegments LongBranchLinkSegments
     = {{11, 11}, {10, 0}};
 
 std::function<void()> CPU::ThumbOperation(OpCode opcode) {
-  switch (opcode >> 13) {
+  switch (BIT_RANGE(opcode, 13, 15)) {
 	case 0b000: {
 	  if ((opcode & 0x1800) == 0x1800) {
 		return std::bind(&CPU::ThumbAddSubtract_P, this,
@@ -99,7 +99,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b010: {
-	  switch (opcode >> 10 & NBIT_MASK(3)) {
+	  switch (BIT_RANGE(opcode, 10, 12)) {
 		case 0b000: {
 		  return std::bind(&CPU::ThumbALUOps_P, this,
 		                   ParseParams(opcode, ALUOpsSegments));
@@ -117,7 +117,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 		  break;
 		}
 		default: {
-		  if (opcode >> 9 & NBIT_MASK(1)) {
+		  if (BIT_RANGE(opcode, 9, 9)) {
 			return std::bind(&CPU::ThumbLSSignExt_P, this,
 			                 ParseParams(opcode, LSSignExtSegments));
 		  } else {
@@ -133,7 +133,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b100: {
-	  if (opcode >> 12 & NBIT_MASK(1)) {
+	  if (BIT_RANGE(opcode, 12, 12)) {
 		return std::bind(&CPU::ThumbSPRelativeLS_P, this,
 		                 ParseParams(opcode, SPRelativeLSSegments));
 	  } else {
@@ -143,8 +143,8 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b101: {
-	  if (opcode >> 12 & NBIT_MASK(1)) {
-		if (opcode >> 8 & NBIT_MASK(4)) {
+	  if (BIT_RANGE(opcode, 12, 12)) {
+		if (BIT_RANGE(opcode, 8, 11)) {
 		  return std::bind(&CPU::ThumbPushPopReg_P, this,
 		                   ParseParams(opcode, PushPopRegSegments));
 		} else {
@@ -158,8 +158,8 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b110: {
-	  if (opcode >> 12 & NBIT_MASK(1)) {
-		if ((opcode >> 8 & NBIT_MASK(4)) == NBIT_MASK(4)) {
+	  if (BIT_RANGE(opcode, 12, 12)) {
+		if (BIT_RANGE(opcode, 8, 11) == NBIT_MASK(4)) {
 		  return std::bind(&CPU::ThumbSWI_P, this,
 		                   ParseParams(opcode, SWISegments));
 		} else {
@@ -173,7 +173,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
 	  break;
 	}
 	case 0b111: {
-	  if (opcode >> 12 & NBIT_MASK(1)) {
+	  if (BIT_RANGE(opcode, 12, 12)) {
 		return std::bind(&CPU::ThumbLongBranchLink_P, this,
 		                 ParseParams(opcode, LongBranchLinkSegments));
 	  } else {

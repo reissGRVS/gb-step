@@ -31,9 +31,9 @@ void WindowSFML::translateFramebuffer(const Framebuffer& fb) {
   for (std::uint64_t i = 0; i < fb.size(); i++) {
 	auto base = i * 4;
 	const auto& pixel = fb[i];
-	sfFramebuffer[base] = (NBIT_MASK(5) & (pixel)) << 3;
-	sfFramebuffer[base + 1] = (NBIT_MASK(5) & (pixel >> 5)) << 3;
-	sfFramebuffer[base + 2] = (NBIT_MASK(5) & (pixel >> 10)) << 3;
+	sfFramebuffer[base] = BIT_RANGE(pixel, 0, 4) << 3;
+	sfFramebuffer[base + 1] = BIT_RANGE(pixel, 5, 9) << 3;
+	sfFramebuffer[base + 2] = BIT_RANGE(pixel, 10, 14) << 3;
 	sfFramebuffer[base + 3] = 255;
   }
 }
