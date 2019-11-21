@@ -4,7 +4,7 @@
 #include <functional>
 #include "arm7tdmi/cpu.hpp"
 #include "debugger.hpp"
-#include "dma.hpp"
+#include "dma_controller.hpp"
 #include "memory.hpp"
 #include "ppu.hpp"
 #include "screen.hpp"
@@ -24,9 +24,18 @@ class GBA {
       : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath, cfg.joypad)),
         cpu(memory),
         ppu(memory, cfg.screen),
-        debugger(memory) {
-	memory->SetPublishWriteCallback(std::bind(
-	    &Debugger::NotifyMemoryWrite, &debugger, std::placeholders::_1));
+        debugger(memory),
+        dma(memory) {
+	memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
+	                                        &debugger, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0));
+	memory->SetIOWriteCallback(
+	    DMA1CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 1));
+	memory->SetIOWriteCallback(
+	    DMA2CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 2));
+	memory->SetIOWriteCallback(
+	    DMA3CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 3));
   };
 
   void run() {
@@ -45,5 +54,5 @@ class GBA {
   PPU ppu;
   Debugger debugger;
   Timer timer;
-  DMA dma;
+  DMAController dma;
 };

@@ -131,9 +131,15 @@ void Memory::Write(AccessSize size,
 	case 0x03:
 	  WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
 	  break;
-	case 0x04:
+	case 0x04: {
 	  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
+	  auto callback = ioCallbacks.find(address);
+	  // TODO: Make sure that word writes call all half callbacks
+	  if (callback != ioCallbacks.end()) {
+		callback->second();
+	  }
 	  break;
+	}
 	case 0x05:
 	  WriteToSize(&mem.disp.pram[address & PRAM_MASK], value, size);
 	  break;
@@ -148,7 +154,12 @@ void Memory::Write(AccessSize size,
   }
 }
 
-void Memory::SetPublishWriteCallback(
+void Memory::SetDebugWriteCallback(
     std::function<void(std::uint32_t)> callback) {
   PublishWriteCallback = callback;
+}
+
+void Memory::SetIOWriteCallback(std::uint32_t address,
+                                std::function<void()> callback) {
+  ioCallbacks.emplace(address, callback);
 }

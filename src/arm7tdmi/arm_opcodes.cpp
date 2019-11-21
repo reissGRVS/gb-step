@@ -426,7 +426,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::TST: {
 	  auto result = Op1Val & Op2Val;
-	  spdlog::get("std")->trace("	CMP {:X} {:X} {:X}", Op1Val, Op2Val,
+	  spdlog::get("std")->trace("	TST {:X} {:X} {:X}", Op1Val, Op2Val,
 	                            result);
 	  SetFlags(1, result, carry);
 	  S = 0;  // To not trigger SetFlags at bottom
@@ -450,6 +450,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  SetFlags(1, result, carry);
 	  auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
 	  SRFlag::set(cpsr, SRFlag::v, overflow);
+	  spdlog::get("std")->trace("	V set to: {:X}", overflow);
 	  S = 0;
 	  break;
 	}

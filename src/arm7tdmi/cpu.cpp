@@ -4,14 +4,11 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-int count = 0;
-
 namespace ARM7TDMI {
 std::uint32_t CPU::Execute() {
   HandleInterruptRequests();
   auto opcode = pipeline[0];
   auto& pc = registers.get(R15);
-
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
 	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", pc - 2, opcode);
 	backtrace.addOpPCPair(pc - 2, opcode);
@@ -25,8 +22,7 @@ std::uint32_t CPU::Execute() {
 
 	ThumbOperation(opcode)();
   } else {
-	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", registers.get(R15) - 4,
-	                          opcode);
+	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", pc - 4, opcode);
 	backtrace.addOpPCPair(pc - 4, opcode);
 
 	pc &= ~3;

@@ -24,9 +24,12 @@ class Memory {
              std::uint32_t value,
              Sequentiality type);
 
-  void SetPublishWriteCallback(std::function<void(std::uint32_t)> callback);
+  void SetIOWriteCallback(std::uint32_t address,
+                          std::function<void()> callback);
+  void SetDebugWriteCallback(std::function<void(std::uint32_t)> callback);
 
  private:
+  std::unordered_map<std::uint32_t, std::function<void()>> ioCallbacks;
   std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
   void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
 

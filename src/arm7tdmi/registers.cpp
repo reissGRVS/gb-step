@@ -109,8 +109,8 @@ bool RegisterSet::conditionCheck(Condition cond) {
 	  return SRFlag::get(registers.CPSR, SRFlag::n) !=
 	         SRFlag::get(registers.CPSR, SRFlag::v);
 	case GT:
-	  return SRFlag::get(registers.CPSR, SRFlag::n) ==
-	             SRFlag::get(registers.CPSR, SRFlag::v) &&
+	  return (SRFlag::get(registers.CPSR, SRFlag::n) ==
+	          SRFlag::get(registers.CPSR, SRFlag::v)) &&
 	         !SRFlag::get(registers.CPSR, SRFlag::z);
 	case LE:
 	  return SRFlag::get(registers.CPSR, SRFlag::n) !=
