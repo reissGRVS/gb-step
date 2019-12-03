@@ -30,13 +30,42 @@ class GBA {
 	memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 	                                        &debugger, std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0));
+	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0,
+	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA1CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 1));
+	    DMA1CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 1,
+	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA2CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 2));
+	    DMA2CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 2,
+	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA3CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 3));
+	    DMA3CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 3,
+	                         std::placeholders::_1));
+
+	memory->SetIOWriteCallback(
+	    TM0CNT_L,
+	    std::bind(&Timer::SetReloadValue, &timer, 0, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM0CNT_H,
+	    std::bind(&Timer::TimerCntHUpdate, &timer, 0, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM1CNT_L,
+	    std::bind(&Timer::SetReloadValue, &timer, 1, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM1CNT_H,
+	    std::bind(&Timer::TimerCntHUpdate, &timer, 1, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM2CNT_L,
+	    std::bind(&Timer::SetReloadValue, &timer, 2, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM2CNT_H,
+	    std::bind(&Timer::TimerCntHUpdate, &timer, 2, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM3CNT_L,
+	    std::bind(&Timer::SetReloadValue, &timer, 3, std::placeholders::_1));
+	memory->SetIOWriteCallback(
+	    TM3CNT_H,
+	    std::bind(&Timer::TimerCntHUpdate, &timer, 3, std::placeholders::_1));
   };
 
   void run() {

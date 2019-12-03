@@ -43,6 +43,7 @@ class Timer {
 		if (overflow) {
 		  counter = reloadValues[timerIndex];
 		  if (irqEnable) {
+			spdlog::get("std")->info("Timer {:X} IntReq", timerIndex);
 			auto intReq = memory->getHalf(IF);
 			BIT_SET(intReq, 3 + timerIndex);
 			memory->setHalf(IF, intReq);
@@ -54,12 +55,23 @@ class Timer {
 	}
   }
 
-  void ReloadValueSetCallback(std::uint_fast8_t id, std::uint32_t reloadValue) {
+  void SetReloadValue(std::uint_fast8_t id, std::uint16_t value) {
+	reloadValues[id] = value;
+  }
+
+  void TimerCntHUpdate(std::uint_fast8_t id, std::uint16_t value) {
+	if (BIT_RANGE(timerCntH[id], 7, 7) == 0 && BIT_RANGE(value, 7, 7) == 1) {
+	  memory->setHalf(TM0CNT_L + 0x4u * id, reloadValues[id]);
+	}
+	timerCntH[id] = value;
+	memory->setHalf(TM0CNT_H + 0x4u * id, value);
   }
 
  private:
   std::shared_ptr<Memory> memory;
   std::array<std::uint32_t, 4> PRESCALER_SELECTION{1, 64, 256, 1024};
+
+  std::array<std::uint16_t, 4> timerCntH{0, 0, 0, 0};
   std::array<std::uint32_t, 4> prescalerCounts{0, 0, 0, 0};
   std::array<std::uint32_t, 4> reloadValues{0, 0, 0, 0};
 };

@@ -23,7 +23,7 @@ class CPU {
 	// registers.get(ModeBank::IRQ, Register::R13) = 0x03007FA0;
 	// registers.get(Register::R13) = 0x03007F00;
 	// registers.switchMode(SRFlag::ModeBits::USR);
-	// registers.get(Register::R15) = 0x08000000;
+	registers.get(Register::R15) = 0x00000000;
 
 	PipelineFlush();
   };

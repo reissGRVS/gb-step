@@ -7,14 +7,11 @@
 
 #include "joypad.hpp"
 #include "memory_regions.hpp"
+#include "types.hpp"
 
 class Memory {
  public:
   Memory(std::string biosPath, std::string romPath, Joypad& joypad);
-
-  enum Sequentiality { NSEQ, SEQ, PPU, DEBUG };
-
-  enum AccessSize { Byte = 0xFFu, Half = 0xFFFFu, Word = 0xFFFFFFFFu };
 
   std::uint32_t Read(AccessSize size,
                      std::uint32_t address,
@@ -25,25 +22,26 @@ class Memory {
              Sequentiality type);
 
   std::uint16_t getHalf(const std::uint32_t& address) {
-	return Read(Memory::AccessSize::Half, address, Memory::Sequentiality::PPU);
+	return Read(AccessSize::Half, address, Sequentiality::FREE);
   }
   std::uint32_t getWord(const std::uint32_t& address) {
-	return Read(Memory::AccessSize::Word, address, Memory::Sequentiality::PPU);
+	return Read(AccessSize::Word, address, Sequentiality::FREE);
   }
 
   void setHalf(const std::uint32_t& address, const std::uint16_t& value) {
-	Write(Memory::AccessSize::Half, address, value, Memory::Sequentiality::PPU);
+	Write(AccessSize::Half, address, value, Sequentiality::FREE);
   }
   void setWord(const std::uint32_t& address, const std::uint32_t& value) {
-	Write(Memory::AccessSize::Word, address, value, Memory::Sequentiality::PPU);
+	Write(AccessSize::Word, address, value, Sequentiality::FREE);
   }
 
   void SetIOWriteCallback(std::uint32_t address,
-                          std::function<void()> callback);
+                          std::function<void(std::uint32_t)> callback);
   void SetDebugWriteCallback(std::function<void(std::uint32_t)> callback);
 
  private:
-  std::unordered_map<std::uint32_t, std::function<void()>> ioCallbacks;
+  std::unordered_map<std::uint32_t, std::function<void(std::uint32_t)>>
+      ioCallbacks;
   std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
   void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
 

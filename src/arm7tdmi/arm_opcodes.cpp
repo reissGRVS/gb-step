@@ -628,24 +628,24 @@ void CPU::ArmSingleDataSwap(std::uint32_t B,
 
   if (B) {
 	auto addr = registers.get((Register)Rn);
-	auto memVal = memory->Read(Memory::AccessSize::Byte, addr,
-	                           Memory::Sequentiality::NSEQ);
-	memory->Write(Memory::AccessSize::Byte, addr, registers.get((Register)Rm),
-	              Memory::Sequentiality::NSEQ);
+	auto memVal = memory->Read(AccessSize::Byte, addr,
+	                           Sequentiality::NSEQ);
+	memory->Write(AccessSize::Byte, addr, registers.get((Register)Rm),
+	              Sequentiality::NSEQ);
 	registers.get((Register)Rd) = memVal;
   } else {
 	auto addr = registers.get((Register)Rn);
-	auto memVal = memory->Read(Memory::AccessSize::Word, addr,
-	                           Memory::Sequentiality::NSEQ);
+	auto memVal = memory->Read(AccessSize::Word, addr,
+	                           Sequentiality::NSEQ);
 	// TODO: Maybe these writes need to be word aligned?
-	memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm),
-	              Memory::Sequentiality::NSEQ);
-	memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm),
-	              Memory::Sequentiality::NSEQ);
-	memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm),
-	              Memory::Sequentiality::NSEQ);
-	memory->Write(Memory::AccessSize::Word, addr, registers.get((Register)Rm),
-	              Memory::Sequentiality::NSEQ);
+	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
+	              Sequentiality::NSEQ);
+	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
+	              Sequentiality::NSEQ);
+	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
+	              Sequentiality::NSEQ);
+	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
+	              Sequentiality::NSEQ);
 	registers.get((Register)Rd) = memVal;
   }
 }
@@ -744,8 +744,8 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
 	if (H)  // HalfWord
 	{
 	  // TODO: Addr needs to be on half boundary
-	  destReg = memory->Read(Memory::AccessSize::Half, memAddr,
-	                         Memory::Sequentiality::NSEQ);
+	  destReg = memory->Read(AccessSize::Half, memAddr,
+	                         Sequentiality::NSEQ);
 	  if (S)  // Signed
 	  {
 		if (destReg >> 15) {
@@ -755,8 +755,8 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
 	} else  // Byte
 	{
 	  if (S) {
-		destReg = memory->Read(Memory::AccessSize::Byte, memAddr,
-		                       Memory::Sequentiality::NSEQ);
+		destReg = memory->Read(AccessSize::Byte, memAddr,
+		                       Sequentiality::NSEQ);
 		if (destReg >> 7) {
 		  destReg |= NBIT_MASK(24) << 8;
 		}
@@ -769,8 +769,8 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
   {
 	if (H)  // HalfWord
 	{
-	  memory->Write(Memory::AccessSize::Half, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
+	  memory->Write(AccessSize::Half, memAddr, destReg,
+	                Sequentiality::NSEQ);
 	}
   }
 }
@@ -825,15 +825,15 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 
   if (L) {
 	if (B) {
-	  destReg = memory->Read(Memory::AccessSize::Byte, memAddr,
-	                         Memory::Sequentiality::NSEQ);
+	  destReg = memory->Read(AccessSize::Byte, memAddr,
+	                         Sequentiality::NSEQ);
 	} else {
 	  // TODO: Check word boundary addr LD behaviour, seems complicated pg 49
 	  // or 55 of pdf
 	  auto wordBoundaryOffset = memAddr % 4;
 	  auto value =
-	      memory->Read(Memory::AccessSize::Word, memAddr - wordBoundaryOffset,
-	                   Memory::Sequentiality::NSEQ);
+	      memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
+	                   Sequentiality::NSEQ);
 	  if (wordBoundaryOffset) {
 		std::uint8_t emptyCarry = 0;
 		const std::uint32_t ROR = 0b11;
@@ -846,12 +846,12 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	}
   } else {
 	if (B) {
-	  memory->Write(Memory::AccessSize::Byte, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
+	  memory->Write(AccessSize::Byte, memAddr, destReg,
+	                Sequentiality::NSEQ);
 	} else {
 	  // TODO: Check word boundary addr
-	  memory->Write(Memory::AccessSize::Word, memAddr, destReg,
-	                Memory::Sequentiality::NSEQ);
+	  memory->Write(AccessSize::Word, memAddr, destReg,
+	                Sequentiality::NSEQ);
 	}
   }
 }
@@ -934,20 +934,20 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
 	  if (reg == (Register)Rn) {
 		stopWriteback = true;
 	  }
-	  registers.get(reg) = memory->Read(Memory::AccessSize::Word, addr,
-	                                    Memory::Sequentiality::NSEQ);
+	  registers.get(reg) = memory->Read(AccessSize::Word, addr,
+	                                    Sequentiality::NSEQ);
 	} else {
 	  if (reg == (Register)Rn) {
 		if (saved == 0) {
-		  memory->Write(Memory::AccessSize::Word, addr, base,
-		                Memory::Sequentiality::NSEQ);
+		  memory->Write(AccessSize::Word, addr, base,
+		                Sequentiality::NSEQ);
 		} else {
-		  memory->Write(Memory::AccessSize::Word, addr, writebackVal,
-		                Memory::Sequentiality::NSEQ);
+		  memory->Write(AccessSize::Word, addr, writebackVal,
+		                Sequentiality::NSEQ);
 		}
 	  } else {
-		memory->Write(Memory::AccessSize::Word, addr, registers.get(reg),
-		              Memory::Sequentiality::NSEQ);
+		memory->Write(AccessSize::Word, addr, registers.get(reg),
+		              Sequentiality::NSEQ);
 	  }
 	}
 	addr += 4;

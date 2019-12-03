@@ -20,6 +20,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		BIT_SET(dispStat, 1);
 		setHalf(DISPSTAT, dispStat);
 		if (BIT_RANGE(dispStat, 4, 4)) {
+		  spdlog::get("std")->info("HBlank IntReq");
 		  auto intReq = getHalf(IF);
 		  BIT_SET(intReq, 1);
 		  setHalf(IF, intReq);
@@ -51,6 +52,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
 		  setHalf(DISPSTAT, dispStat);
 		  if (BIT_RANGE(dispStat, 3, 3)) {
+			spdlog::get("std")->info("VBlank IntReq");
 			auto intReq = getHalf(IF);
 			BIT_SET(intReq, 0);
 			setHalf(IF, intReq);
@@ -166,16 +168,13 @@ std::uint16_t PPU::getBgColorFromPallete(const std::uint32_t& colorID) {
 }
 
 std::uint8_t PPU::getByte(const std::uint32_t& address) {
-  return memory->Read(Memory::AccessSize::Byte, address,
-                      Memory::Sequentiality::PPU);
+  return memory->Read(AccessSize::Byte, address, Sequentiality::FREE);
 }
 
 std::uint16_t PPU::getHalf(const std::uint32_t& address) {
-  return memory->Read(Memory::AccessSize::Half, address,
-                      Memory::Sequentiality::PPU);
+  return memory->Read(AccessSize::Half, address, Sequentiality::FREE);
 }
 
 void PPU::setHalf(const std::uint32_t& address, const std::uint16_t& value) {
-  return memory->Write(Memory::AccessSize::Half, address, value,
-                       Memory::Sequentiality::PPU);
+  return memory->Write(AccessSize::Half, address, value, Sequentiality::FREE);
 }

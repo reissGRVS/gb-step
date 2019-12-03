@@ -156,8 +156,7 @@ void Debugger::PrintMemoryBPs() {
 }
 
 void Debugger::WriteHalfToMemory(std::uint32_t address, std::uint16_t value) {
-  memory->Write(Memory::AccessSize::Half, address, value,
-                Memory::Sequentiality::DEBUG);
+  memory->Write(Half, address, value, FREE);
 }
 
 void Debugger::PrintMemorySection(std::uint32_t address, std::uint32_t count) {
@@ -168,9 +167,7 @@ void Debugger::PrintMemorySection(std::uint32_t address, std::uint32_t count) {
 	            << address + i << "  ";
 	}
 	std::cout << std::setfill('0') << std::setw(2) << std::hex
-	          << memory->Read(Memory::AccessSize::Byte, address + i,
-	                          Memory::Sequentiality::DEBUG)
-	          << " ";
+	          << memory->Read(Byte, address + i, FREE) << " ";
   }
   std::cout << std::endl;
 }

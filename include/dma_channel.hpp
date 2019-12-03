@@ -14,10 +14,11 @@ class DMAChannel {
         CNT_H(DMA0CNT_H + ID * 0xC),
         memory(memory_){};
 
-  void updateDetails() {
+  void updateDetails(std::uint16_t value) {
 	spdlog::get("std")->info("DMA Details {}", ID);
 	auto prevEnable = enable;
-	dmaCnt = memory->getHalf(CNT_H);
+	memory->setHalf(CNT_H, value);
+	dmaCnt = value;
 	enable = BIT_RANGE(dmaCnt, 15, 15);
 
 	// Set internal registers on DMA enable

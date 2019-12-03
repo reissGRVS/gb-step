@@ -10,7 +10,8 @@ std::uint32_t CPU::Execute() {
   auto opcode = pipeline[0];
   auto& pc = registers.get(R15);
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", pc - 2, opcode);
+	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:b}", pc - 2, opcode,
+	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
 	backtrace.addOpPCPair(pc - 2, opcode);
 
 	pc &= ~1;
@@ -18,11 +19,12 @@ std::uint32_t CPU::Execute() {
 	pipeline[0] = pipeline[1];
 	// TODO: Fix memory sequentiality
 	pc += 2;
-	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
+	pipeline[1] = memory->Read(Half, pc, NSEQ);
 
 	ThumbOperation(opcode)();
   } else {
-	spdlog::get("std")->debug("PC:{:X} - Op:{:X}", pc - 4, opcode);
+	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:04b}", pc - 4, opcode,
+	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
 	backtrace.addOpPCPair(pc - 4, opcode);
 
 	pc &= ~3;
@@ -30,7 +32,7 @@ std::uint32_t CPU::Execute() {
 	pipeline[0] = pipeline[1];
 	// TODO: Fix memory sequentiality
 	pc += 4;
-	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
+	pipeline[1] = memory->Read(Word, pc, NSEQ);
 
 	ArmOperation(opcode)();
   }
@@ -54,15 +56,12 @@ void CPU::HandleInterruptRequests() {
   if (SRFlag::get(cpsr, SRFlag::irqDisable)) {
 	return;
   }
-  auto ie =
-      memory->Read(Memory::AccessSize::Half, IE, Memory::Sequentiality::NSEQ);
-  auto irf =
-      memory->Read(Memory::AccessSize::Half, IF, Memory::Sequentiality::NSEQ);
-  auto ime =
-      memory->Read(Memory::AccessSize::Half, IME, Memory::Sequentiality::NSEQ);
+  auto ie = memory->Read(Half, IE, NSEQ);
+  auto irf = memory->Read(Half, IF, NSEQ);
+  auto ime = memory->Read(Half, IME, NSEQ);
 
   if (ime && (ie & irf)) {
-	spdlog::get("std")->info("IRQ Successful");
+	spdlog::get("std")->info("IRQ Successful {:B}", (ie & irf));
 	registers.switchMode(SRFlag::ModeBits::IRQ);
 
 	if (SRFlag::get(cpsr, SRFlag::thumb)) {
@@ -83,16 +82,16 @@ void CPU::PipelineFlush() {
 	spdlog::get("std")->trace("Flush to THUMB");
 	auto& pc = registers.get(R15);
 	pc &= ~1;
-	pipeline[0] = memory->Read(Memory::Half, pc, Memory::NSEQ);
+	pipeline[0] = memory->Read(Half, pc, NSEQ);
 	pc += 2;
-	pipeline[1] = memory->Read(Memory::Half, pc, Memory::NSEQ);
+	pipeline[1] = memory->Read(Half, pc, NSEQ);
   } else {
 	spdlog::get("std")->trace("Flush to ARM");
 	auto& pc = registers.get(R15);
 	pc &= ~3;
-	pipeline[0] = memory->Read(Memory::Word, pc, Memory::NSEQ);
+	pipeline[0] = memory->Read(Word, pc, NSEQ);
 	pc += 4;
-	pipeline[1] = memory->Read(Memory::Word, pc, Memory::NSEQ);
+	pipeline[1] = memory->Read(Word, pc, NSEQ);
   }
 }
 

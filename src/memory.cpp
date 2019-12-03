@@ -47,7 +47,9 @@ uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size) {
   return (*word) & size;
 }
 
-uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
+uint32_t Memory::Read(AccessSize size,
+                      std::uint32_t address,
+                      Sequentiality seq) {
   auto page = address >> 24;
 
   if (address == KEYINPUT) {
@@ -72,6 +74,10 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
 	case 0x03:
 	  return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
+	  if (seq != Sequentiality::FREE && address < 0x4000200) {
+		spdlog::get("std")->info("IORead {:X} size: {:X}", address,
+		                         (uint32_t)size);
+	  }
 	  return ReadToSize(&mem.gen.ioreg[address & IOREG_MASK], size);
 	case 0x05:
 	  return ReadToSize(&mem.disp.pram[address & PRAM_MASK], size);
@@ -119,7 +125,7 @@ void Memory::WriteToSize(std::uint8_t* byte,
 void Memory::Write(AccessSize size,
                    std::uint32_t address,
                    std::uint32_t value,
-                   Sequentiality) {
+                   Sequentiality seq) {
   auto page = address >> 24;
 #ifndef NDEBUG
   PublishWriteCallback(address);
@@ -133,18 +139,42 @@ void Memory::Write(AccessSize size,
 	  WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
 	  break;
 	case 0x04: {
-	  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
-	  spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X}", value,
-	                            address, (uint32_t)size);
+	  if (address > 0x4000006)
+		spdlog::get("std")->info("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
+		                         value, address, (uint32_t)size, seq);
+	  if (seq == Sequentiality::FREE) {
+		WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
+	  } else {
+		if (size == Byte) {
+		  // TODO: Callbacks?
+		  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
+		}
+		if (size == Half) {
+		  auto callback = ioCallbacks.find(address);
+		  if (callback != ioCallbacks.end()) {
+			callback->second(value);
+		  } else {
+			WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
+		  }
+		}
 
-	  // TODO: Make sure that word writes call all half callbacks
-	  auto callback = ioCallbacks.find(address);
-	  if (callback != ioCallbacks.end()) {
-		callback->second();
-	  }
-	  callback = ioCallbacks.find(address + 2);
-	  if (callback != ioCallbacks.end()) {
-		callback->second();
+		// TODO: Make sure this is the right write order
+		if (size == Word) {
+		  auto callback = ioCallbacks.find(address);
+		  if (callback != ioCallbacks.end()) {
+			callback->second(value);
+		  } else {
+			WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, Half);
+		  }
+
+		  callback = ioCallbacks.find(address + 2);
+		  if (callback != ioCallbacks.end()) {
+			callback->second(value);
+		  } else {
+			WriteToSize(&mem.gen.ioreg[(address + 2) & IOREG_MASK], value >> 16,
+			            Half);
+		  }
+		}
 	  }
 
 	  break;
@@ -169,6 +199,6 @@ void Memory::SetDebugWriteCallback(
 }
 
 void Memory::SetIOWriteCallback(std::uint32_t address,
-                                std::function<void()> callback) {
+                                std::function<void(std::uint32_t)> callback) {
   ioCallbacks.emplace(address, callback);
 }

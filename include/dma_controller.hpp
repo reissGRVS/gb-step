@@ -13,8 +13,8 @@ class DMAController {
   // TODO: Fix so that if one is running another one doesnt stop running (if
   // higher priority), will be relevant when doing this properly and getting
   // HBlank interrupts mid transfer
-  void CntHUpdateCallback(std::uint_fast8_t id) {
-	channels[id].updateDetails();
+  void CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value) {
+	channels[id].updateDetails(value);
 
 	if (channels[id].enable && channels[id].startTiming == (uint)IMMEDIATE) {
 	  channels[id].doTransfer();
