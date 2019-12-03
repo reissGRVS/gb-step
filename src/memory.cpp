@@ -91,6 +91,7 @@ uint32_t Memory::Read(AccessSize size, std::uint32_t address, Sequentiality) {
   }
 
   spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
+  PublishWriteCallback(1);
   exit(-1);
 }
 
@@ -133,11 +134,19 @@ void Memory::Write(AccessSize size,
 	  break;
 	case 0x04: {
 	  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
-	  auto callback = ioCallbacks.find(address);
+	  spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X}", value,
+	                            address, (uint32_t)size);
+
 	  // TODO: Make sure that word writes call all half callbacks
+	  auto callback = ioCallbacks.find(address);
 	  if (callback != ioCallbacks.end()) {
 		callback->second();
 	  }
+	  callback = ioCallbacks.find(address + 2);
+	  if (callback != ioCallbacks.end()) {
+		callback->second();
+	  }
+
 	  break;
 	}
 	case 0x05:

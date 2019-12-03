@@ -25,6 +25,7 @@ class GBA {
         cpu(memory),
         ppu(memory, cfg.screen),
         debugger(memory),
+        timer(memory),
         dma(memory) {
 	memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 	                                        &debugger, std::placeholders::_1));
@@ -45,6 +46,7 @@ class GBA {
 #endif
 	  auto ticks = cpu.Execute();
 	  ppu.Execute(ticks);
+	  timer.Update(ticks);
 	}
   };
 

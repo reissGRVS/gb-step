@@ -17,15 +17,15 @@ class DMAChannel {
   void updateDetails() {
 	spdlog::get("std")->info("DMA Details {}", ID);
 	auto prevEnable = enable;
-	dmaCnt = getHalf(CNT_H);
+	dmaCnt = memory->getHalf(CNT_H);
 	enable = BIT_RANGE(dmaCnt, 15, 15);
 
 	// Set internal registers on DMA enable
 	if (enable == 1 && prevEnable == 0) {
-	  source = getWord(SAD) & NBIT_MASK(27);
+	  source = memory->getWord(SAD) & NBIT_MASK(27);
 	  // TODO: 28 and 16 and 0x10000 for Id3
-	  dest = getWord(DAD) & NBIT_MASK(27);
-	  wordCount = getHalf(CNT_L) & NBIT_MASK(14);
+	  dest = memory->getWord(DAD) & NBIT_MASK(27);
+	  wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
 	  if (wordCount == 0) {
 		wordCount = 0x4000;
 	  }
@@ -43,9 +43,9 @@ class DMAChannel {
 	while (wordCount > 0) {
 	  // 0 -> 16bit  1 -> 32bit
 	  if (transferType) {
-		setHalf(dest, getHalf(source));
+		memory->setHalf(dest, memory->getHalf(source));
 	  } else {
-		setWord(dest, getWord(source));
+		memory->setWord(dest, memory->getWord(source));
 	  }
 
 	  // Update internal registers
@@ -83,7 +83,7 @@ class DMAChannel {
 	}
 
 	if (repeat) {
-	  wordCount = getHalf(CNT_L) & NBIT_MASK(14);
+	  wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
 	  if (wordCount == 0) {
 		wordCount = 0x4000;
 	  }
@@ -111,21 +111,4 @@ class DMAChannel {
  private:
   std::shared_ptr<Memory> memory;
   // TODO: Change memory seq
-  std::uint16_t getHalf(const std::uint32_t& address) {
-	return memory->Read(Memory::AccessSize::Half, address,
-	                    Memory::Sequentiality::PPU);
-  }
-  std::uint32_t getWord(const std::uint32_t& address) {
-	return memory->Read(Memory::AccessSize::Word, address,
-	                    Memory::Sequentiality::PPU);
-  }
-
-  void setHalf(const std::uint32_t& address, const std::uint16_t& value) {
-	return memory->Write(Memory::AccessSize::Half, address, value,
-	                     Memory::Sequentiality::PPU);
-  }
-  void setWord(const std::uint32_t& address, const std::uint32_t& value) {
-	return memory->Write(Memory::AccessSize::Word, address, value,
-	                     Memory::Sequentiality::PPU);
-  }
 };

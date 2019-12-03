@@ -19,10 +19,11 @@ void PPU::Execute(std::uint32_t ticks) {
 		auto dispStat = getHalf(DISPSTAT);
 		BIT_SET(dispStat, 1);
 		setHalf(DISPSTAT, dispStat);
-
-		auto intReq = getHalf(IF);
-		BIT_SET(intReq, 1);
-		setHalf(DISPSTAT, intReq);
+		if (BIT_RANGE(dispStat, 4, 4)) {
+		  auto intReq = getHalf(IF);
+		  BIT_SET(intReq, 1);
+		  setHalf(IF, intReq);
+		}
 	  }
 	  break;
 	}
@@ -46,14 +47,14 @@ void PPU::Execute(std::uint32_t ticks) {
 		  screen.render(fb);
 
 		  // Set VBlank flag and Request Interrupt
-		  auto dispStat = getHalf(DISPSTAT);
 		  BIT_SET(dispStat, 0);
 		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
 		  setHalf(DISPSTAT, dispStat);
-
-		  auto intReq = getHalf(IF);
-		  BIT_SET(intReq, 0);
-		  setHalf(DISPSTAT, intReq);
+		  if (BIT_RANGE(dispStat, 3, 3)) {
+			auto intReq = getHalf(IF);
+			BIT_SET(intReq, 0);
+			setHalf(IF, intReq);
+		  }
 		} else {
 		  state = Visible;
 		}

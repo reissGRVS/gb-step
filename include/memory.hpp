@@ -14,7 +14,7 @@ class Memory {
 
   enum Sequentiality { NSEQ, SEQ, PPU, DEBUG };
 
-  enum AccessSize { Byte = 0xFF, Half = 0xFFFF, Word = 0xFFFFFFFF };
+  enum AccessSize { Byte = 0xFFu, Half = 0xFFFFu, Word = 0xFFFFFFFFu };
 
   std::uint32_t Read(AccessSize size,
                      std::uint32_t address,
@@ -23,6 +23,20 @@ class Memory {
              std::uint32_t address,
              std::uint32_t value,
              Sequentiality type);
+
+  std::uint16_t getHalf(const std::uint32_t& address) {
+	return Read(Memory::AccessSize::Half, address, Memory::Sequentiality::PPU);
+  }
+  std::uint32_t getWord(const std::uint32_t& address) {
+	return Read(Memory::AccessSize::Word, address, Memory::Sequentiality::PPU);
+  }
+
+  void setHalf(const std::uint32_t& address, const std::uint16_t& value) {
+	Write(Memory::AccessSize::Half, address, value, Memory::Sequentiality::PPU);
+  }
+  void setWord(const std::uint32_t& address, const std::uint32_t& value) {
+	Write(Memory::AccessSize::Word, address, value, Memory::Sequentiality::PPU);
+  }
 
   void SetIOWriteCallback(std::uint32_t address,
                           std::function<void()> callback);
