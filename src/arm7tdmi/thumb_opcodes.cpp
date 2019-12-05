@@ -346,7 +346,13 @@ void CPU::ThumbLSImmOff_P(ParamList params) {
   spdlog::get("std")->trace("THUMB LS Imm Off");
   std::uint16_t Rd = params[0], Rb = params[1], Offset5 = params[2],
                 L = params[3], B = params[4];
-  ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset5 << 2);
+
+  std::uint16_t Offset = Offset5;
+  if (!B)
+  {
+	  Offset = Offset5 << 2;
+  }
+  ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset);
 }
 
 void CPU::ThumbLSHalf_P(ParamList params) {

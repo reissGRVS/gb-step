@@ -332,8 +332,10 @@ void CPU::ArmDataProcessing(std::uint32_t I,
   };
 
   if (Rd == 15 && S) {
+	auto previousSPSR = registers.get(SPSR);
 	registers.switchMode(
 	    (SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
+	registers.get(CPSR) = previousSPSR;
 	S = 0;
   }
 
@@ -837,6 +839,9 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 	  }
 	  spdlog::get("std")->trace("R{:X} <- {:X}", Rd, value);
 	  destReg = value;
+	  if (Rd == 15) {
+		PipelineFlush();
+	  }
 	}
   } else {
 	if (B) {
@@ -946,8 +951,10 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
   }
 
   if (S && L && transferPC) {
+	auto previousSPSR = registers.get(SPSR);
 	registers.switchMode(
 	    (SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
+	registers.get(CPSR) = previousSPSR;
   }
 
   if (W && !stopWriteback) {

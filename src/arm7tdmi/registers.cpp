@@ -100,7 +100,7 @@ bool RegisterSet::conditionCheck(Condition cond) {
 	  return SRFlag::get(registers.CPSR, SRFlag::c) &&
 	         !SRFlag::get(registers.CPSR, SRFlag::z);
 	case LS:
-	  return !SRFlag::get(registers.CPSR, SRFlag::c) &&
+	  return !SRFlag::get(registers.CPSR, SRFlag::c) ||
 	         SRFlag::get(registers.CPSR, SRFlag::z);
 	case GE:
 	  return SRFlag::get(registers.CPSR, SRFlag::n) ==
@@ -128,6 +128,9 @@ bool RegisterSet::conditionCheck(Condition cond) {
 
 void RegisterSet::switchMode(SRFlag::ModeBits mode) {
   auto newBank = getModeBank(mode);
+  spdlog::get("std")->trace("Changing to bank {:X} -> {:X}", currentBank,
+                            newBank);
+
   if (newBank == currentBank)
 	return;
 

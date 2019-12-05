@@ -75,8 +75,8 @@ uint32_t Memory::Read(AccessSize size,
 	  return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
 	  if (seq != Sequentiality::FREE && address < 0x4000200) {
-		spdlog::get("std")->info("IORead {:X} size: {:X}", address,
-		                         (uint32_t)size);
+		spdlog::get("std")->debug("IORead {:X} size: {:X}", address,
+		                          (uint32_t)size);
 	  }
 	  return ReadToSize(&mem.gen.ioreg[address & IOREG_MASK], size);
 	case 0x05:
@@ -139,12 +139,13 @@ void Memory::Write(AccessSize size,
 	  WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
 	  break;
 	case 0x04: {
-	  if (address > 0x4000006)
-		spdlog::get("std")->info("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
-		                         value, address, (uint32_t)size, seq);
 	  if (seq == Sequentiality::FREE) {
+		spdlog::get("std")->trace("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
+		                          value, address, (uint32_t)size, seq);
 		WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
 	  } else {
+		spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
+		                          value, address, (uint32_t)size, seq);
 		if (size == Byte) {
 		  // TODO: Callbacks?
 		  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);

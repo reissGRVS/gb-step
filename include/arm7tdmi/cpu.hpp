@@ -40,7 +40,7 @@ class CPU {
   std::array<OpCode, 2> pipeline;
 
   void PipelineFlush();
-  void HandleInterruptRequests();
+  bool HandleInterruptRequests();
 
   ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 

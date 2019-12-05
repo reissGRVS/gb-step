@@ -6,9 +6,10 @@
 
 namespace ARM7TDMI {
 std::uint32_t CPU::Execute() {
-  HandleInterruptRequests();
   auto opcode = pipeline[0];
   auto& pc = registers.get(R15);
+
+  auto Operation = ArmOperation(opcode);
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
 	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:b}", pc - 2, opcode,
 	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
@@ -21,7 +22,7 @@ std::uint32_t CPU::Execute() {
 	pc += 2;
 	pipeline[1] = memory->Read(Half, pc, NSEQ);
 
-	ThumbOperation(opcode)();
+	Operation = ThumbOperation(opcode);
   } else {
 	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:04b}", pc - 4, opcode,
 	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
@@ -33,8 +34,10 @@ std::uint32_t CPU::Execute() {
 	// TODO: Fix memory sequentiality
 	pc += 4;
 	pipeline[1] = memory->Read(Word, pc, NSEQ);
+  }
 
-	ArmOperation(opcode)();
+  if (!HandleInterruptRequests()) {
+	Operation();
   }
 
   spdlog::get("std")->trace("************************");
@@ -51,44 +54,45 @@ StateView CPU::ViewState() {
   return stateView;
 }
 
-void CPU::HandleInterruptRequests() {
+bool CPU::HandleInterruptRequests() {
   auto& cpsr = registers.get(CPSR);
   if (SRFlag::get(cpsr, SRFlag::irqDisable)) {
-	return;
+	return false;
   }
   auto ie = memory->Read(Half, IE, NSEQ);
   auto irf = memory->Read(Half, IF, NSEQ);
   auto ime = memory->Read(Half, IME, NSEQ);
 
   if (ime && (ie & irf)) {
-	spdlog::get("std")->info("IRQ Successful {:B}", (ie & irf));
+	spdlog::get("std")->debug("IRQ Successful {:B} from {:X}", (ie & irf),
+	                          registers.get(R15));
 	registers.switchMode(SRFlag::ModeBits::IRQ);
 
+	registers.get(R14) = registers.get(R15);
 	if (SRFlag::get(cpsr, SRFlag::thumb)) {
-	  registers.get(R14) = registers.get(R15);
 	  SRFlag::set(cpsr, SRFlag::thumb, 0);
-	} else {
-	  registers.get(R14) = registers.get(R15) - 4;
 	}
 
 	SRFlag::set(cpsr, SRFlag::irqDisable, 1);
 	registers.get(R15) = 0x18;
 	PipelineFlush();
+	return true;
   }
+  return false;
 }
 
 void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::get("std")->trace("Flush to THUMB");
 	auto& pc = registers.get(R15);
 	pc &= ~1;
+	spdlog::get("std")->trace("Flush to THUMB {:X}", pc);
 	pipeline[0] = memory->Read(Half, pc, NSEQ);
 	pc += 2;
 	pipeline[1] = memory->Read(Half, pc, NSEQ);
   } else {
-	spdlog::get("std")->trace("Flush to ARM");
 	auto& pc = registers.get(R15);
 	pc &= ~3;
+	spdlog::get("std")->trace("Flush to ARM {:X}", pc);
 	pipeline[0] = memory->Read(Word, pc, NSEQ);
 	pc += 4;
 	pipeline[1] = memory->Read(Word, pc, NSEQ);
