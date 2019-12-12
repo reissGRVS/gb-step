@@ -6,8 +6,11 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-Memory::Memory(std::string biosPath, std::string romPath, Joypad& joypad)
-    : joypad(joypad) {
+Memory::Memory(std::shared_ptr<SystemClock> clock,
+               std::string biosPath,
+               std::string romPath,
+               Joypad& joypad)
+    : clock(clock), joypad(joypad) {
   // Read BIOS
   {
 	std::ifstream infile(biosPath);
@@ -56,7 +59,7 @@ uint32_t Memory::Read(AccessSize size,
 	return joypad.getKeyStatus();
   }
 
-  // TODO: Increment cycles based on AccessType
+  Tick(size, page, seq);
   switch (page) {
 	case 0x00:
 	  if ((address & PAGE_MASK) < BIOS_SIZE) {
@@ -130,7 +133,7 @@ void Memory::Write(AccessSize size,
 #ifndef NDEBUG
   PublishWriteCallback(address);
 #endif
-
+  Tick(size, page, seq);
   switch (page) {
 	case 0x02:
 	  WriteToSize(&mem.gen.wramb[address & WRAMB_MASK], value, size);
@@ -188,6 +191,85 @@ void Memory::Write(AccessSize size,
 	  break;
 	case 0x07:
 	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
+	  break;
+	default:
+	  break;
+  }
+}
+
+void Memory::TickBySize(AccessSize size,
+                        std::uint32_t ticks8,
+                        std::uint32_t ticks16,
+                        std::uint32_t ticks32) {
+  switch (size) {
+	case Byte:
+	  clock->Tick(ticks8);
+	  break;
+	case Half:
+	  clock->Tick(ticks16);
+	  break;
+	case Word:
+	  clock->Tick(ticks32);
+	  break;
+  }
+}
+
+void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality) {
+  // TODO: Plus 1 cycle if GBA accesses video memory at the same time. for OAM
+  // PRAM VRAM
+  // TODO: Waitstate settings for WRAM 256, GamePak
+  // TODO: Separate timings for sequential, and non-sequential accesses. Gamepak
+  // ROM and Flash
+  switch (page) {
+	case 0x00:
+	  // BIOS
+	  clock->Tick(1);
+	  break;
+	case 0x01:
+	  // unused
+	  break;
+	case 0x02:
+	  // WRAM 256 - 2 wait
+	  TickBySize(size, 3, 3, 6);
+	  break;
+	case 0x03:
+	  // WRAM 32
+	  clock->Tick(1);
+	  break;
+	case 0x04:
+	  // IO
+	  clock->Tick(1);
+	  break;
+	case 0x05:
+	  // BG PRAM
+	  TickBySize(size, 1, 1, 2);
+	  break;
+	case 0x06:
+	  // VRAM
+	  TickBySize(size, 1, 1, 2);
+	  break;
+	case 0x07:
+	  // OAM
+	  clock->Tick(1);
+	  break;
+	case 0x08:
+	case 0x09:
+	  // Game Pak ROM/FlashROM - WS0
+	  TickBySize(size, 5, 5, 8);
+	  break;
+	case 0x0A:
+	case 0x0B:
+	  // Game Pak ROM/FlashROM - WS1
+	  TickBySize(size, 5, 5, 8);
+	  break;
+	case 0x0C:
+	case 0x0D:
+	  // Game Pak ROM/FlashROM - WS2
+	  TickBySize(size, 5, 5, 8);
+	  break;
+	case 0x0E:
+	  // Game Pak SRAM
+	  clock->Tick(5);
 	  break;
 	default:
 	  break;

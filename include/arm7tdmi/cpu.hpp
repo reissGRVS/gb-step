@@ -11,12 +11,14 @@
 #include "opbacktrace.hpp"
 #include "registers.hpp"
 #include "stateview.hpp"
+#include "system_clock.hpp"
 #include "types.hpp"
 
 namespace ARM7TDMI {
 class CPU {
  public:
-  CPU(std::shared_ptr<Memory> memory_) : memory(memory_) {
+  CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<Memory> memory)
+      : clock(clock), memory(memory) {
 	// Skip BIOS
 
 	// registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
@@ -28,7 +30,7 @@ class CPU {
 	PipelineFlush();
   };
 
-  std::uint32_t Execute();
+  void Execute();
 
   StateView ViewState();
   RegisterSet registers;
@@ -36,6 +38,7 @@ class CPU {
 
  private:
   bool slow = false;
+  std::shared_ptr<SystemClock> clock;
   std::shared_ptr<Memory> memory;
   std::array<OpCode, 2> pipeline;
 

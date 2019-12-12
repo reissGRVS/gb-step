@@ -5,7 +5,7 @@
 #include "utils.hpp"
 
 namespace ARM7TDMI {
-std::uint32_t CPU::Execute() {
+void CPU::Execute() {
   auto opcode = pipeline[0];
   auto& pc = registers.get(R15);
 
@@ -41,7 +41,6 @@ std::uint32_t CPU::Execute() {
   }
 
   spdlog::get("std")->trace("************************");
-  return 1;
 }
 
 StateView CPU::ViewState() {

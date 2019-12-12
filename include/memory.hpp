@@ -7,11 +7,15 @@
 
 #include "joypad.hpp"
 #include "memory_regions.hpp"
+#include "system_clock.hpp"
 #include "types.hpp"
 
 class Memory {
  public:
-  Memory(std::string biosPath, std::string romPath, Joypad& joypad);
+  Memory(std::shared_ptr<SystemClock> clock,
+         std::string biosPath,
+         std::string romPath,
+         Joypad& joypad);
 
   std::uint32_t Read(AccessSize size,
                      std::uint32_t address,
@@ -40,11 +44,17 @@ class Memory {
   void SetDebugWriteCallback(std::function<void(std::uint32_t)> callback);
 
  private:
+  std::shared_ptr<SystemClock> clock;
   std::unordered_map<std::uint32_t, std::function<void(std::uint32_t)>>
       ioCallbacks;
   std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
   void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
 
+  void Tick(AccessSize size, std::uint32_t page, Sequentiality seq);
+  void TickBySize(AccessSize size,
+                  std::uint32_t ticks8,
+                  std::uint32_t ticks16,
+                  std::uint32_t ticks32);
   // https://problemkaputt.de/gbatek.htm#gbamemorymap
   std::function<void(std::uint32_t)> PublishWriteCallback;
   Joypad& joypad;

@@ -3,7 +3,6 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-// TODO: TIMINGS
 namespace ARM7TDMI {
 
 const ParamSegments DataProcessingSegments
@@ -299,7 +298,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 		Rm += 4;
 	  }
 
-	  // CYCLETODO: I
+	  clock->Tick(1);
 	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & NBIT_MASK(8);
 	  Shift(Rm, shiftAmount, shiftType, carry, true);
 	} else {
@@ -520,7 +519,7 @@ void CPU::ICyclesMultiply(const std::uint32_t& mulop) {
 	  ticks++;
 	}
   }
-  // CYCLETODO: I ticks
+  clock->Tick(1);
 }
 
 void CPU::ArmMultiply_P(ParamList params) {
@@ -554,7 +553,7 @@ void CPU::ArmMultiply(std::uint32_t A,
   std::int32_t op3 = registers.get((Register)Rn);
 
   if (A) {
-	// CYCLETODO: I ticks
+	clock->Tick(1);
 	dest = op1 * op2 + op3;
   } else {
 	dest = op1 * op2;
@@ -597,7 +596,7 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 	return;
   }
 
-  // CYCLETODO: I ticks
+  clock->Tick(1);
   std::int64_t result = 0;
   std::uint32_t op1 = registers.get((Register)Rm);
   std::uint32_t op2 = registers.get((Register)Rs);
@@ -606,7 +605,7 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
   std::uint32_t op4 = registers.get((Register)RdHi);
 
   if (A) {
-	// CYCLETODO: I ticks
+	clock->Tick(1);
 	result = op4;
 	result <<= 32;
 	result += op3;
@@ -651,7 +650,7 @@ void CPU::ArmSingleDataSwap(std::uint32_t B,
 	return;
   }
 
-  // CYCLETODO: I tick
+  clock->Tick(1);
   if (B) {
 	auto addr = registers.get((Register)Rn);
 	auto memVal = memory->Read(AccessSize::Byte, addr, Sequentiality::NSEQ);
@@ -759,7 +758,7 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
 
   if (L)  // LD
   {
-	// CYCLETODO: I tick
+	clock->Tick(1);
 	if (H)  // HalfWord
 	{
 	  // TODO: Addr needs to be on half boundary
@@ -840,7 +839,7 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
   auto& destReg = registers.get((Register)Rd);
 
   if (L) {
-	// CYCLETODO: I tick
+	clock->Tick(1);
 	if (B) {
 	  destReg = memory->Read(AccessSize::Byte, memAddr, Sequentiality::NSEQ);
 	} else {

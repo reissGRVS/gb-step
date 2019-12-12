@@ -8,6 +8,7 @@
 #include "memory.hpp"
 #include "ppu.hpp"
 #include "screen.hpp"
+#include "system_clock.hpp"
 #include "timer.hpp"
 
 struct GBAConfig {
@@ -21,8 +22,12 @@ struct GBAConfig {
 class GBA {
  public:
   GBA(GBAConfig cfg)
-      : memory(std::make_shared<Memory>(cfg.biosPath, cfg.romPath, cfg.joypad)),
-        cpu(memory),
+      : sysClock(std::make_shared<SystemClock>()),
+        memory(std::make_shared<Memory>(sysClock,
+                                        cfg.biosPath,
+                                        cfg.romPath,
+                                        cfg.joypad)),
+        cpu(sysClock, memory),
         ppu(memory, cfg.screen),
         debugger(memory),
         timer(memory),
@@ -73,13 +78,15 @@ class GBA {
 #ifndef NDEBUG
 	  debugger.CheckForBreakpoint(cpu.ViewState());
 #endif
-	  auto ticks = cpu.Execute();
+	  cpu.Execute();
+	  auto ticks = sysClock->SinceLastCheck();
 	  ppu.Execute(ticks);
 	  timer.Update(ticks);
 	}
   };
 
  private:
+  std::shared_ptr<SystemClock> sysClock;
   std::shared_ptr<Memory> memory;
   ARM7TDMI::CPU cpu;
   PPU ppu;
