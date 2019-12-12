@@ -298,6 +298,8 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 		spdlog::get("std")->trace("PC: {:X}", Rm);
 		Rm += 4;
 	  }
+
+	  // CYCLETODO: I
 	  shiftAmount = registers.get((Register)(shiftAmount >> 1)) & NBIT_MASK(8);
 	  Shift(Rm, shiftAmount, shiftType, carry, true);
 	} else {
@@ -506,6 +508,21 @@ void CPU::ArmDataProcessing(std::uint32_t I,
   SetFlags(S, dest, carry);
 }
 
+void CPU::ICyclesMultiply(const std::uint32_t& mulop) {
+  auto ticks = 1u;
+  auto mask = 0xFFFFFFFF;
+  for (auto i = 0u; i < 3u; i++) {
+	mask <<= 8;
+	auto mulopsection = mask & mulop;
+	if (mulopsection == 0 || mulopsection == mask) {
+	  break;
+	} else {
+	  ticks++;
+	}
+  }
+  // CYCLETODO: I ticks
+}
+
 void CPU::ArmMultiply_P(ParamList params) {
   spdlog::get("std")->trace("MUL");
   const std::uint32_t Rm = params[0], Rs = params[1], Rn = params[2],
@@ -533,9 +550,11 @@ void CPU::ArmMultiply(std::uint32_t A,
 
   std::int32_t op1 = registers.get((Register)Rm);
   std::int32_t op2 = registers.get((Register)Rs);
+  ICyclesMultiply(op2);
   std::int32_t op3 = registers.get((Register)Rn);
 
   if (A) {
+	// CYCLETODO: I ticks
 	dest = op1 * op2 + op3;
   } else {
 	dest = op1 * op2;
@@ -578,13 +597,16 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 	return;
   }
 
+  // CYCLETODO: I ticks
   std::int64_t result = 0;
   std::uint32_t op1 = registers.get((Register)Rm);
   std::uint32_t op2 = registers.get((Register)Rs);
+  ICyclesMultiply(op2);
   std::uint32_t op3 = registers.get((Register)RdLo);
   std::uint32_t op4 = registers.get((Register)RdHi);
 
   if (A) {
+	// CYCLETODO: I ticks
 	result = op4;
 	result <<= 32;
 	result += op3;
@@ -629,24 +651,19 @@ void CPU::ArmSingleDataSwap(std::uint32_t B,
 	return;
   }
 
+  // CYCLETODO: I tick
   if (B) {
 	auto addr = registers.get((Register)Rn);
 	auto memVal = memory->Read(AccessSize::Byte, addr, Sequentiality::NSEQ);
 	memory->Write(AccessSize::Byte, addr, registers.get((Register)Rm),
-	              Sequentiality::NSEQ);
+	              Sequentiality::SEQ);
 	registers.get((Register)Rd) = memVal;
   } else {
 	auto addr = registers.get((Register)Rn);
 	auto memVal = memory->Read(AccessSize::Word, addr, Sequentiality::NSEQ);
 	// TODO: Maybe these writes need to be word aligned?
 	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
-	              Sequentiality::NSEQ);
-	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
-	              Sequentiality::NSEQ);
-	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
-	              Sequentiality::NSEQ);
-	memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
-	              Sequentiality::NSEQ);
+	              Sequentiality::SEQ);
 	registers.get((Register)Rd) = memVal;
   }
 }
@@ -742,6 +759,7 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
 
   if (L)  // LD
   {
+	// CYCLETODO: I tick
 	if (H)  // HalfWord
 	{
 	  // TODO: Addr needs to be on half boundary
@@ -822,11 +840,10 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
   auto& destReg = registers.get((Register)Rd);
 
   if (L) {
+	// CYCLETODO: I tick
 	if (B) {
 	  destReg = memory->Read(AccessSize::Byte, memAddr, Sequentiality::NSEQ);
 	} else {
-	  // TODO: Check word boundary addr LD behaviour, seems complicated pg 49
-	  // or 55 of pdf
 	  auto wordBoundaryOffset = memAddr % 4;
 	  auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
 	                            Sequentiality::NSEQ);
@@ -927,23 +944,24 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
 
   auto saved = 0;
   for (auto reg : toSave) {
+	auto accessType = Sequentiality::SEQ;
+	if (saved == 0) {
+	  accessType = Sequentiality::NSEQ;
+	}
 	if (L) {
 	  if (reg == (Register)Rn) {
 		stopWriteback = true;
 	  }
-	  registers.get(reg) =
-	      memory->Read(AccessSize::Word, addr, Sequentiality::NSEQ);
+	  registers.get(reg) = memory->Read(AccessSize::Word, addr, accessType);
 	} else {
 	  if (reg == (Register)Rn) {
 		if (saved == 0) {
-		  memory->Write(AccessSize::Word, addr, base, Sequentiality::NSEQ);
+		  memory->Write(AccessSize::Word, addr, base, accessType);
 		} else {
-		  memory->Write(AccessSize::Word, addr, writebackVal,
-		                Sequentiality::NSEQ);
+		  memory->Write(AccessSize::Word, addr, writebackVal, accessType);
 		}
 	  } else {
-		memory->Write(AccessSize::Word, addr, registers.get(reg),
-		              Sequentiality::NSEQ);
+		memory->Write(AccessSize::Word, addr, registers.get(reg), accessType);
 	  }
 	}
 	addr += 4;
@@ -1000,7 +1018,8 @@ void CPU::ArmSWI_P(ParamList) {
 
 void CPU::ArmSWI() {
   spdlog::get("std")->trace("SWI");
-
+  // TODO: Check this is correct??? Think this should use the standard
+  // interrupt request?
   registers.switchMode(SRFlag::ModeBits::SVC);
   registers.get(R14) = registers.get(R15) - 4;
 

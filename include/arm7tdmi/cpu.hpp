@@ -104,6 +104,7 @@ class CPU {
   void ArmMRS(bool Ps, std::uint8_t Rd);
   void ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source);
 
+  void ICyclesMultiply(const std::uint32_t& mulop);
   void ArmMultiply_P(ParamList params);
   void ArmMultiply(std::uint32_t A,
                    std::uint32_t S,

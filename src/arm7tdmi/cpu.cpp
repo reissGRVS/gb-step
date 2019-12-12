@@ -20,7 +20,7 @@ std::uint32_t CPU::Execute() {
 	pipeline[0] = pipeline[1];
 	// TODO: Fix memory sequentiality
 	pc += 2;
-	pipeline[1] = memory->Read(Half, pc, NSEQ);
+	pipeline[1] = memory->Read(Half, pc, SEQ);
 
 	Operation = ThumbOperation(opcode);
   } else {
@@ -33,7 +33,7 @@ std::uint32_t CPU::Execute() {
 	pipeline[0] = pipeline[1];
 	// TODO: Fix memory sequentiality
 	pc += 4;
-	pipeline[1] = memory->Read(Word, pc, NSEQ);
+	pipeline[1] = memory->Read(Word, pc, SEQ);
   }
 
   if (!HandleInterruptRequests()) {
@@ -88,14 +88,14 @@ void CPU::PipelineFlush() {
 	spdlog::get("std")->trace("Flush to THUMB {:X}", pc);
 	pipeline[0] = memory->Read(Half, pc, NSEQ);
 	pc += 2;
-	pipeline[1] = memory->Read(Half, pc, NSEQ);
+	pipeline[1] = memory->Read(Half, pc, SEQ);
   } else {
 	auto& pc = registers.get(R15);
 	pc &= ~3;
 	spdlog::get("std")->trace("Flush to ARM {:X}", pc);
 	pipeline[0] = memory->Read(Word, pc, NSEQ);
 	pc += 4;
-	pipeline[1] = memory->Read(Word, pc, NSEQ);
+	pipeline[1] = memory->Read(Word, pc, SEQ);
   }
 }
 
