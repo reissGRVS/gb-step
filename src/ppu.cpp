@@ -88,12 +88,12 @@ void PPU::Execute(std::uint32_t ticks) {
   }
 }
 
-void PPU::BG0Line() {
-  auto bg0Cnt = getHalf(BG0CNT);
-  auto bgTileBase = VRAM_START + BIT_RANGE(bg0Cnt, 2, 3) * 0x4000u;
-  auto colorDepth = BIT_RANGE(bg0Cnt, 7, 7) ? 8u : 4u;
+void PPU::BGLine(const uint32_t& BGCNT) {
+  auto bgCnt = getHalf(BGCNT);
+  auto bgTileBase = VRAM_START + BIT_RANGE(bgCnt, 2, 3) * 0x4000u;
+  auto colorDepth = BIT_RANGE(bgCnt, 7, 7) ? 8u : 4u;
   auto pixelsPerByte = 8u / colorDepth;
-  auto bgMapBase = VRAM_START + BIT_RANGE(bg0Cnt, 8, 12) * 0x800u;
+  auto bgMapBase = VRAM_START + BIT_RANGE(bgCnt, 8, 12) * 0x800u;
 
   std::uint32_t PIXELS_PER_TILE_LINE = 8;
   std::uint32_t TILE_DATA_ROWS = 8;
@@ -141,12 +141,14 @@ void PPU::fetchScanline() {
 	switch (bgMode) {
 	  case 0:
 		// TODO: This is dumb, get rid of this, temp solution
-		BG0Line();
+		BGLine(BG0CNT);
 		return;
 	  case 1:
+		BGLine(BG0CNT);
+		return;
 	  case 2:
-		spdlog::get("std")->error("Unsupported bgMode {:X}", bgMode);
-		break;
+		BGLine(BG2CNT);
+		return;
 	  case 3: {
 		fb[pixel] = getHalf(VRAM_START + pixel * 2);
 	  } break;

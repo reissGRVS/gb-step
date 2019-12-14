@@ -8,6 +8,7 @@
 #include "memory.hpp"
 #include "ppu.hpp"
 #include "screen.hpp"
+#include "spdlog/spdlog.h"
 #include "system_clock.hpp"
 #include "timer.hpp"
 
@@ -34,6 +35,17 @@ class GBA {
         dma(memory) {
 	memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 	                                        &debugger, std::placeholders::_1));
+
+	memory->SetIOWriteCallback(IF, [&](std::uint32_t irAcknowledge) {
+	  auto currentIF = memory->getHalf(IF);
+	  spdlog::get("std")->info("IRQ Acknowledge {:B} was {:X}", irAcknowledge,
+	                           currentIF);
+	  currentIF &= ~irAcknowledge;
+
+	  memory->setHalf(IF, currentIF);
+	  spdlog::get("std")->info("IRQ Acknowledge now {:X}", currentIF);
+	});
+
 	memory->SetIOWriteCallback(
 	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0,
 	                         std::placeholders::_1));

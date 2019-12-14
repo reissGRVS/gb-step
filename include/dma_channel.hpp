@@ -15,7 +15,6 @@ class DMAChannel {
         memory(memory_){};
 
   void updateDetails(std::uint16_t value) {
-	spdlog::get("std")->info("DMA Details {}", ID);
 	auto prevEnable = enable;
 	memory->setHalf(CNT_H, value);
 	dmaCnt = value;
@@ -24,55 +23,80 @@ class DMAChannel {
 	// Set internal registers on DMA enable
 	if (enable == 1 && prevEnable == 0) {
 	  source = memory->getWord(SAD) & NBIT_MASK(27);
-	  // TODO: 28 and 16 and 0x10000 for Id3
-	  dest = memory->getWord(DAD) & NBIT_MASK(27);
-	  wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
+	  if (ID == 3) {
+		dest = memory->getWord(DAD) & NBIT_MASK(28);
+	  } else {
+		dest = memory->getWord(DAD) & NBIT_MASK(27);
+	  }
+
+	  if (ID == 3) {
+		wordCount = memory->getHalf(CNT_L) & NBIT_MASK(16);
+	  } else {
+		wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
+	  }
+
 	  if (wordCount == 0) {
 		wordCount = 0x4000;
 	  }
+	  if (dest > 0x40000FF)
+		spdlog::get("std")->info("DMA Set Internal Registers");
 	}
 
-	repeat = BIT_RANGE(dmaCnt, 7, 8);
+	repeat = BIT_RANGE(dmaCnt, 9, 9);
 	startTiming = BIT_RANGE(dmaCnt, 12, 13);
 	irqAtEnd = BIT_RANGE(dmaCnt, 14, 14);
+
+	if (dest > 0x40000FF)
+	  spdlog::get("std")->debug(
+	      "DMA Details Ch {}: enable {}, startTiming {}, src {:X}, dst {:X}, "
+	      "irqAtEnd {}, repeat {}",
+	      ID, enable, startTiming, source, dest, irqAtEnd, repeat);
   }
 
   void doTransfer() {
-	spdlog::get("std")->info("DMA {}", ID);
 	auto transferType = BIT_RANGE(dmaCnt, 10, 10);
+	auto transferSize = transferType ? 4 : 2;
+	auto destAddrCtl = BIT_RANGE(dmaCnt, 5, 6);
+	auto srcAddrCtl = BIT_RANGE(dmaCnt, 7, 8);
+	auto firstSrcVal = memory->getWord(source);
+	spdlog::get("std")->debug(
+	    "DMA{} starting: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
+	    "destCtl {}, srcCtl {}, srcVal {:X}",
+	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl,
+	    firstSrcVal);
 
 	while (wordCount > 0) {
 	  // 0 -> 16bit  1 -> 32bit
 	  if (transferType) {
-		memory->setHalf(dest, memory->getHalf(source));
-	  } else {
 		memory->setWord(dest, memory->getWord(source));
+	  } else {
+		memory->setHalf(dest, memory->getHalf(source));
 	  }
 
 	  // Update internal registers
 	  {
 		// Dest Addr Control
-		switch (BIT_RANGE(dmaCnt, 5, 6)) {
+		switch (destAddrCtl) {
 		  case 0: {
-			dest++;
+			dest += transferSize;
 			break;
 		  }
 		  case 1: {
-			dest--;
+			dest -= transferSize;
 			break;
 		  }
 		  default:
 			break;
 		}
 
-		// Dest Addr Control
-		switch (BIT_RANGE(dmaCnt, 7, 8)) {
+		// Src Addr Control
+		switch (srcAddrCtl) {
 		  case 0: {
-			source++;
+			source += transferSize;
 			break;
 		  }
 		  case 1: {
-			source--;
+			source -= transferSize;
 			break;
 		  }
 		  default:
@@ -83,6 +107,10 @@ class DMAChannel {
 	  }
 	}
 
+	spdlog::get("std")->debug(
+	    "DMA{} finishing: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
+	    "destCtl {}, srcCtl {}",
+	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl);
 	if (repeat) {
 	  wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
 	  if (wordCount == 0) {
@@ -90,6 +118,7 @@ class DMAChannel {
 	  }
 	} else {
 	  BIT_CLEAR(dmaCnt, 15);
+	  enable = 0;
 	}
   }
 
@@ -111,5 +140,4 @@ class DMAChannel {
 
  private:
   std::shared_ptr<Memory> memory;
-  // TODO: Change memory seq
 };

@@ -14,7 +14,7 @@ class PPU {
  private:
   void fetchScanline();
 
-  void BG0Line();
+  void BGLine(const uint32_t& BGCNT);
 
   std::uint16_t getBgColorFromPallete(const std::uint32_t& colorID);
   std::uint8_t getByte(const std::uint32_t& address);

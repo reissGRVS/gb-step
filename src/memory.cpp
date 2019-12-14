@@ -77,7 +77,8 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x03:
 	  return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
-	  if (seq != Sequentiality::FREE && address < 0x4000200) {
+	  if (seq != Sequentiality::FREE &&
+	      (address < 0x40000E0 && address > 0x40000AF)) {
 		spdlog::get("std")->debug("IORead {:X} size: {:X}", address,
 		                          (uint32_t)size);
 	  }
@@ -147,13 +148,10 @@ void Memory::Write(AccessSize size,
 		                          value, address, (uint32_t)size, seq);
 		WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
 	  } else {
-		spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
-		                          value, address, (uint32_t)size, seq);
-		if (size == Byte) {
-		  // TODO: Callbacks?
-		  WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
-		}
-		if (size == Half) {
+		if (address < 0x40000E0 && address > 0x40000AF)
+		  spdlog::get("std")->info("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
+		                           value, address, (uint32_t)size, seq);
+		if (size == Half || size == Byte) {
 		  auto callback = ioCallbacks.find(address);
 		  if (callback != ioCallbacks.end()) {
 			callback->second(value);
@@ -214,7 +212,10 @@ void Memory::TickBySize(AccessSize size,
   }
 }
 
-void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality) {
+void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
+  if (seq != NSEQ && seq != SEQ) {
+	return;
+  }
   // TODO: Plus 1 cycle if GBA accesses video memory at the same time. for OAM
   // PRAM VRAM
   // TODO: Waitstate settings for WRAM 256, GamePak

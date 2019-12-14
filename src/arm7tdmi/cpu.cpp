@@ -69,6 +69,7 @@ bool CPU::HandleInterruptRequests() {
 
 	registers.get(R14) = registers.get(R15);
 	if (SRFlag::get(cpsr, SRFlag::thumb)) {
+	  registers.get(R14) += 2;
 	  SRFlag::set(cpsr, SRFlag::thumb, 0);
 	}
 

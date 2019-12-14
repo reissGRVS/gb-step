@@ -336,10 +336,18 @@ void CPU::ThumbLSRegOff_P(ParamList params) {
 }
 
 void CPU::ThumbLSSignExt_P(ParamList params) {
-  spdlog::get("std")->trace("THUMB LS SignExt");
   std::uint16_t Rd = params[0], Rb = params[1], Ro = params[2], S = params[3],
                 H = params[4];
-  ArmHalfwordDTRegOffset(1, 1, 0, S | H, Rb, Rd, S, H, Ro);
+
+  spdlog::get("std")->trace("THUMB LS SignExt Rd {} Rb {} Ro {} S {} H {}", Rd,
+                            Rb, Ro, S, H);
+  if (S | H) {
+	// Loads
+	ArmHalfwordDTRegOffset(1, 1, 0, 1, Rb, Rd, S, H, Ro);
+  } else {
+	// Store
+	ArmHalfwordDTRegOffset(1, 1, 0, 0, Rb, Rd, 0, 1, Ro);
+  }
 }
 
 void CPU::ThumbLSImmOff_P(ParamList params) {
@@ -348,9 +356,8 @@ void CPU::ThumbLSImmOff_P(ParamList params) {
                 L = params[3], B = params[4];
 
   std::uint16_t Offset = Offset5;
-  if (!B)
-  {
-	  Offset = Offset5 << 2;
+  if (!B) {
+	Offset = Offset5 << 2;
   }
   ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset);
 }
@@ -429,16 +436,13 @@ void CPU::ThumbCondBranch_P(ParamList params) {
 
 void CPU::ThumbSWI_P(ParamList) {
   spdlog::get("std")->trace("THUMB SWI");
-  auto pc = registers.get(R15) - 2;
-  auto v = SRFlag::get(registers.get(CPSR), SRFlag::v);
 
   registers.switchMode(SRFlag::ModeBits::SVC);
 
-  registers.get(R14) = pc;
-  SRFlag::set(registers.get(SPSR), SRFlag::v, v);
+  registers.get(R14) = registers.get(R15) + 2;
   SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
-  SRFlag::set(registers.get(CPSR), SRFlag::thumb, 1);
-  registers.get(R15) = 0x08;
+  SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
+  registers.get(R15) = 0x8;
 
   PipelineFlush();
 }

@@ -519,7 +519,7 @@ void CPU::ICyclesMultiply(const std::uint32_t& mulop) {
 	  ticks++;
 	}
   }
-  clock->Tick(1);
+  clock->Tick(ticks);
 }
 
 void CPU::ArmMultiply_P(ParamList params) {
@@ -699,6 +699,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
                                  std::uint32_t H,
                                  std::uint32_t Rm) {
   auto Offset = registers.get((Register)Rm);
+  spdlog::get("std")->debug("HDT Reg Offset {:X}", Offset);
   ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
 
@@ -747,9 +748,12 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
   }
 
   auto memAddr = base;
+  spdlog::get("std")->debug("HDT memAddr {:X} baseOffset {:X}", memAddr,
+                            baseOffset);
   if (P) {
 	memAddr = baseOffset;
   }
+
   if (W || !P) {
 	registers.get((Register)Rn) = baseOffset;
   }
@@ -785,6 +789,8 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
   {
 	if (H)  // HalfWord
 	{
+	  spdlog::get("std")->debug("HDT Store memAddr {:X} value {:X}", memAddr,
+	                            destReg);
 	  memory->Write(AccessSize::Half, memAddr, destReg, Sequentiality::NSEQ);
 	}
   }
@@ -1017,13 +1023,12 @@ void CPU::ArmSWI_P(ParamList) {
 
 void CPU::ArmSWI() {
   spdlog::get("std")->trace("SWI");
-  // TODO: Check this is correct??? Think this should use the standard
-  // interrupt request?
+
   registers.switchMode(SRFlag::ModeBits::SVC);
   registers.get(R14) = registers.get(R15) - 4;
 
   SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
-  registers.get(R15) = 0x08;
+  registers.get(R15) = 0x8;
 
   PipelineFlush();
 }
