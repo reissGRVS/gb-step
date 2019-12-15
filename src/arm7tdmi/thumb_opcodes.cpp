@@ -2,7 +2,6 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-// TODO: TIMINGS
 namespace ARM7TDMI {
 
 const ParamSegments MoveShiftedRegSegments
@@ -439,7 +438,7 @@ void CPU::ThumbSWI_P(ParamList) {
 
   registers.switchMode(SRFlag::ModeBits::SVC);
 
-  registers.get(R14) = registers.get(R15) + 2;
+  registers.get(R14) = registers.get(R15) - 2;
   SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
   SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
   registers.get(R15) = 0x8;

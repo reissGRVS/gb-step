@@ -77,8 +77,7 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x03:
 	  return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
-	  if (seq != Sequentiality::FREE &&
-	      (address < 0x40000E0 && address > 0x40000AF)) {
+	  if (seq != Sequentiality::FREE) {
 		spdlog::get("std")->debug("IORead {:X} size: {:X}", address,
 		                          (uint32_t)size);
 	  }
@@ -96,6 +95,9 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x0C:
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
+	case 0x0E:
+	  // TODO: Implement Gamepak SRAM saves
+	  return 0;
 	default:
 	  break;
   }
@@ -149,8 +151,8 @@ void Memory::Write(AccessSize size,
 		WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
 	  } else {
 		if (address < 0x40000E0 && address > 0x40000AF)
-		  spdlog::get("std")->info("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
-		                           value, address, (uint32_t)size, seq);
+		  spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
+		                            value, address, (uint32_t)size, seq);
 		if (size == Half || size == Byte) {
 		  auto callback = ioCallbacks.find(address);
 		  if (callback != ioCallbacks.end()) {
@@ -160,7 +162,6 @@ void Memory::Write(AccessSize size,
 		  }
 		}
 
-		// TODO: Make sure this is the right write order
 		if (size == Word) {
 		  auto callback = ioCallbacks.find(address);
 		  if (callback != ioCallbacks.end()) {
