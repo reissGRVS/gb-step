@@ -97,25 +97,33 @@ std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
   auto mapY = y / TILE_PIXEL_HEIGHT;
   auto mapX = x / TILE_PIXEL_WIDTH;
   auto mapIndex = mapX + (mapY * TILE_AREA_WIDTH);
-  auto tileY = y % TILE_PIXEL_HEIGHT;
-  auto tileX = x % TILE_PIXEL_WIDTH;
+  auto pixelY = y % TILE_PIXEL_HEIGHT;
+  auto pixelX = x % TILE_PIXEL_WIDTH;
 
   // Parse tile data
   auto bgMapEntry = getHalf(bgCnt.mapDataBase + (mapIndex * BYTES_PER_ENTRY));
   auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
-  //   auto horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
-  //   auto verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
+  bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
+  bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
   auto paletteNumber = BIT_RANGE(bgMapEntry, 12, 15);
+
+  // Deal with flips
+  if (verticalFlip) {
+	pixelY = TILE_PIXEL_HEIGHT - pixelY - 1;
+  }
+  if (horizontalFlip) {
+	pixelX = TILE_PIXEL_WIDTH - pixelX - 1;
+  }
 
   // Calculate position of tile pixel
   auto bytesPerTile = bgCnt.colorDepth * TILE_PIXEL_HEIGHT;
   auto startOfTileAddress = bgCnt.tileDataBase + (tileNumber * bytesPerTile);
   auto positionInTile =
-      (tileX / bgCnt.pixelsPerByte) + (tileY * bgCnt.colorDepth);
+      (pixelX / bgCnt.pixelsPerByte) + (pixelY * bgCnt.colorDepth);
   auto pixelPalette = getByte(startOfTileAddress + positionInTile);
 
   if (bgCnt.colorDepth == 4) {
-	if (tileX % 2 == 0) {
+	if ((pixelX % 2 == 0) != horizontalFlip) {
 	  pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
 	} else {
 	  pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
