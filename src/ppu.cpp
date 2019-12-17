@@ -13,14 +13,13 @@ void PPU::Execute(std::uint32_t ticks) {
 		tickCount = tickCount - CYCLES_PER_VISIBLE;
 		state = HBlank;
 
-		// TODO: Add line to framebuffer
 		fetchScanline();
 		// Set HBlank flag and Request Interrupt
 		auto dispStat = getHalf(DISPSTAT);
 		BIT_SET(dispStat, 1);
 		setHalf(DISPSTAT, dispStat);
 		if (BIT_RANGE(dispStat, 4, 4)) {
-		  spdlog::get("std")->info("HBlank IntReq");
+		  spdlog::get("std")->debug("HBlank IntReq");
 		  auto intReq = getHalf(IF);
 		  BIT_SET(intReq, 1);
 		  setHalf(IF, intReq);
@@ -52,7 +51,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
 		  setHalf(DISPSTAT, dispStat);
 		  if (BIT_RANGE(dispStat, 3, 3)) {
-			spdlog::get("std")->info("VBlank IntReq");
+			spdlog::get("std")->debug("VBlank IntReq");
 			auto intReq = getHalf(IF);
 			BIT_SET(intReq, 0);
 			setHalf(IF, intReq);

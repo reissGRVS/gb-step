@@ -18,7 +18,6 @@ void CPU::Execute() {
 	pc &= ~1;
 
 	pipeline[0] = pipeline[1];
-	// TODO: Fix memory sequentiality
 	pc += 2;
 	pipeline[1] = memory->Read(Half, pc, SEQ);
 
@@ -31,7 +30,6 @@ void CPU::Execute() {
 	pc &= ~3;
 
 	pipeline[0] = pipeline[1];
-	// TODO: Fix memory sequentiality
 	pc += 4;
 	pipeline[1] = memory->Read(Word, pc, SEQ);
   }
@@ -58,9 +56,9 @@ bool CPU::HandleInterruptRequests() {
   if (SRFlag::get(cpsr, SRFlag::irqDisable)) {
 	return false;
   }
-  auto ie = memory->Read(Half, IE, NSEQ);
-  auto irf = memory->Read(Half, IF, NSEQ);
-  auto ime = memory->Read(Half, IME, NSEQ);
+  auto ie = memory->Read(Half, IE, FREE);
+  auto irf = memory->Read(Half, IF, FREE);
+  auto ime = memory->Read(Half, IME, FREE);
 
   if (ime && (ie & irf)) {
 	spdlog::get("std")->debug("IRQ Successful {:B} from {:X}", (ie & irf),

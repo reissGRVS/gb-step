@@ -384,7 +384,6 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	  break;
 	}
 
-	// TODO: Revisit all flag logic
 	case DPOps::ADC: {
 	  carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
 	  auto result = (std::uint64_t)Op1Val + Op2Val + carry;
@@ -892,7 +891,6 @@ void CPU::ArmUndefined() {
 }
 
 void CPU::ArmBlockDataTransfer_P(ParamList params) {
-  // TODO: Use of S bit, Use of R15 as base
   spdlog::get("std")->trace("BDT");
   std::uint32_t RegList = params[0], Rn = params[1], L = params[2],
                 W = params[3], S = params[4], U = params[5], P = params[6];

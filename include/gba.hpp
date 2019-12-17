@@ -38,12 +38,12 @@ class GBA {
 
 	memory->SetIOWriteCallback(IF, [&](std::uint32_t irAcknowledge) {
 	  auto currentIF = memory->getHalf(IF);
-	  spdlog::get("std")->info("IRQ Acknowledge {:B} was {:X}", irAcknowledge,
-	                           currentIF);
+	  spdlog::get("std")->debug("IRQ Acknowledge {:B} was {:X}", irAcknowledge,
+	                            currentIF);
 	  currentIF &= ~irAcknowledge;
 
 	  memory->setHalf(IF, currentIF);
-	  spdlog::get("std")->info("IRQ Acknowledge now {:X}", currentIF);
+	  spdlog::get("std")->debug("IRQ Acknowledge now {:X}", currentIF);
 	});
 
 	memory->SetIOWriteCallback(

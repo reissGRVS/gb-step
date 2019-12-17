@@ -38,19 +38,17 @@ class DMAChannel {
 	  if (wordCount == 0) {
 		wordCount = 0x4000;
 	  }
-	  if (dest > 0x40000FF)
-		spdlog::get("std")->info("DMA Set Internal Registers");
+	  spdlog::get("std")->info("DMA Set Internal Registers");
 	}
 
 	repeat = BIT_RANGE(dmaCnt, 9, 9);
 	startTiming = BIT_RANGE(dmaCnt, 12, 13);
 	irqAtEnd = BIT_RANGE(dmaCnt, 14, 14);
 
-	if (dest > 0x40000FF)
-	  spdlog::get("std")->debug(
-	      "DMA Details Ch {}: enable {}, startTiming {}, src {:X}, dst {:X}, "
-	      "irqAtEnd {}, repeat {}",
-	      ID, enable, startTiming, source, dest, irqAtEnd, repeat);
+	spdlog::get("std")->info(
+	    "DMA Details Ch {}: enable {}, startTiming {}, src {:X}, dst {:X}, "
+	    "irqAtEnd {}, repeat {}",
+	    ID, enable, startTiming, source, dest, irqAtEnd, repeat);
   }
 
   void doTransfer() {
@@ -59,7 +57,7 @@ class DMAChannel {
 	auto destAddrCtl = BIT_RANGE(dmaCnt, 5, 6);
 	auto srcAddrCtl = BIT_RANGE(dmaCnt, 7, 8);
 	auto firstSrcVal = memory->getWord(source);
-	spdlog::get("std")->debug(
+	spdlog::get("std")->info(
 	    "DMA{} starting: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
 	    "destCtl {}, srcCtl {}, srcVal {:X}",
 	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl,
@@ -107,7 +105,7 @@ class DMAChannel {
 	  }
 	}
 
-	spdlog::get("std")->debug(
+	spdlog::get("std")->info(
 	    "DMA{} finishing: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
 	    "destCtl {}, srcCtl {}",
 	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl);

@@ -43,7 +43,7 @@ class Timer {
 		if (overflow) {
 		  counter = reloadValues[timerIndex];
 		  if (irqEnable) {
-			spdlog::get("std")->info("Timer {:X} IntReq", timerIndex);
+			spdlog::get("std")->debug("Timer {:X} IntReq", timerIndex);
 			auto intReq = memory->getHalf(IF);
 			BIT_SET(intReq, 3 + timerIndex);
 			memory->setHalf(IF, intReq);
