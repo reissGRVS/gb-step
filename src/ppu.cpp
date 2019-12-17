@@ -13,7 +13,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		tickCount = tickCount - CYCLES_PER_VISIBLE;
 		state = HBlank;
 
-		fetchScanline();
+		drawLine();
 		// Set HBlank flag and Request Interrupt
 		auto dispStat = getHalf(DISPSTAT);
 		BIT_SET(dispStat, 1);
@@ -87,84 +87,101 @@ void PPU::Execute(std::uint32_t ticks) {
   }
 }
 
-void PPU::BGLine(const uint32_t& BGCNT) {
-  auto bgCnt = getHalf(BGCNT);
-  auto bgTileBase = VRAM_START + BIT_RANGE(bgCnt, 2, 3) * 0x4000u;
-  auto colorDepth = BIT_RANGE(bgCnt, 7, 7) ? 8u : 4u;
-  auto pixelsPerByte = 8u / colorDepth;
-  auto bgMapBase = VRAM_START + BIT_RANGE(bgCnt, 8, 12) * 0x800u;
+std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
+                                                 const std::uint16_t& x,
+                                                 const std::uint16_t& y) {
+  const std::uint32_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
+                      TILE_AREA_WIDTH = 32, BYTES_PER_ENTRY = 2;
 
-  std::uint32_t PIXELS_PER_TILE_LINE = 8;
-  std::uint32_t TILE_DATA_ROWS = 8;
+  // Get tile coords
+  auto mapY = y / TILE_PIXEL_HEIGHT;
+  auto mapX = x / TILE_PIXEL_WIDTH;
+  auto mapIndex = mapX + (mapY * TILE_AREA_WIDTH);
+  auto tileY = y % TILE_PIXEL_HEIGHT;
+  auto tileX = x % TILE_PIXEL_WIDTH;
 
-  auto y = getHalf(VCOUNT);
-  auto mapY = y / 8;
-  auto tileY = y % 8;
-  for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
-	auto mapX = x / PIXELS_PER_TILE_LINE;
-	auto tileX = x % PIXELS_PER_TILE_LINE;
+  // Parse tile data
+  auto bgMapEntry = getHalf(bgCnt.mapDataBase + (mapIndex * BYTES_PER_ENTRY));
+  auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
+  //   auto horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
+  //   auto verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
+  auto paletteNumber = BIT_RANGE(bgMapEntry, 12, 15);
 
-	auto mapPos = mapX + (mapY * 32);
-	auto tileData = getHalf(bgMapBase + (mapPos * 2));
-	auto tileNumber = tileData & NBIT_MASK(10);
-	// auto paletteNumber = tileData >> 12;
-	auto bytesPerTile = colorDepth * TILE_DATA_ROWS;
+  // Calculate position of tile pixel
+  auto bytesPerTile = bgCnt.colorDepth * TILE_PIXEL_HEIGHT;
+  auto startOfTileAddress = bgCnt.tileDataBase + (tileNumber * bytesPerTile);
+  auto positionInTile =
+      (tileX / bgCnt.pixelsPerByte) + (tileY * bgCnt.colorDepth);
+  auto pixelPalette = getByte(startOfTileAddress + positionInTile);
 
-	auto pixelPalette = getByte(bgTileBase + (tileNumber * bytesPerTile) +
-	                            (tileX / pixelsPerByte) + (tileY * colorDepth));
-
-	auto fbPos = x + y * Screen::SCREEN_WIDTH;
-	if (colorDepth == 4) {
-	  // Process to pixels at a time
-	  auto pixelColorL = getBgColorFromPallete(pixelPalette & NBIT_MASK(4));
-	  auto pixelColorR = getBgColorFromPallete(pixelPalette >> 4);
-	  fb[fbPos] = pixelColorL;
-	  fb[fbPos + 1] = pixelColorR;
-	  x++;
+  if (bgCnt.colorDepth == 4) {
+	if (tileX % 2 == 0) {
+	  pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
 	} else {
-	  auto pixelColor = getBgColorFromPallete(pixelPalette);
-	  fb[fbPos] = pixelColor;
+	  pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
 	}
+	return getBgColorFromPalette(paletteNumber, pixelPalette);
+  } else  // equal to 8
+  {
+	return getBgColorFromPalette(pixelPalette);
   }
-  // TODO: HFlip VFlip
 }
 
-void PPU::fetchScanline() {
+void PPU::TextBGLine(const uint32_t& BG_ID) {
+  auto bgCnt = BGControlInfo(BG_ID, getHalf(BGCNT[BG_ID]));
+  auto y = getHalf(VCOUNT);
+  for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
+	auto fbPos = Screen::SCREEN_WIDTH * y + x;
+	fb[fbPos] = TilePixelAtAbsoluteBGPosition(bgCnt, x, y);
+  }
+}
+
+void PPU::drawLine() {
   auto vCount = getHalf(VCOUNT);
   auto dispCnt = getHalf(DISPCNT);
   auto bgMode = BIT_RANGE(dispCnt, 0, 2);
   auto frame = BIT_RANGE(dispCnt, 3, 3);
 
-  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
-       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
-	switch (bgMode) {
-	  case 0:
-		// TODO: This is dumb, get rid of this, temp solution
-		BGLine(BG0CNT);
-		return;
-	  case 1:
-		BGLine(BG0CNT);
-		return;
-	  case 2:
-		BGLine(BG2CNT);
-		return;
-	  case 3: {
+  switch (bgMode) {
+	case 0:
+	  // TODO: This is dumb, get rid of this, temp solution
+	  TextBGLine(0);
+	  break;
+	case 1:
+	  TextBGLine(0);
+	  break;
+	case 2:
+	  TextBGLine(2);
+	  break;
+	case 3: {
+	  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
+	       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
 		fb[pixel] = getHalf(VRAM_START + pixel * 2);
-	  } break;
-	  case 4:
-	  case 5: {
+	  }
+	} break;
+	case 4:
+	case 5: {
+	  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
+	       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
 		auto colorID = getByte(VRAM_START + (frame * 0xA000) + pixel);
-		fb[pixel] = getBgColorFromPallete(colorID);
-	  } break;
-	  default:
-		spdlog::get("std")->error("Unsupported bgMode");
-		break;
-		// TODO: complain
-	}
+		fb[pixel] = getBgColorFromPalette(colorID);
+	  }
+	  // TODO: Actually implement Mode 5
+	} break;
+	default:
+	  spdlog::get("std")->error("Unsupported bgMode");
+	  break;
+	  // TODO: complain
   }
   return;
 }
-std::uint16_t PPU::getBgColorFromPallete(const std::uint32_t& colorID) {
+
+std::uint16_t PPU::getBgColorFromPalette(const std::uint32_t& paletteNumber,
+                                         const std::uint32_t& colorID) {
+  return getBgColorFromPalette(paletteNumber * 16u + colorID);
+}
+
+std::uint16_t PPU::getBgColorFromPalette(const std::uint32_t& colorID) {
   return getHalf(colorID * 2 + PRAM_START);
 }
 
