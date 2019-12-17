@@ -10,7 +10,7 @@ set(SOURCE_FILES
 	src/main.cpp
 	src/memory.cpp
 	src/debugger.cpp
-	src/ppu.cpp
+	src/ppu/ppu.cpp
 	src/joypad.cpp
 	src/arm7tdmi/arm_opcodes.cpp
 	src/arm7tdmi/thumb_opcodes.cpp

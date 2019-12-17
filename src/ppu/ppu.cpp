@@ -1,7 +1,19 @@
-#include "ppu.hpp"
+#include "ppu/ppu.hpp"
 #include "memory_regions.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
+
+const std::uint32_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
+                    TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32,
+                    TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2;
+
+const std::uint16_t TEXT_BGMAP_SIZES[4][2] = {{256, 256},
+                                              {512, 256},
+                                              {256, 512},
+                                              {512, 512}};
+const std::uint32_t BGCNT[4] = {BG0CNT, BG1CNT, BG2CNT, BG3CNT};
+const std::uint32_t BGHOFS[4] = {BG0HOFS, BG1HOFS, BG2HOFS, BG3HOFS};
+const std::uint32_t BGVOFS[4] = {BG0VOFS, BG1VOFS, BG2VOFS, BG3VOFS};
 
 void PPU::Execute(std::uint32_t ticks) {
   tickCount += ticks;
@@ -87,21 +99,43 @@ void PPU::Execute(std::uint32_t ticks) {
   }
 }
 
+std::uint32_t GetScreenAreaOffset(std::uint32_t mapX,
+                                  std::uint32_t mapY,
+                                  std::uint_fast8_t screenSize) {
+  auto screenX = mapX / TILE_AREA_WIDTH;
+  auto screenY = mapY / TILE_AREA_HEIGHT;
+  auto screenAreaId = 0;
+  switch (screenSize) {
+	case 0:
+	  break;
+	case 1:
+	  screenAreaId = screenX;
+	  break;
+	case 2:
+	  screenAreaId = screenY;
+	  break;
+	case 3:
+	  screenAreaId = screenX + screenY * 2;
+	  break;
+  }
+  return TILE_AREA_ADDRESS_INC * screenAreaId;
+}
+
 std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
                                                  const std::uint16_t& x,
                                                  const std::uint16_t& y) {
-  const std::uint32_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
-                      TILE_AREA_WIDTH = 32, BYTES_PER_ENTRY = 2;
-
   // Get tile coords
-  auto mapY = y / TILE_PIXEL_HEIGHT;
   auto mapX = x / TILE_PIXEL_WIDTH;
-  auto mapIndex = mapX + (mapY * TILE_AREA_WIDTH);
-  auto pixelY = y % TILE_PIXEL_HEIGHT;
+  auto mapY = y / TILE_PIXEL_HEIGHT;
+  auto mapIndex =
+      (mapX % TILE_AREA_WIDTH) + ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
   auto pixelX = x % TILE_PIXEL_WIDTH;
+  auto pixelY = y % TILE_PIXEL_HEIGHT;
 
+  auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt.screenSize);
   // Parse tile data
-  auto bgMapEntry = getHalf(bgCnt.mapDataBase + (mapIndex * BYTES_PER_ENTRY));
+  auto bgMapEntry = getHalf(bgCnt.mapDataBase + screenAreaAddressInc +
+                            (mapIndex * BYTES_PER_ENTRY));
   auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
   bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
   bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
@@ -109,10 +143,10 @@ std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
 
   // Deal with flips
   if (verticalFlip) {
-	pixelY = TILE_PIXEL_HEIGHT - pixelY - 1;
+	pixelY = TILE_PIXEL_HEIGHT - (pixelY + 1);
   }
   if (horizontalFlip) {
-	pixelX = TILE_PIXEL_WIDTH - pixelX - 1;
+	pixelX = TILE_PIXEL_WIDTH - (pixelX + 1);
   }
 
   // Calculate position of tile pixel
@@ -135,12 +169,17 @@ std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
   }
 }
 
-void PPU::TextBGLine(const uint32_t& BG_ID) {
+void PPU::TextBGLine(const std::uint32_t& BG_ID) {
   auto bgCnt = BGControlInfo(BG_ID, getHalf(BGCNT[BG_ID]));
+  auto bgXOffset = getHalf(BGHOFS[BG_ID]) & NBIT_MASK(9);
+  auto bgYOffset = getHalf(BGVOFS[BG_ID]) & NBIT_MASK(9);
+
   auto y = getHalf(VCOUNT);
   for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
+	auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
+	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
 	auto fbPos = Screen::SCREEN_WIDTH * y + x;
-	fb[fbPos] = TilePixelAtAbsoluteBGPosition(bgCnt, x, y);
+	fb[fbPos] = TilePixelAtAbsoluteBGPosition(bgCnt, absoluteX, absoluteY);
   }
 }
 

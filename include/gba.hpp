@@ -6,7 +6,7 @@
 #include "debugger.hpp"
 #include "dma_controller.hpp"
 #include "memory.hpp"
-#include "ppu.hpp"
+#include "ppu/ppu.hpp"
 #include "screen.hpp"
 #include "spdlog/spdlog.h"
 #include "system_clock.hpp"
