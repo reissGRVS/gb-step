@@ -5,7 +5,8 @@
 
 const std::uint32_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
                     TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32,
-                    TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2;
+                    TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
+                    OBJ_START_ADDRESS = 0x06010000;
 
 const std::uint16_t TEXT_BGMAP_SIZES[4][2] = {{256, 256},
                                               {512, 256},
@@ -25,16 +26,16 @@ void PPU::Execute(std::uint32_t ticks) {
 		tickCount = tickCount - CYCLES_PER_VISIBLE;
 		state = HBlank;
 
-		drawLine();
+		DrawLine();
 		// Set HBlank flag and Request Interrupt
-		auto dispStat = getHalf(DISPSTAT);
+		auto dispStat = GetHalf(DISPSTAT);
 		BIT_SET(dispStat, 1);
-		setHalf(DISPSTAT, dispStat);
+		SetHalf(DISPSTAT, dispStat);
 		if (BIT_RANGE(dispStat, 4, 4)) {
 		  spdlog::get("std")->debug("HBlank IntReq");
-		  auto intReq = getHalf(IF);
+		  auto intReq = GetHalf(IF);
 		  BIT_SET(intReq, 1);
-		  setHalf(IF, intReq);
+		  SetHalf(IF, intReq);
 		}
 	  }
 	  break;
@@ -44,29 +45,31 @@ void PPU::Execute(std::uint32_t ticks) {
 		tickCount = tickCount - CYCLES_PER_HBLANK;
 
 		// Set HBlank flag to 0
-		auto dispStat = getHalf(DISPSTAT);
+		auto dispStat = GetHalf(DISPSTAT);
 		BIT_CLEAR(dispStat, 1);
-		setHalf(DISPSTAT, dispStat);
+		SetHalf(DISPSTAT, dispStat);
 
-		auto vCount = getHalf(VCOUNT);
+		auto vCount = GetHalf(VCOUNT);
 		vCount++;
-		setHalf(VCOUNT, vCount);
+		SetHalf(VCOUNT, vCount);
 		spdlog::get("std")->debug("HBlank Line {}", vCount);
 
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
 
+		  DrawObjects();
 		  screen.render(fb);
+		  fb.fill(0);
 
 		  // Set VBlank flag and Request Interrupt
 		  BIT_SET(dispStat, 0);
 		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
-		  setHalf(DISPSTAT, dispStat);
+		  SetHalf(DISPSTAT, dispStat);
 		  if (BIT_RANGE(dispStat, 3, 3)) {
 			spdlog::get("std")->debug("VBlank IntReq");
-			auto intReq = getHalf(IF);
+			auto intReq = GetHalf(IF);
 			BIT_SET(intReq, 0);
-			setHalf(IF, intReq);
+			SetHalf(IF, intReq);
 		  }
 		} else {
 		  state = Visible;
@@ -78,18 +81,18 @@ void PPU::Execute(std::uint32_t ticks) {
 	  if (tickCount > CYCLES_PER_LINE) {
 		tickCount = tickCount - CYCLES_PER_LINE;
 
-		auto vCount = getHalf(VCOUNT);
+		auto vCount = GetHalf(VCOUNT);
 		vCount++;
-		setHalf(VCOUNT, vCount);
+		SetHalf(VCOUNT, vCount);
 
 		if (vCount == 227) {
 		  // Set VBlank flag to 0
-		  auto dispStat = getHalf(DISPSTAT);
+		  auto dispStat = GetHalf(DISPSTAT);
 		  BIT_CLEAR(dispStat, 0);
-		  setHalf(DISPSTAT, dispStat);
+		  SetHalf(DISPSTAT, dispStat);
 		}
 		if (vCount >= TOTAL_LINES) {
-		  setHalf(VCOUNT, 0);
+		  SetHalf(VCOUNT, 0);
 		  spdlog::get("std")->debug("VCount cleared");
 		  state = Visible;
 		}
@@ -121,9 +124,10 @@ std::uint32_t GetScreenAreaOffset(std::uint32_t mapX,
   return TILE_AREA_ADDRESS_INC * screenAreaId;
 }
 
-std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
-                                                 const std::uint16_t& x,
-                                                 const std::uint16_t& y) {
+std::optional<std::uint16_t> PPU::TilePixelAtAbsoluteBGPosition(
+    const BGControlInfo& bgCnt,
+    const std::uint16_t& x,
+    const std::uint16_t& y) {
   // Get tile coords
   auto mapX = x / TILE_PIXEL_WIDTH;
   auto mapY = y / TILE_PIXEL_HEIGHT;
@@ -134,64 +138,161 @@ std::uint16_t PPU::TilePixelAtAbsoluteBGPosition(const BGControlInfo& bgCnt,
 
   auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt.screenSize);
   // Parse tile data
-  auto bgMapEntry = getHalf(bgCnt.mapDataBase + screenAreaAddressInc +
+  auto bgMapEntry = GetHalf(bgCnt.mapDataBase + screenAreaAddressInc +
                             (mapIndex * BYTES_PER_ENTRY));
   auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
   bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
   bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
   auto paletteNumber = BIT_RANGE(bgMapEntry, 12, 15);
 
+  return GetTilePixel(tileNumber, pixelX, pixelY, bgCnt.colorDepth,
+                      bgCnt.tileDataBase, verticalFlip, horizontalFlip,
+                      paletteNumber);
+}
+
+std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
+                                               std::uint16_t x,
+                                               std::uint16_t y,
+                                               std::uint16_t colorDepth,
+                                               std::uint32_t tileDataBase,
+                                               bool verticalFlip,
+                                               bool horizontalFlip,
+                                               std::uint16_t paletteNumber) {
+  // Calculate position of tile pixel
+  auto bytesPerTile = colorDepth * TILE_PIXEL_HEIGHT;
+  auto startOfTileAddress = tileDataBase + (tileNumber * bytesPerTile);
+  auto pixelsPerByte = 8 / colorDepth;
+  auto positionInTile = (x / pixelsPerByte) + (y * colorDepth);
+  auto pixelPalette = GetByte(startOfTileAddress + positionInTile);
+
   // Deal with flips
   if (verticalFlip) {
-	pixelY = TILE_PIXEL_HEIGHT - (pixelY + 1);
+	y = TILE_PIXEL_HEIGHT - (y + 1);
   }
   if (horizontalFlip) {
-	pixelX = TILE_PIXEL_WIDTH - (pixelX + 1);
+	x = TILE_PIXEL_WIDTH - (x + 1);
   }
 
-  // Calculate position of tile pixel
-  auto bytesPerTile = bgCnt.colorDepth * TILE_PIXEL_HEIGHT;
-  auto startOfTileAddress = bgCnt.tileDataBase + (tileNumber * bytesPerTile);
-  auto positionInTile =
-      (pixelX / bgCnt.pixelsPerByte) + (pixelY * bgCnt.colorDepth);
-  auto pixelPalette = getByte(startOfTileAddress + positionInTile);
-
-  if (bgCnt.colorDepth == 4) {
-	if ((pixelX % 2 == 0) != horizontalFlip) {
+  if (colorDepth == 4) {
+	if ((x % 2 == 0) != horizontalFlip) {
 	  pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
 	} else {
 	  pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
 	}
-	return getBgColorFromPalette(paletteNumber, pixelPalette);
+	if (pixelPalette == 0)
+	  return {};
+	return GetBgColorFromPalette(paletteNumber, pixelPalette);
   } else  // equal to 8
   {
-	return getBgColorFromPalette(pixelPalette);
+	if (pixelPalette == 0)
+	  return {};
+	return GetBgColorFromPalette(pixelPalette);
   }
 }
 
 void PPU::TextBGLine(const std::uint32_t& BG_ID) {
-  auto bgCnt = BGControlInfo(BG_ID, getHalf(BGCNT[BG_ID]));
-  auto bgXOffset = getHalf(BGHOFS[BG_ID]) & NBIT_MASK(9);
-  auto bgYOffset = getHalf(BGVOFS[BG_ID]) & NBIT_MASK(9);
+  auto bgCnt = BGControlInfo(BG_ID, GetHalf(BGCNT[BG_ID]));
+  auto bgXOffset = GetHalf(BGHOFS[BG_ID]) & NBIT_MASK(9);
+  auto bgYOffset = GetHalf(BGVOFS[BG_ID]) & NBIT_MASK(9);
 
-  auto y = getHalf(VCOUNT);
+  auto y = GetHalf(VCOUNT);
   for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
 	auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
 	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
-	auto fbPos = Screen::SCREEN_WIDTH * y + x;
-	fb[fbPos] = TilePixelAtAbsoluteBGPosition(bgCnt, absoluteX, absoluteY);
+	auto framebufferIndex = Screen::SCREEN_WIDTH * y + x;
+	auto pixel = TilePixelAtAbsoluteBGPosition(bgCnt, absoluteX, absoluteY);
+	if (pixel)
+	  fb[framebufferIndex] = pixel.value();
   }
 }
 
-void PPU::drawLine() {
-  auto vCount = getHalf(VCOUNT);
-  auto dispCnt = getHalf(DISPCNT);
+const std::uint32_t OAM_ENTRIES = 128;
+void PPU::DrawObjects() {
+  for (std::uint32_t i = 0; i < OAM_ENTRIES; i++) {
+	auto objAddress = OAM_START + (i * 8);
+	auto objAttr0 = GetHalf(objAddress);
+	auto drawObjectEnabled = BIT_RANGE(objAttr0, 8, 9) != 0b10;
+	if (drawObjectEnabled) {
+	  auto objAttr1 = GetHalf(objAddress + 2);
+	  auto objAttr2 = GetHalf(objAddress + 4);
+	  auto objAttrs = ObjAttributes(objAttr0, objAttr1, objAttr2);
+	  DrawObject(objAttrs);
+	}
+  }
+}
+
+const uint16_t objDimensions[4][3][2] = {{{1, 1}, {2, 1}, {1, 2}},
+                                         {{2, 2}, {4, 1}, {1, 4}},
+                                         {{4, 4}, {4, 2}, {2, 4}},
+                                         {{8, 8}, {8, 4}, {4, 8}}};
+
+void PPU::DrawObject(ObjAttributes objAttrs) {
+  auto [spriteWidth, spriteHeight] =
+      objDimensions[objAttrs.attr1.b.objSize][objAttrs.attr0.b.objShape];
+  auto topLeftTile = objAttrs.attr2.b.characterName;
+  auto characterMapping = BIT_RANGE(GetHalf(DISPCNT), 6, 6);
+  auto halfTiles = objAttrs.attr0.b.colorsPalettes ? 2u : 1u;
+  auto colorDepth = objAttrs.attr0.b.colorsPalettes ? 8u : 4u;
+  auto tileYIncrement = characterMapping ? (halfTiles * spriteWidth) : 0x20;
+
+  for (auto tileX = 0; tileX < spriteWidth; tileX++) {
+	for (auto tileY = 0; tileY < spriteHeight; tileY++) {
+	  auto tileNumber =
+	      topLeftTile + (tileX * halfTiles) + (tileY * tileYIncrement);
+
+	  auto actualTileX = tileX;
+	  if (objAttrs.attr1.b.horizontalFlip)
+		actualTileX = spriteWidth - tileX - 1;
+	  auto actualTileY = tileY;
+	  if (objAttrs.attr1.b.verticalFlip)
+		actualTileY = spriteHeight - tileY - 1;
+
+	  auto x = objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX;
+	  auto y = objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY;
+
+	  DrawTile(x, y, tileNumber, colorDepth, OBJ_START_ADDRESS,
+	           objAttrs.attr1.b.verticalFlip, objAttrs.attr1.b.horizontalFlip,
+	           objAttrs.attr2.b.paletteNumber);
+	}
+  }
+}
+
+void PPU::DrawTile(std::uint16_t startX,
+                   std::uint16_t startY,
+                   std::uint16_t tileNumber,
+                   std::uint16_t colorDepth,
+                   std::uint32_t tileDataBase,
+                   bool verticalFlip,
+                   bool horizontalFlip,
+                   std::uint16_t paletteNumber) {
+  for (auto x = 0u; x < TILE_PIXEL_WIDTH; x++) {
+	for (auto y = 0u; y < TILE_PIXEL_HEIGHT; y++) {
+	  auto totalX = (x + startX);
+	  auto totalY = (y + startY);
+	  if (totalX < Screen::SCREEN_WIDTH && totalY < Screen::SCREEN_HEIGHT) {
+		auto pixel = GetTilePixel(tileNumber, x, y, colorDepth, tileDataBase,
+		                          verticalFlip, horizontalFlip, paletteNumber);
+		if (pixel) {
+		  auto fbPos = totalX + (Screen::SCREEN_WIDTH * totalY);
+		  fb[fbPos] = pixel.value();
+		}
+	  }
+	}
+  }
+}
+
+void PPU::DrawLine() {
+  auto vCount = GetHalf(VCOUNT);
+  auto dispCnt = GetHalf(DISPCNT);
   auto bgMode = BIT_RANGE(dispCnt, 0, 2);
   auto frame = BIT_RANGE(dispCnt, 3, 3);
 
   switch (bgMode) {
 	case 0:
 	  // TODO: This is dumb, get rid of this, temp solution
+	  TextBGLine(3);
+	  TextBGLine(2);
+	  TextBGLine(1);
 	  TextBGLine(0);
 	  break;
 	case 1:
@@ -203,15 +304,15 @@ void PPU::drawLine() {
 	case 3: {
 	  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
 	       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
-		fb[pixel] = getHalf(VRAM_START + pixel * 2);
+		fb[pixel] = GetHalf(VRAM_START + pixel * 2);
 	  }
 	} break;
 	case 4:
 	case 5: {
 	  for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
 	       pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
-		auto colorID = getByte(VRAM_START + (frame * 0xA000) + pixel);
-		fb[pixel] = getBgColorFromPalette(colorID);
+		auto colorID = GetByte(VRAM_START + (frame * 0xA000) + pixel);
+		fb[pixel] = GetBgColorFromPalette(colorID);
 	  }
 	  // TODO: Actually implement Mode 5
 	} break;
@@ -223,23 +324,23 @@ void PPU::drawLine() {
   return;
 }
 
-std::uint16_t PPU::getBgColorFromPalette(const std::uint32_t& paletteNumber,
+std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& paletteNumber,
                                          const std::uint32_t& colorID) {
-  return getBgColorFromPalette(paletteNumber * 16u + colorID);
+  return GetBgColorFromPalette(paletteNumber * 16u + colorID);
 }
 
-std::uint16_t PPU::getBgColorFromPalette(const std::uint32_t& colorID) {
-  return getHalf(colorID * 2 + PRAM_START);
+std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& colorID) {
+  return GetHalf(colorID * 2 + PRAM_START);
 }
 
-std::uint8_t PPU::getByte(const std::uint32_t& address) {
+std::uint8_t PPU::GetByte(const std::uint32_t& address) {
   return memory->Read(AccessSize::Byte, address, Sequentiality::FREE);
 }
 
-std::uint16_t PPU::getHalf(const std::uint32_t& address) {
+std::uint16_t PPU::GetHalf(const std::uint32_t& address) {
   return memory->Read(AccessSize::Half, address, Sequentiality::FREE);
 }
 
-void PPU::setHalf(const std::uint32_t& address, const std::uint16_t& value) {
+void PPU::SetHalf(const std::uint32_t& address, const std::uint16_t& value) {
   return memory->Write(AccessSize::Half, address, value, Sequentiality::FREE);
 }

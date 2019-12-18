@@ -16,7 +16,6 @@ struct BGControlInfo {
         mosaic(BIT_RANGE(bgCnt, 6, 6)),
         colorsPalettes(BIT_RANGE(bgCnt, 7, 7)),
         colorDepth(colorsPalettes ? 8u : 4u),
-        pixelsPerByte(8 / colorDepth),
         mapDataBase(VRAM_START +
                     BIT_RANGE(bgCnt, 8, 12) * BG_MAP_DATA_UNITSIZE),
         wrapAround(BIT_RANGE(bgCnt, 13, 13) || ID == 0 || ID == 1),
@@ -29,7 +28,6 @@ struct BGControlInfo {
   const bool mosaic;
   const uint_fast8_t colorsPalettes;
   const uint_fast8_t colorDepth;
-  const uint_fast8_t pixelsPerByte;
 
   const std::uint32_t mapDataBase;
   const bool wrapAround;
