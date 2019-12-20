@@ -10,7 +10,7 @@
 #include "screen.hpp"
 #include "spdlog/spdlog.h"
 #include "system_clock.hpp"
-#include "timer.hpp"
+#include "timers.hpp"
 
 struct GBAConfig {
   std::string biosPath;
@@ -31,7 +31,7 @@ class GBA {
         cpu(sysClock, memory),
         ppu(memory, cfg.screen),
         debugger(memory),
-        timer(memory),
+        timers(memory),
         dma(memory) {
 	memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 	                                        &debugger, std::placeholders::_1));
@@ -61,28 +61,28 @@ class GBA {
 
 	memory->SetIOWriteCallback(
 	    TM0CNT_L,
-	    std::bind(&Timer::SetReloadValue, &timer, 0, std::placeholders::_1));
+	    std::bind(&Timers::SetReloadValue, &timers, 0, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM0CNT_H,
-	    std::bind(&Timer::TimerCntHUpdate, &timer, 0, std::placeholders::_1));
+	    std::bind(&Timers::TimerCntHUpdate, &timers, 0, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM1CNT_L,
-	    std::bind(&Timer::SetReloadValue, &timer, 1, std::placeholders::_1));
+	    std::bind(&Timers::SetReloadValue, &timers, 1, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM1CNT_H,
-	    std::bind(&Timer::TimerCntHUpdate, &timer, 1, std::placeholders::_1));
+	    std::bind(&Timers::TimerCntHUpdate, &timers, 1, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM2CNT_L,
-	    std::bind(&Timer::SetReloadValue, &timer, 2, std::placeholders::_1));
+	    std::bind(&Timers::SetReloadValue, &timers, 2, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM2CNT_H,
-	    std::bind(&Timer::TimerCntHUpdate, &timer, 2, std::placeholders::_1));
+	    std::bind(&Timers::TimerCntHUpdate, &timers, 2, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM3CNT_L,
-	    std::bind(&Timer::SetReloadValue, &timer, 3, std::placeholders::_1));
+	    std::bind(&Timers::SetReloadValue, &timers, 3, std::placeholders::_1));
 	memory->SetIOWriteCallback(
 	    TM3CNT_H,
-	    std::bind(&Timer::TimerCntHUpdate, &timer, 3, std::placeholders::_1));
+	    std::bind(&Timers::TimerCntHUpdate, &timers, 3, std::placeholders::_1));
   };
 
   void run() {
@@ -93,7 +93,7 @@ class GBA {
 	  cpu.Execute();
 	  auto ticks = sysClock->SinceLastCheck();
 	  ppu.Execute(ticks);
-	  timer.Update(ticks);
+	  timers.Update(ticks);
 	}
   };
 
@@ -103,6 +103,6 @@ class GBA {
   ARM7TDMI::CPU cpu;
   PPU ppu;
   Debugger debugger;
-  Timer timer;
+  Timers timers;
   DMAController dma;
 };
