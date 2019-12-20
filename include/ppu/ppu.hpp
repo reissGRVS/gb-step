@@ -6,6 +6,7 @@
 #include "screen.hpp"
 
 #include <optional>
+#include <vector>
 
 class PPU {
   enum State { Visible, HBlank, VBlank };
@@ -17,7 +18,6 @@ class PPU {
 
  private:
   void DrawLine();
-
   void DrawObjects();
   void DrawObject(ObjAttributes objAttrs);
   void DrawTile(std::uint16_t startX,
@@ -43,6 +43,10 @@ class PPU {
       const std::uint16_t& x,
       const std::uint16_t& y);
   void TextBGLine(const uint32_t& BG_ID);
+
+  uint8_t GetLayerPriority(uint8_t layer);
+  std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
+                                      uint8_t screenDisplay);
 
   std::uint16_t GetBgColorFromPalette(const std::uint32_t& paletteNumber,
                                       const std::uint32_t& colorID);

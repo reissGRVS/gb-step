@@ -1,4 +1,5 @@
 #include "ppu/ppu.hpp"
+#include <map>
 #include "memory_regions.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
@@ -158,13 +159,6 @@ std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
                                                bool verticalFlip,
                                                bool horizontalFlip,
                                                std::uint16_t paletteNumber) {
-  // Calculate position of tile pixel
-  auto bytesPerTile = colorDepth * TILE_PIXEL_HEIGHT;
-  auto startOfTileAddress = tileDataBase + (tileNumber * bytesPerTile);
-  auto pixelsPerByte = 8 / colorDepth;
-  auto positionInTile = (x / pixelsPerByte) + (y * colorDepth);
-  auto pixelPalette = GetByte(startOfTileAddress + positionInTile);
-
   // Deal with flips
   if (verticalFlip) {
 	y = TILE_PIXEL_HEIGHT - (y + 1);
@@ -173,8 +167,15 @@ std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
 	x = TILE_PIXEL_WIDTH - (x + 1);
   }
 
+  // Calculate position of tile pixel
+  auto bytesPerTile = colorDepth * TILE_PIXEL_HEIGHT;
+  auto startOfTileAddress = tileDataBase + (tileNumber * bytesPerTile);
+  auto pixelsPerByte = 8 / colorDepth;
+  auto positionInTile = (x / pixelsPerByte) + (y * colorDepth);
+  auto pixelPalette = GetByte(startOfTileAddress + positionInTile);
+
   if (colorDepth == 4) {
-	if ((x % 2 == 0) != horizontalFlip) {
+	if ((x % 2 == 0)) {
 	  pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
 	} else {
 	  pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
@@ -208,7 +209,7 @@ void PPU::TextBGLine(const std::uint32_t& BG_ID) {
 
 const std::uint32_t OAM_ENTRIES = 128;
 void PPU::DrawObjects() {
-  for (std::uint32_t i = 0; i < OAM_ENTRIES; i++) {
+  for (std::int32_t i = OAM_ENTRIES - 1; i >= 0; i--) {
 	auto objAddress = OAM_START + (i * 8);
 	auto objAttr0 = GetHalf(objAddress);
 	auto drawObjectEnabled = BIT_RANGE(objAttr0, 8, 9) != 0b10;
@@ -240,9 +241,13 @@ void PPU::DrawObject(ObjAttributes objAttrs) {
 	  auto tileNumber =
 	      topLeftTile + (tileX * halfTiles) + (tileY * tileYIncrement);
 
+	  if (colorDepth == 8)
+		tileNumber /= 2;
+
 	  auto actualTileX = tileX;
 	  if (objAttrs.attr1.b.horizontalFlip)
 		actualTileX = spriteWidth - tileX - 1;
+
 	  auto actualTileY = tileY;
 	  if (objAttrs.attr1.b.verticalFlip)
 		actualTileY = spriteHeight - tileY - 1;
@@ -280,21 +285,52 @@ void PPU::DrawTile(std::uint16_t startX,
 	}
   }
 }
+uint8_t PPU::GetLayerPriority(uint8_t layer) {
+  auto bgCnt = GetHalf(BGCNT[layer]);
+  auto bgPriority = BIT_RANGE(bgCnt, 0, 1);
+  return bgPriority;
+}
+
+std::vector<uint8_t> PPU::GetBGDrawOrder(std::vector<uint8_t> layers,
+                                         uint8_t screenDisplay) {
+  // Find active layers
+  std::vector<uint8_t> activeLayers = {};
+  for (const auto& layer : layers) {
+	if (BIT_RANGE(screenDisplay, layer, layer)) {
+	  activeLayers.push_back(layer);
+	}
+  }
+  // Order active layers
+  std::map<uint8_t, uint8_t> orderedLayers;
+  for (const auto& layer : activeLayers) {
+	const uint8_t NUM_BGS = 4;
+	auto layerScore = layer + GetLayerPriority(layer) * NUM_BGS;
+	orderedLayers[layerScore] = layer;
+  }
+
+  std::vector<uint8_t> resultLayers = {};
+  for (const auto& pair : orderedLayers) {
+	resultLayers.push_back(pair.second);
+  }
+
+  return resultLayers;
+}
 
 void PPU::DrawLine() {
   auto vCount = GetHalf(VCOUNT);
   auto dispCnt = GetHalf(DISPCNT);
+  auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
   auto bgMode = BIT_RANGE(dispCnt, 0, 2);
   auto frame = BIT_RANGE(dispCnt, 3, 3);
 
   switch (bgMode) {
-	case 0:
-	  // TODO: This is dumb, get rid of this, temp solution
-	  TextBGLine(3);
-	  TextBGLine(2);
-	  TextBGLine(1);
-	  TextBGLine(0);
+	case 0: {
+	  auto bgOrder = GetBGDrawOrder({0, 1, 2, 3}, screenDisplay);
+	  for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
+		TextBGLine(*bg);
+	  }
 	  break;
+	}
 	case 1:
 	  TextBGLine(0);
 	  break;
