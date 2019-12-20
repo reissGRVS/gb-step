@@ -66,7 +66,7 @@ uint32_t Memory::Read(AccessSize size,
 		return ReadToSize(&mem.gen.bios[address & BIOS_MASK], size);
 	  } else {
 		spdlog::get("std")->error("Reading from Invalid BIOS memory");
-		exit(-1);
+		return 0;
 	  }
 	case 0x01: {
 	  spdlog::get("std")->error("Reading from Unused memory");
@@ -104,7 +104,7 @@ uint32_t Memory::Read(AccessSize size,
 
   spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
   PublishWriteCallback(1);
-  exit(-1);
+  return 0;
 }
 
 void Memory::WriteToSize(std::uint8_t* byte,
@@ -255,24 +255,54 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
 	  clock->Tick(1);
 	  break;
 	case 0x08:
-	case 0x09:
+	case 0x09: {
 	  // Game Pak ROM/FlashROM - WS0
-	  TickBySize(size, 5, 5, 8);
+	  const std::array<uint8_t, 4> WS0_NSEQ = {4, 3, 2, 8};
+	  const std::array<uint8_t, 2> WS0_SEQ = {2, 1};
+	  auto waitCnt = getHalf(WAITCNT);
+
+	  auto secondAccess = WS0_SEQ[BIT_RANGE(waitCnt, 4, 4)] + 1;
+	  auto firstAccess =
+	      (seq == SEQ) ? secondAccess : WS0_NSEQ[BIT_RANGE(waitCnt, 2, 3)] + 1;
+
+	  TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
 	  break;
+	}
 	case 0x0A:
-	case 0x0B:
+	case 0x0B: {
 	  // Game Pak ROM/FlashROM - WS1
-	  TickBySize(size, 5, 5, 8);
+	  const std::array<uint8_t, 4> WS1_NSEQ = {4, 3, 2, 8};
+	  const std::array<uint8_t, 2> WS1_SEQ = {4, 1};
+	  auto waitCnt = getHalf(WAITCNT);
+
+	  auto secondAccess = WS1_SEQ[BIT_RANGE(waitCnt, 7, 7)] + 1;
+	  auto firstAccess =
+	      (seq == SEQ) ? secondAccess : WS1_NSEQ[BIT_RANGE(waitCnt, 5, 6)] + 1;
+
+	  TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
 	  break;
+	}
 	case 0x0C:
-	case 0x0D:
+	case 0x0D: {
 	  // Game Pak ROM/FlashROM - WS2
-	  TickBySize(size, 5, 5, 8);
+	  const std::array<uint8_t, 4> WS2_NSEQ = {4, 3, 2, 8};
+	  const std::array<uint8_t, 2> WS2_SEQ = {8, 1};
+	  auto waitCnt = getHalf(WAITCNT);
+
+	  auto secondAccess = WS2_SEQ[BIT_RANGE(waitCnt, 10, 10)] + 1;
+	  auto firstAccess =
+	      (seq == SEQ) ? secondAccess : WS2_NSEQ[BIT_RANGE(waitCnt, 8, 9)] + 1;
+	  TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
 	  break;
-	case 0x0E:
-	  // Game Pak SRAM
-	  clock->Tick(5);
+	}
+	case 0x0E: {
+	  // Game Pak ROM/FlashROM - WS2
+	  const std::array<uint8_t, 4> SRAM_NSEQ = {4, 3, 2, 8};
+	  auto waitCnt = getHalf(WAITCNT);
+	  auto firstAccess = SRAM_NSEQ[BIT_RANGE(waitCnt, 0, 1)] + 1;
+	  clock->Tick(firstAccess);
 	  break;
+	} break;
 	default:
 	  break;
   }
