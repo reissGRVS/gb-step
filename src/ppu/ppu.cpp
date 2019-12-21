@@ -355,7 +355,6 @@ void PPU::DrawLine() {
 	default:
 	  spdlog::get("std")->error("Unsupported bgMode");
 	  break;
-	  // TODO: complain
   }
   return;
 }

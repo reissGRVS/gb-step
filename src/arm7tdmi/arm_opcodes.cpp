@@ -698,7 +698,7 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
                                  std::uint32_t H,
                                  std::uint32_t Rm) {
   auto Offset = registers.get((Register)Rm);
-  spdlog::get("std")->debug("HDT Reg Offset {:X}", Offset);
+  spdlog::get("std")->trace("HDT Reg Offset {:X}", Offset);
   ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
 
@@ -747,7 +747,7 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
   }
 
   auto memAddr = base;
-  spdlog::get("std")->debug("HDT memAddr {:X} baseOffset {:X}", memAddr,
+  spdlog::get("std")->trace("HDT memAddr {:X} baseOffset {:X}", memAddr,
                             baseOffset);
   if (P) {
 	memAddr = baseOffset;
@@ -788,7 +788,7 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
   {
 	if (H)  // HalfWord
 	{
-	  spdlog::get("std")->debug("HDT Store memAddr {:X} value {:X}", memAddr,
+	  spdlog::get("std")->trace("HDT Store memAddr {:X} value {:X}", memAddr,
 	                            destReg);
 	  memory->Write(AccessSize::Half, memAddr, destReg, Sequentiality::NSEQ);
 	}

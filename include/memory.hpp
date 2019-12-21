@@ -73,8 +73,8 @@ class Memory {
 	} disp;
 
 	struct {
-	  // TODO: Make this as small as possible when rom is loaded?
 	  std::array<std::uint8_t, ROM_SIZE> rom{};
+	  std::array<std::uint8_t, SRAM_SIZE> sram{};
 	} ext;
   } mem;
 };

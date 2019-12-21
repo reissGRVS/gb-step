@@ -96,8 +96,7 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
 	case 0x0E:
-	  // TODO: Implement Gamepak SRAM saves
-	  return 0;
+	  return ReadToSize(&mem.ext.sram[address & SRAM_MASK], size);
 	default:
 	  break;
   }
@@ -137,6 +136,7 @@ void Memory::Write(AccessSize size,
   PublishWriteCallback(address);
 #endif
   Tick(size, page, seq);
+  // TODO: Check if bus widths affect anything
   switch (page) {
 	case 0x02:
 	  WriteToSize(&mem.gen.wramb[address & WRAMB_MASK], value, size);
@@ -172,7 +172,7 @@ void Memory::Write(AccessSize size,
 
 		  callback = ioCallbacks.find(address + 2);
 		  if (callback != ioCallbacks.end()) {
-			callback->second(value);
+			callback->second(value >> 16);
 		  } else {
 			WriteToSize(&mem.gen.ioreg[(address + 2) & IOREG_MASK], value >> 16,
 			            Half);
@@ -191,6 +191,8 @@ void Memory::Write(AccessSize size,
 	case 0x07:
 	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
 	  break;
+	case 0x0E:
+	  WriteToSize(&mem.ext.sram[address & SRAM_MASK], value, size);
 	default:
 	  break;
   }
@@ -219,9 +221,6 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
   }
   // TODO: Plus 1 cycle if GBA accesses video memory at the same time. for OAM
   // PRAM VRAM
-  // TODO: Waitstate settings for WRAM 256, GamePak
-  // TODO: Separate timings for sequential, and non-sequential accesses. Gamepak
-  // ROM and Flash
   switch (page) {
 	case 0x00:
 	  // BIOS
