@@ -36,7 +36,8 @@ class PPU {
                                             std::uint32_t tileDataBase,
                                             bool verticalFlip,
                                             bool horizontalFlip,
-                                            std::uint16_t paletteNumber);
+                                            std::uint16_t paletteNumber,
+                                            bool obj);
 
   std::optional<std::uint16_t> TilePixelAtAbsoluteBGPosition(
       const BGControlInfo& bgCnt,
@@ -48,9 +49,11 @@ class PPU {
   std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
                                       uint8_t screenDisplay);
 
-  std::uint16_t GetBgColorFromPalette(const std::uint32_t& paletteNumber,
-                                      const std::uint32_t& colorID);
-  std::uint16_t GetBgColorFromPalette(const std::uint32_t& colorID);
+  std::uint16_t GetBgColorFromSubPalette(const std::uint32_t& paletteNumber,
+                                         const std::uint32_t& colorID,
+                                         bool obj = false);
+  std::uint16_t GetBgColorFromPalette(const std::uint32_t& colorID,
+                                      bool obj = false);
   std::uint8_t GetByte(const std::uint32_t& address);
   std::uint16_t GetHalf(const std::uint32_t& address);
   void SetHalf(const std::uint32_t& address, const std::uint16_t& value);

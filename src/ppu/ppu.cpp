@@ -57,7 +57,6 @@ void PPU::Execute(std::uint32_t ticks) {
 
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
-
 		  DrawObjects();
 		  screen.render(fb);
 		  fb.fill(0);
@@ -148,7 +147,7 @@ std::optional<std::uint16_t> PPU::TilePixelAtAbsoluteBGPosition(
 
   return GetTilePixel(tileNumber, pixelX, pixelY, bgCnt.colorDepth,
                       bgCnt.tileDataBase, verticalFlip, horizontalFlip,
-                      paletteNumber);
+                      paletteNumber, false);
 }
 
 std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
@@ -158,7 +157,8 @@ std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
                                                std::uint32_t tileDataBase,
                                                bool verticalFlip,
                                                bool horizontalFlip,
-                                               std::uint16_t paletteNumber) {
+                                               std::uint16_t paletteNumber,
+                                               bool obj) {
   // Deal with flips
   if (verticalFlip) {
 	y = TILE_PIXEL_HEIGHT - (y + 1);
@@ -173,21 +173,21 @@ std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
   auto pixelsPerByte = 8 / colorDepth;
   auto positionInTile = (x / pixelsPerByte) + (y * colorDepth);
   auto pixelPalette = GetByte(startOfTileAddress + positionInTile);
-
   if (colorDepth == 4) {
 	if ((x % 2 == 0)) {
 	  pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
 	} else {
 	  pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
 	}
+
 	if (pixelPalette == 0)
 	  return {};
-	return GetBgColorFromPalette(paletteNumber, pixelPalette);
+	return GetBgColorFromSubPalette(paletteNumber, pixelPalette, obj);
   } else  // equal to 8
   {
 	if (pixelPalette == 0)
 	  return {};
-	return GetBgColorFromPalette(pixelPalette);
+	return GetBgColorFromPalette(pixelPalette, obj);
   }
 }
 
@@ -275,8 +275,9 @@ void PPU::DrawTile(std::uint16_t startX,
 	  auto totalX = (x + startX);
 	  auto totalY = (y + startY);
 	  if (totalX < Screen::SCREEN_WIDTH && totalY < Screen::SCREEN_HEIGHT) {
-		auto pixel = GetTilePixel(tileNumber, x, y, colorDepth, tileDataBase,
-		                          verticalFlip, horizontalFlip, paletteNumber);
+		auto pixel =
+		    GetTilePixel(tileNumber, x, y, colorDepth, tileDataBase,
+		                 verticalFlip, horizontalFlip, paletteNumber, true);
 		if (pixel) {
 		  auto fbPos = totalX + (Screen::SCREEN_WIDTH * totalY);
 		  fb[fbPos] = pixel.value();
@@ -321,7 +322,7 @@ void PPU::DrawLine() {
   auto dispCnt = GetHalf(DISPCNT);
   auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
   auto bgMode = BIT_RANGE(dispCnt, 0, 2);
-  auto frame = BIT_RANGE(dispCnt, 3, 3);
+  auto frame = BIT_RANGE(dispCnt, 4, 4);
 
   switch (bgMode) {
 	case 0: {
@@ -331,9 +332,13 @@ void PPU::DrawLine() {
 	  }
 	  break;
 	}
-	case 1:
-	  TextBGLine(0);
+	case 1: {
+	  auto bgOrder = GetBGDrawOrder({0, 1, 2}, screenDisplay);
+	  for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
+		TextBGLine(*bg);
+	  }
 	  break;
+	}
 	case 2:
 	  TextBGLine(2);
 	  break;
@@ -359,13 +364,18 @@ void PPU::DrawLine() {
   return;
 }
 
-std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& paletteNumber,
-                                         const std::uint32_t& colorID) {
-  return GetBgColorFromPalette(paletteNumber * 16u + colorID);
+std::uint16_t PPU::GetBgColorFromSubPalette(const std::uint32_t& paletteNumber,
+                                            const std::uint32_t& colorID,
+                                            bool obj) {
+  return GetBgColorFromPalette(paletteNumber * 16u + colorID, obj);
 }
 
-std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& colorID) {
-  return GetHalf(colorID * 2 + PRAM_START);
+std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& colorID,
+                                         bool obj) {
+  auto paletteStart = PRAM_START;
+  if (obj)
+	paletteStart += 0x200;
+  return GetHalf(colorID * 2 + paletteStart);
 }
 
 std::uint8_t PPU::GetByte(const std::uint32_t& address) {

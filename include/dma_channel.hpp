@@ -47,6 +47,11 @@ class DMAChannel {
 
 	repeat = BIT_RANGE(dmaCnt, 9, 9);
 	startTiming = BIT_RANGE(dmaCnt, 12, 13);
+	if (startTiming == 1 || startTiming == 2) {
+	  spdlog::get("std")->debug("DMA startTiming unimplemented {}",
+	                            startTiming);
+	  exit(-1);
+	}
 	irqAtEnd = BIT_RANGE(dmaCnt, 14, 14);
 
 	spdlog::get("std")->debug(
@@ -68,14 +73,15 @@ class DMAChannel {
 	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl,
 	    firstSrcVal);
 
+	auto seq = NSEQ;
 	while (wordCount > 0) {
 	  // 0 -> 16bit  1 -> 32bit
 	  if (transferType) {
-		memory->setWord(dest, memory->getWord(source));
+		memory->Write(Word, dest, memory->Read(Word, source, seq), seq);
 	  } else {
-		memory->setHalf(dest, memory->getHalf(source));
+		memory->Write(Word, dest, memory->Read(Word, source, seq), seq);
 	  }
-
+	  seq = SEQ;
 	  // Update internal registers
 	  {
 		// Dest Addr Control
