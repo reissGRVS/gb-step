@@ -27,7 +27,8 @@ class PPU {
                 std::uint32_t tileDataBase,
                 bool verticalFlip,
                 bool horizontalFlip,
-                std::uint16_t paletteNumber);
+                std::uint16_t paletteNumber,
+                std::uint16_t priority);
 
   std::optional<std::uint16_t> GetTilePixel(std::uint16_t tileNumber,
                                             std::uint16_t x,
@@ -60,6 +61,8 @@ class PPU {
 
   std::shared_ptr<Memory> memory;
   Screen& screen;
+  //   std::string class_id = "dwoadjoawjc";
+  Screen::Framebuffer depth{4};
   Screen::Framebuffer fb{};
   State state = Visible;
   std::uint32_t tickCount;
@@ -69,4 +72,6 @@ class PPU {
                       VISIBLE_LINES = 160, VBLANK_LINES = 68,
                       TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
                       CYCLES_PER_VBLANK = CYCLES_PER_LINE * VBLANK_LINES;
+
+  const std::uint16_t MAX_DEPTH = 4;
 };

@@ -55,11 +55,12 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 	auto backupID = FindBackupID(length);
 
 	if (backupID == FLASH1M_V) {
-	  // TODO: Construct Flash1M
 	  mem.ext.flash = std::make_unique<Flash>(FlashSize::Double);
 	} else {
+	  // TODO: Implement other backup types
 	  spdlog::get("std")->error("Unsupported Backup type {}", backupID);
-	  exit(-1);
+	  mem.ext.flash = std::make_unique<Flash>(FlashSize::Double);
+	  //   exit(-1);
 	}
   }
 }

@@ -60,6 +60,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  DrawObjects();
 		  screen.render(fb);
 		  fb.fill(0);
+		  depth.fill(MAX_DEPTH);
 
 		  // Set VBlank flag and Request Interrupt
 		  BIT_SET(dispStat, 0);
@@ -201,9 +202,16 @@ void PPU::TextBGLine(const std::uint32_t& BG_ID) {
 	auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
 	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
 	auto framebufferIndex = Screen::SCREEN_WIDTH * y + x;
+
+	if (depth[framebufferIndex] <= bgCnt.priority) {
+	  continue;
+	}
+
 	auto pixel = TilePixelAtAbsoluteBGPosition(bgCnt, absoluteX, absoluteY);
-	if (pixel)
+	if (pixel) {
 	  fb[framebufferIndex] = pixel.value();
+	  depth[framebufferIndex] = bgCnt.priority;
+	}
   }
 }
 
@@ -226,7 +234,7 @@ const uint16_t objDimensions[4][3][2] = {{{1, 1}, {2, 1}, {1, 2}},
                                          {{2, 2}, {4, 1}, {1, 4}},
                                          {{4, 4}, {4, 2}, {2, 4}},
                                          {{8, 8}, {8, 4}, {4, 8}}};
-
+#include <iostream>
 void PPU::DrawObject(ObjAttributes objAttrs) {
   auto [spriteWidth, spriteHeight] =
       objDimensions[objAttrs.attr1.b.objSize][objAttrs.attr0.b.objShape];
@@ -254,10 +262,9 @@ void PPU::DrawObject(ObjAttributes objAttrs) {
 
 	  auto x = objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX;
 	  auto y = objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY;
-
 	  DrawTile(x, y, tileNumber, colorDepth, OBJ_START_ADDRESS,
 	           objAttrs.attr1.b.verticalFlip, objAttrs.attr1.b.horizontalFlip,
-	           objAttrs.attr2.b.paletteNumber);
+	           objAttrs.attr2.b.paletteNumber, objAttrs.attr2.b.priority);
 	}
   }
 }
@@ -269,18 +276,25 @@ void PPU::DrawTile(std::uint16_t startX,
                    std::uint32_t tileDataBase,
                    bool verticalFlip,
                    bool horizontalFlip,
-                   std::uint16_t paletteNumber) {
+                   std::uint16_t paletteNumber,
+                   std::uint16_t priority) {
   for (auto x = 0u; x < TILE_PIXEL_WIDTH; x++) {
 	for (auto y = 0u; y < TILE_PIXEL_HEIGHT; y++) {
 	  auto totalX = (x + startX);
 	  auto totalY = (y + startY);
+
 	  if (totalX < Screen::SCREEN_WIDTH && totalY < Screen::SCREEN_HEIGHT) {
+		auto fbPos = totalX + (Screen::SCREEN_WIDTH * totalY);
+		if (depth[fbPos] < priority) {
+		  continue;
+		}
+
 		auto pixel =
 		    GetTilePixel(tileNumber, x, y, colorDepth, tileDataBase,
 		                 verticalFlip, horizontalFlip, paletteNumber, true);
 		if (pixel) {
-		  auto fbPos = totalX + (Screen::SCREEN_WIDTH * totalY);
 		  fb[fbPos] = pixel.value();
+		  depth[fbPos] = priority;
 		}
 	  }
 	}
@@ -327,9 +341,12 @@ void PPU::DrawLine() {
   switch (bgMode) {
 	case 0: {
 	  auto bgOrder = GetBGDrawOrder({0, 1, 2, 3}, screenDisplay);
-	  for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
-		TextBGLine(*bg);
+	  for (auto bg : bgOrder) {
+		TextBGLine(bg);
 	  }
+	  //   for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
+	  // 	TextBGLine(*bg);
+	  //   }
 	  break;
 	}
 	case 1: {
