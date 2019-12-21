@@ -9,6 +9,7 @@ endif()
 set(SOURCE_FILES
 	src/main.cpp
 	src/memory.cpp
+	src/flash.cpp
 	src/debugger.cpp
 	src/ppu/ppu.cpp
 	src/joypad.cpp

@@ -56,7 +56,7 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 
 	if (backupID == FLASH1M_V) {
 	  // TODO: Construct Flash1M
-
+	  mem.ext.flash = std::make_unique<Flash>(FlashSize::Double);
 	} else {
 	  spdlog::get("std")->error("Unsupported Backup type {}", backupID);
 	  exit(-1);
@@ -127,8 +127,8 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x0C:
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
-	case 0x0E: {
-	}
+	case 0x0E:
+	  return mem.ext.flash->Read(address);
 	default:
 	  break;
   }
@@ -224,7 +224,7 @@ void Memory::Write(AccessSize size,
 	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
 	  break;
 	case 0x0E:
-
+	  return mem.ext.flash->Write(address, value);
 	default:
 	  break;
   }
