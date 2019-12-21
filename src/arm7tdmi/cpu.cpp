@@ -9,10 +9,20 @@ void CPU::Execute() {
   auto opcode = pipeline[0];
   auto& pc = registers.get(R15);
 
+  auto location = memory->Read(Word, 0x03005d88, FREE);
+  //   spdlog::get("std")->info("{:X} = {:X}", 0x03005d88, location);
+  if (pc == 0x8076B88) {
+	exit(-1);
+  }
+  if (location != 0) {
+	exit(-1);
+  }
   auto Operation = ArmOperation(opcode);
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:b}", pc - 2, opcode,
-	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
+	spdlog::get("std")->debug(
+	    "PC:{:X} - Op:{:X} - R0:{:X} - R1:{:X} - R2:{:X} - R3:{:X} - R4:{:X}",
+	    pc - 2, opcode, registers.get(R0), registers.get(R1), registers.get(R2),
+	    registers.get(R3), registers.get(R4));
 	backtrace.addOpPCPair(pc - 2, opcode);
 
 	pc &= ~1;
@@ -23,8 +33,10 @@ void CPU::Execute() {
 
 	Operation = ThumbOperation(opcode);
   } else {
-	spdlog::get("std")->debug("PC:{:X} - Op:{:X} - NZCV {:04b}", pc - 4, opcode,
-	                          SRFlag::get(registers.get(CPSR), SRFlag::flags));
+	spdlog::get("std")->debug(
+	    "PC:{:X} - Op:{:X} - R0:{:X} - R1:{:X} - R2:{:X} - R3:{:X} - R4:{:X}",
+	    pc - 4, opcode, registers.get(R0), registers.get(R1), registers.get(R2),
+	    registers.get(R3), registers.get(R4));
 	backtrace.addOpPCPair(pc - 4, opcode);
 
 	pc &= ~3;

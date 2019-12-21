@@ -31,7 +31,6 @@ class Joypad {
 		}
 	  }
 
-	  // TODO: Add all keys
 	  default:
 		return false;
 	}

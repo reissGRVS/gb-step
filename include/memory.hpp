@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
 
 #include "joypad.hpp"
 #include "memory_regions.hpp"
@@ -47,6 +48,9 @@ class Memory {
   std::shared_ptr<SystemClock> clock;
   std::unordered_map<std::uint32_t, std::function<void(std::uint32_t)>>
       ioCallbacks;
+
+  std::string FindBackupID(size_t length);
+
   std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
   void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
 

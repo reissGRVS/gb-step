@@ -1,10 +1,19 @@
 #include "memory.hpp"
 #include <unistd.h>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
+
+const std::string EEPROM_V = "EEPROM_V";
+const std::string SRAM_V = "SRAM_V";
+const std::string FLASH_V = "FLASH_V";
+const std::string FLASH512_V = "FLASH512_V";
+const std::string FLASH1M_V = "FLASH1M_V";
+const std::array<std::string, 5> BACKUP_ID_STRINGS = {EEPROM_V, SRAM_V, FLASH_V,
+                                                      FLASH512_V, FLASH1M_V};
 
 Memory::Memory(std::shared_ptr<SystemClock> clock,
                std::string biosPath,
@@ -42,7 +51,30 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 	  exit(-1);
 	}
 	infile.read(reinterpret_cast<char*>(mem.ext.rom.data()), length);
+
+	auto backupID = FindBackupID(length);
+
+	if (backupID == FLASH1M_V) {
+	  // TODO: Construct Flash1M
+
+	} else {
+	  spdlog::get("std")->error("Unsupported Backup type {}", backupID);
+	  exit(-1);
+	}
   }
+}
+
+std::string Memory::FindBackupID(size_t length) {
+  for (std::uint32_t romAddr = 0u; romAddr < length; romAddr += 4) {
+	for (const auto& idString : BACKUP_ID_STRINGS) {
+	  if (std::memcmp(idString.c_str(), mem.ext.rom.data() + romAddr,
+	                  idString.size()) == 0) {
+		spdlog::get("std")->error("Backup type {} @ {:X}", idString, romAddr);
+		return idString;
+	  }
+	}
+  }
+  return "NONE";
 }
 
 uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size) {
@@ -95,8 +127,8 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x0C:
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
-	case 0x0E:
-	  return ReadToSize(&mem.ext.sram[address & SRAM_MASK], size);
+	case 0x0E: {
+	}
 	default:
 	  break;
   }
@@ -192,7 +224,7 @@ void Memory::Write(AccessSize size,
 	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
 	  break;
 	case 0x0E:
-	  WriteToSize(&mem.ext.sram[address & SRAM_MASK], value, size);
+
 	default:
 	  break;
   }

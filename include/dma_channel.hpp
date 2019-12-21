@@ -3,7 +3,6 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-// TODO Extend this to work for all channels
 class DMAChannel {
  public:
   DMAChannel(std::int_fast8_t id, std::shared_ptr<Memory> memory_)
@@ -22,7 +21,12 @@ class DMAChannel {
 
 	// Set internal registers on DMA enable
 	if (enable == 1 && prevEnable == 0) {
-	  source = memory->getWord(SAD) & NBIT_MASK(27);
+	  if (ID == 0) {
+		source = memory->getWord(SAD) & NBIT_MASK(27);
+	  } else {
+		source = memory->getWord(SAD) & NBIT_MASK(28);
+	  }
+
 	  if (ID == 3) {
 		dest = memory->getWord(DAD) & NBIT_MASK(28);
 	  } else {
@@ -36,16 +40,16 @@ class DMAChannel {
 	  }
 
 	  if (wordCount == 0) {
-		wordCount = 0x4000;
+		wordCount = (ID == 3) ? 0x10000 : 0x4000;
 	  }
-	  spdlog::get("std")->info("DMA Set Internal Registers");
+	  spdlog::get("std")->debug("DMA Set Internal Registers");
 	}
 
 	repeat = BIT_RANGE(dmaCnt, 9, 9);
 	startTiming = BIT_RANGE(dmaCnt, 12, 13);
 	irqAtEnd = BIT_RANGE(dmaCnt, 14, 14);
 
-	spdlog::get("std")->info(
+	spdlog::get("std")->debug(
 	    "DMA Details Ch {}: enable {}, startTiming {}, src {:X}, dst {:X}, "
 	    "irqAtEnd {}, repeat {}",
 	    ID, enable, startTiming, source, dest, irqAtEnd, repeat);
@@ -57,8 +61,9 @@ class DMAChannel {
 	auto destAddrCtl = BIT_RANGE(dmaCnt, 5, 6);
 	auto srcAddrCtl = BIT_RANGE(dmaCnt, 7, 8);
 	auto firstSrcVal = memory->getWord(source);
-	spdlog::get("std")->info(
-	    "DMA{} starting: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
+	spdlog::get("std")->debug(
+	    "DMA{} starting: src {:X}, dst {:X}, wordCount {:X}, transferType "
+	    "{}, "
 	    "destCtl {}, srcCtl {}, srcVal {:X}",
 	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl,
 	    firstSrcVal);
@@ -105,8 +110,9 @@ class DMAChannel {
 	  }
 	}
 
-	spdlog::get("std")->info(
-	    "DMA{} finishing: src {:X}, dst {:X}, wordCount {:X}, transferType {}, "
+	spdlog::get("std")->debug(
+	    "DMA{} finishing: src {:X}, dst {:X}, wordCount {:X}, transferType "
+	    "{}, "
 	    "destCtl {}, srcCtl {}",
 	    ID, source, dest, wordCount, transferType, destAddrCtl, srcAddrCtl);
 	if (repeat) {
