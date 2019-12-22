@@ -56,6 +56,19 @@ void PPU::Execute(std::uint32_t ticks) {
 		SetHalf(VCOUNT, vCount);
 		spdlog::get("std")->debug("HBlank Line {}", vCount);
 
+		auto lyc = BIT_RANGE(dispStat, 8, 15);
+		if (lyc == vCount) {
+		  BIT_SET(dispStat, 2);
+		  if (BIT_RANGE(dispStat, 5, 5)) {
+			spdlog::get("std")->info("VCounter IntReq");
+			auto intReq = GetHalf(IF);
+			BIT_SET(intReq, 2);
+			SetHalf(IF, intReq);
+		  }
+		} else {
+		  BIT_CLEAR(dispStat, 2);
+		}
+
 		if (vCount >= VISIBLE_LINES) {
 		  state = VBlank;
 		  DrawObjects();
@@ -66,7 +79,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  // Set VBlank flag and Request Interrupt
 		  BIT_SET(dispStat, 0);
 		  spdlog::get("std")->debug("VBlank {:X}", dispStat);
-		  SetHalf(DISPSTAT, dispStat);
+
 		  if (BIT_RANGE(dispStat, 3, 3)) {
 			spdlog::get("std")->debug("VBlank IntReq");
 			auto intReq = GetHalf(IF);
@@ -77,7 +90,10 @@ void PPU::Execute(std::uint32_t ticks) {
 		} else {
 		  state = Visible;
 		}
+
+		SetHalf(DISPSTAT, dispStat);
 	  }
+
 	  break;
 	}
 	case VBlank: {
