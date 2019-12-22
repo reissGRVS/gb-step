@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-#include "flash.hpp"
+#include "cart_backup.hpp"
 #include "joypad.hpp"
 #include "memory_regions.hpp"
 #include "system_clock.hpp"
@@ -79,7 +79,7 @@ class Memory {
 
 	struct {
 	  std::array<std::uint8_t, ROM_SIZE> rom{};
-	  std::unique_ptr<Flash> flash;
+	  std::unique_ptr<CartBackup> backup;
 	} ext;
   } mem;
 };

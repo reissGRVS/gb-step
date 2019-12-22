@@ -38,6 +38,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  BIT_SET(intReq, 1);
 		  SetHalf(IF, intReq);
 		}
+		HBlankCallback();
 	  }
 	  break;
 	}
@@ -72,6 +73,7 @@ void PPU::Execute(std::uint32_t ticks) {
 			BIT_SET(intReq, 0);
 			SetHalf(IF, intReq);
 		  }
+		  VBlankCallback();
 		} else {
 		  state = Visible;
 		}
@@ -344,15 +346,12 @@ void PPU::DrawLine() {
 	  for (auto bg : bgOrder) {
 		TextBGLine(bg);
 	  }
-	  //   for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
-	  // 	TextBGLine(*bg);
-	  //   }
 	  break;
 	}
 	case 1: {
 	  auto bgOrder = GetBGDrawOrder({0, 1, 2}, screenDisplay);
-	  for (auto bg = bgOrder.rbegin(); bg != bgOrder.rend(); ++bg) {
-		TextBGLine(*bg);
+	  for (auto bg : bgOrder) {
+		TextBGLine(bg);
 	  }
 	  break;
 	}

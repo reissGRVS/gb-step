@@ -46,6 +46,10 @@ class GBA {
 	  spdlog::get("std")->debug("IRQ Acknowledge now {:X}", currentIF);
 	});
 
+	ppu.HBlankCallback = std::bind(&DMAController::EventCallback, &dma,
+	                               DMAController::Event::HBLANK);
+	ppu.VBlankCallback = std::bind(&DMAController::EventCallback, &dma,
+	                               DMAController::Event::VBLANK);
 	memory->SetIOWriteCallback(
 	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0,
 	                         std::placeholders::_1));

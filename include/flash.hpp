@@ -2,18 +2,19 @@
 
 #include <array>
 #include <cstdint>
+#include "cart_backup.hpp"
 #include "memory_regions.hpp"
 
 enum FlashSize { Single = 0, Double = 1 };
-class Flash {
+class Flash : public CartBackup {
  public:
   Flash(FlashSize size)
       : size(size),
         manufacturerID((size == Single) ? 0xBF : 0xC2),
         deviceID((size == Single) ? 0xD4 : 0x09) {}
 
-  std::uint8_t Read(std::uint32_t address);
-  void Write(std::uint32_t address, std::uint8_t value);
+  std::uint8_t Read(std::uint32_t address) override;
+  void Write(std::uint32_t address, std::uint8_t value) override;
 
  private:
   void HandleOperation(std::uint8_t value);

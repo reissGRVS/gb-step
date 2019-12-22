@@ -4,16 +4,10 @@
 #include <fstream>
 #include <iostream>
 
+#include "flash.hpp"
 #include "spdlog/spdlog.h"
+#include "sram.hpp"
 #include "utils.hpp"
-
-const std::string EEPROM_V = "EEPROM_V";
-const std::string SRAM_V = "SRAM_V";
-const std::string FLASH_V = "FLASH_V";
-const std::string FLASH512_V = "FLASH512_V";
-const std::string FLASH1M_V = "FLASH1M_V";
-const std::array<std::string, 5> BACKUP_ID_STRINGS = {EEPROM_V, SRAM_V, FLASH_V,
-                                                      FLASH512_V, FLASH1M_V};
 
 Memory::Memory(std::shared_ptr<SystemClock> clock,
                std::string biosPath,
@@ -55,11 +49,15 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 	auto backupID = FindBackupID(length);
 
 	if (backupID == FLASH1M_V) {
-	  mem.ext.flash = std::make_unique<Flash>(FlashSize::Double);
+	  mem.ext.backup = std::make_unique<Flash>(FlashSize::Double);
+	} else if (backupID == FLASH512_V || backupID == FLASH_V) {
+	  mem.ext.backup = std::make_unique<Flash>(FlashSize::Single);
+	} else if (backupID == SRAM_V) {
+	  mem.ext.backup = std::make_unique<SRAM>();
 	} else {
-	  // TODO: Implement other backup types
+	  // TODO: Implement EEPROM and no backup
 	  spdlog::get("std")->error("Unsupported Backup type {}", backupID);
-	  mem.ext.flash = std::make_unique<Flash>(FlashSize::Double);
+	  mem.ext.backup = std::make_unique<SRAM>();
 	  //   exit(-1);
 	}
   }
@@ -129,7 +127,7 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x0D:
 	  return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
 	case 0x0E:
-	  return mem.ext.flash->Read(address);
+	  return mem.ext.backup->Read(address);
 	default:
 	  break;
   }
@@ -225,7 +223,7 @@ void Memory::Write(AccessSize size,
 	  WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
 	  break;
 	case 0x0E:
-	  return mem.ext.flash->Write(address, value);
+	  mem.ext.backup->Write(address, value);
 	default:
 	  break;
   }

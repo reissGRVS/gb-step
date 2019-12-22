@@ -16,6 +16,10 @@ class PPU {
       : memory(memory_), screen(screen_) {}
   void Execute(std::uint32_t ticks);
 
+  std::function<void()> HBlankCallback = []() { return; };
+
+  std::function<void()> VBlankCallback = []() { return; };
+
  private:
   void DrawLine();
   void DrawObjects();

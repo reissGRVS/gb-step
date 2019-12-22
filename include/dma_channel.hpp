@@ -47,11 +47,6 @@ class DMAChannel {
 
 	repeat = BIT_RANGE(dmaCnt, 9, 9);
 	startTiming = BIT_RANGE(dmaCnt, 12, 13);
-	if (startTiming == 1 || startTiming == 2) {
-	  spdlog::get("std")->debug("DMA startTiming unimplemented {}",
-	                            startTiming);
-	  exit(-1);
-	}
 	irqAtEnd = BIT_RANGE(dmaCnt, 14, 14);
 
 	spdlog::get("std")->debug(
