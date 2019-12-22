@@ -74,7 +74,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		  state = VBlank;
 		  DrawObjects();
 		  screen.render(fb);
-		  fb.fill(0);
+		  fb.fill(GetHalf(PRAM_START));
 		  depth.fill(MAX_DEPTH);
 
 		  // Set VBlank flag and Request Interrupt
