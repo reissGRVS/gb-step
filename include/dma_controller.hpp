@@ -10,21 +10,40 @@ class DMAController {
 
   enum Event { IMMEDIATE, VBLANK, HBLANK, SPECIAL };
 
-  // TODO: Fix so that if one is running another one doesnt stop running (if
-  // higher priority), will be relevant when doing this properly and getting
-  // HBlank interrupts mid transfer
-  void CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value) {
-	channels[id].updateDetails(value);
+  void Execute() {
+	for (const auto& c : channels) {
+	  if (c->active) {
+		c->DoTransferStep();
+		return;
+	  }
+	}
+  }
 
-	if (channels[id].enable && channels[id].startTiming == (uint)IMMEDIATE) {
-	  channels[id].doTransfer();
+  bool IsActive() {
+	for (const auto& c : channels) {
+	  if (c->active) {
+		return true;
+	  }
+	}
+	return false;
+  }
+
+  void CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value) {
+	channels[id]->UpdateDetails(value);
+
+	if (channels[id]->enable && channels[id]->startTiming == (uint)IMMEDIATE) {
+	  channels[id]->active = true;
 	}
   };
 
-  void EventCallback(Event event) {
-	for (DMAChannel c : channels) {
-	  if (c.enable && c.startTiming == (std::uint16_t)event) {
-		c.doTransfer();
+  void EventCallback(Event event, bool start) {
+	for (const auto& c : channels) {
+	  if (c->enable && c->startTiming == (std::uint16_t)event) {
+		if (start) {
+		  c->active = true;
+		} else {
+		  c->active = false;
+		}
 	  }
 	}
   };
@@ -32,12 +51,9 @@ class DMAController {
  private:
   std::shared_ptr<Memory> memory;
 
-  std::int_fast8_t activeChannel = -1;
-  const std::int_fast8_t NO_ACTIVE_CHANNEL = -1;
-  std::array<DMAChannel, 4> channels = {
-      DMAChannel(0, memory),
-      DMAChannel(1, memory),
-      DMAChannel(2, memory),
-      DMAChannel(3, memory),
-  };
+  std::unique_ptr<DMAChannel> channels[4] = {
+      std::make_unique<DMAChannel>(0, memory),
+      std::make_unique<DMAChannel>(1, memory),
+      std::make_unique<DMAChannel>(2, memory),
+      std::make_unique<DMAChannel>(3, memory)};
 };

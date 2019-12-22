@@ -24,6 +24,7 @@ void PPU::Execute(std::uint32_t ticks) {
   switch (state) {
 	case Visible: {
 	  if (tickCount > CYCLES_PER_VISIBLE) {
+		HBlankCallback(true);
 		tickCount = tickCount - CYCLES_PER_VISIBLE;
 		state = HBlank;
 
@@ -38,12 +39,12 @@ void PPU::Execute(std::uint32_t ticks) {
 		  BIT_SET(intReq, 1);
 		  SetHalf(IF, intReq);
 		}
-		HBlankCallback();
 	  }
 	  break;
 	}
 	case HBlank: {
 	  if (tickCount > CYCLES_PER_HBLANK) {
+		HBlankCallback(false);
 		tickCount = tickCount - CYCLES_PER_HBLANK;
 
 		// Set HBlank flag to 0
@@ -60,7 +61,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		if (lyc == vCount) {
 		  BIT_SET(dispStat, 2);
 		  if (BIT_RANGE(dispStat, 5, 5)) {
-			spdlog::get("std")->info("VCounter IntReq");
+			spdlog::get("std")->debug("VCounter IntReq");
 			auto intReq = GetHalf(IF);
 			BIT_SET(intReq, 2);
 			SetHalf(IF, intReq);
@@ -86,7 +87,7 @@ void PPU::Execute(std::uint32_t ticks) {
 			BIT_SET(intReq, 0);
 			SetHalf(IF, intReq);
 		  }
-		  VBlankCallback();
+		  VBlankCallback(true);
 		} else {
 		  state = Visible;
 		}
@@ -113,6 +114,7 @@ void PPU::Execute(std::uint32_t ticks) {
 		if (vCount >= TOTAL_LINES) {
 		  SetHalf(VCOUNT, 0);
 		  spdlog::get("std")->debug("VCount cleared");
+		  VBlankCallback(false);
 		  state = Visible;
 		}
 	  }

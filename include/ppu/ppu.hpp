@@ -7,7 +7,6 @@
 
 #include <optional>
 #include <vector>
-
 class PPU {
   enum State { Visible, HBlank, VBlank };
 
@@ -16,9 +15,8 @@ class PPU {
       : memory(memory_), screen(screen_) {}
   void Execute(std::uint32_t ticks);
 
-  std::function<void()> HBlankCallback = []() { return; };
-
-  std::function<void()> VBlankCallback = []() { return; };
+  std::function<void(bool)> HBlankCallback = [](bool) { return; };
+  std::function<void(bool)> VBlankCallback = [](bool) { return; };
 
  private:
   void DrawLine();
@@ -65,11 +63,11 @@ class PPU {
 
   std::shared_ptr<Memory> memory;
   Screen& screen;
-  //   std::string class_id = "dwoadjoawjc";
+
   Screen::Framebuffer depth{4};
   Screen::Framebuffer fb{};
   State state = Visible;
-  std::uint32_t tickCount;
+  std::uint32_t tickCount = 0;
 
   const std::uint32_t CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
                       CYCLES_PER_LINE = CYCLES_PER_VISIBLE + CYCLES_PER_HBLANK,

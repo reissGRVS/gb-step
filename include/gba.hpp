@@ -46,10 +46,12 @@ class GBA {
 	  spdlog::get("std")->debug("IRQ Acknowledge now {:X}", currentIF);
 	});
 
-	ppu.HBlankCallback = std::bind(&DMAController::EventCallback, &dma,
-	                               DMAController::Event::HBLANK);
-	ppu.VBlankCallback = std::bind(&DMAController::EventCallback, &dma,
-	                               DMAController::Event::VBLANK);
+	ppu.HBlankCallback =
+	    std::bind(&DMAController::EventCallback, &dma,
+	              DMAController::Event::HBLANK, std::placeholders::_1);
+	ppu.VBlankCallback =
+	    std::bind(&DMAController::EventCallback, &dma,
+	              DMAController::Event::VBLANK, std::placeholders::_1);
 	memory->SetIOWriteCallback(
 	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0,
 	                         std::placeholders::_1));
@@ -94,7 +96,12 @@ class GBA {
 #ifndef NDEBUG
 	  debugger.CheckForBreakpoint(cpu.ViewState());
 #endif
-	  cpu.Execute();
+	  if (dma.IsActive()) {
+		dma.Execute();
+	  } else {
+		cpu.Execute();
+	  }
+
 	  auto ticks = sysClock->SinceLastCheck();
 	  ppu.Execute(ticks);
 	  timers.Update(ticks);

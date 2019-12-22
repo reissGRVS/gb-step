@@ -11,6 +11,7 @@ set(SOURCE_FILES
 	src/memory.cpp
 	src/flash.cpp
 	src/debugger.cpp
+	src/dma_channel.cpp
 	src/ppu/ppu.cpp
 	src/joypad.cpp
 	src/arm7tdmi/arm_opcodes.cpp
