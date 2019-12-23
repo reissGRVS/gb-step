@@ -2,14 +2,14 @@
 #include <cstdint>
 #include <unordered_map>
 
-#define REGION_INFO(NAME, SIZE, START, MASK) \
-  static const std::uint32_t NAME##_SIZE = SIZE; \
-  static const std::uint32_t NAME##_START = START; \
-  static const std::uint32_t NAME##_MASK = MASK;
+#define REGION_INFO(NAME, SIZE, START, MASK)         \
+	static const std::uint32_t NAME##_SIZE = SIZE;   \
+	static const std::uint32_t NAME##_START = START; \
+	static const std::uint32_t NAME##_MASK = MASK;
 
-#define IOREG_INFO(NAME, ADDRESS) \
-  static const std::uint32_t NAME = ADDRESS; \
-  static const std::string NAME##_STR = #NAME;
+#define IOREG_INFO(NAME, ADDRESS)              \
+	static const std::uint32_t NAME = ADDRESS; \
+	static const std::string NAME##_STR = #NAME;
 
 static const std::uint32_t PAGE_MASK = 0xFFFFFF;
 REGION_INFO(BIOS, 0x04000, 0x0000000, 0x03FFF)

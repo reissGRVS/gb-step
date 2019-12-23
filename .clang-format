@@ -1,7 +1,6 @@
----
-BasedOnStyle: Chromium
-AlignEscapedNewlines: DontAlign
+﻿---
+BasedOnStyle: WebKit
 TabWidth: '4'
-UseTab: ForIndentation
+UseTab: ForContinuationAndIndentation
 
 ...

@@ -14,4 +14,4 @@ using ParamList = std::vector<std::uint32_t>;
 
 using RegisterView = std::array<std::uint64_t, 16>;
 
-}  // namespace ARM7TDMI
+} // namespace ARM7TDMI

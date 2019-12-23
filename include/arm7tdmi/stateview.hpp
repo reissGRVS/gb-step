@@ -7,8 +7,8 @@
 namespace ARM7TDMI {
 
 struct StateView {
-  RegisterView registers;
-  OpBacktrace backtrace;
+	RegisterView registers;
+	OpBacktrace backtrace;
 };
 
-}  // namespace ARM7TDMI
+} // namespace ARM7TDMI
