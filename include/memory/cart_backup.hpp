@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <string>
 
 const std::string EEPROM_V = "EEPROM_V";
 const std::string SRAM_V = "SRAM_V";

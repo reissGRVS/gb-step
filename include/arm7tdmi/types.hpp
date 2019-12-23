@@ -1,8 +1,9 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <utility>
-
+#include <vector>
 namespace ARM7TDMI {
 
 using OpCode = std::uint32_t;

@@ -7,12 +7,12 @@
 #include <utility>
 #include <vector>
 
+#include "arm7tdmi/types.hpp"
 #include "memory/memory.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
 #include "stateview.hpp"
 #include "system_clock.hpp"
-#include "types.hpp"
 
 namespace ARM7TDMI {
 class CPU {
