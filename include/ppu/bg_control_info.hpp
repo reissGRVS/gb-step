@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "memory_regions.hpp"
+#include "memory/regions.hpp"
 #include "utils.hpp"
 
 const std::uint32_t BG_TILE_DATA_UNITSIZE = 0x4000u;

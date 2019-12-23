@@ -6,11 +6,12 @@
 #include <memory>
 #include <string>
 
-#include "cart_backup.hpp"
 #include "joypad.hpp"
-#include "memory_regions.hpp"
+#include "memory/cart_backup.hpp"
+#include "memory/regions.hpp"
 #include "system_clock.hpp"
 #include "types.hpp"
+#include "utils.hpp"
 
 class Memory {
  public:
@@ -27,18 +28,29 @@ class Memory {
              std::uint32_t value,
              Sequentiality type);
 
-  std::uint16_t getHalf(const std::uint32_t& address) {
+  std::uint8_t GetByte(const std::uint32_t& address) {
+	return Read(AccessSize::Byte, address, Sequentiality::FREE);
+  }
+  std::uint16_t GetHalf(const std::uint32_t& address) {
 	return Read(AccessSize::Half, address, Sequentiality::FREE);
   }
-  std::uint32_t getWord(const std::uint32_t& address) {
+  std::uint32_t GetWord(const std::uint32_t& address) {
 	return Read(AccessSize::Word, address, Sequentiality::FREE);
   }
-
-  void setHalf(const std::uint32_t& address, const std::uint16_t& value) {
+  void SetByte(const std::uint32_t& address, const std::uint8_t& value) {
+	Write(AccessSize::Byte, address, value, Sequentiality::FREE);
+  }
+  void SetHalf(const std::uint32_t& address, const std::uint16_t& value) {
 	Write(AccessSize::Half, address, value, Sequentiality::FREE);
   }
-  void setWord(const std::uint32_t& address, const std::uint32_t& value) {
+  void SetWord(const std::uint32_t& address, const std::uint32_t& value) {
 	Write(AccessSize::Word, address, value, Sequentiality::FREE);
+  }
+
+  void RequestInterrupt(Interrupt i) {
+	auto intReq = GetHalf(IF);
+	BIT_SET(intReq, i);
+	SetHalf(IF, intReq);
   }
 
   void SetIOWriteCallback(std::uint32_t address,

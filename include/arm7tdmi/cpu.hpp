@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "../memory.hpp"
+#include "memory/memory.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
 #include "stateview.hpp"

@@ -1,6 +1,7 @@
-#include "dma_channel.hpp"
+#include "dma/channel.hpp"
 
-DMAChannel::DMAChannel(std::int_fast8_t id, std::shared_ptr<Memory> memory_)
+using namespace DMA;
+Channel::Channel(std::int_fast8_t id, std::shared_ptr<Memory> memory_)
     : ID(id),
       SAD(DMA0SAD + ID * 0xC),
       DAD(DMA0DAD + ID * 0xC),
@@ -8,34 +9,34 @@ DMAChannel::DMAChannel(std::int_fast8_t id, std::shared_ptr<Memory> memory_)
       CNT_H(DMA0CNT_H + ID * 0xC),
       memory(memory_) {}
 
-void DMAChannel::ReloadDAD() {
+void Channel::ReloadDAD() {
   if (ID == 3) {
-	dest = memory->getWord(DAD) & NBIT_MASK(28);
+	dest = memory->GetWord(DAD) & NBIT_MASK(28);
   } else {
-	dest = memory->getWord(DAD) & NBIT_MASK(27);
+	dest = memory->GetWord(DAD) & NBIT_MASK(27);
   }
 }
 
-void DMAChannel::ReloadSAD() {
+void Channel::ReloadSAD() {
   if (ID == 0) {
-	source = memory->getWord(SAD) & NBIT_MASK(27);
+	source = memory->GetWord(SAD) & NBIT_MASK(27);
   } else {
-	source = memory->getWord(SAD) & NBIT_MASK(28);
+	source = memory->GetWord(SAD) & NBIT_MASK(28);
   }
 }
 
-void DMAChannel::ReloadWordCount() {
+void Channel::ReloadWordCount() {
   if (ID == 3) {
-	wordCount = memory->getHalf(CNT_L) & NBIT_MASK(16);
+	wordCount = memory->GetHalf(CNT_L) & NBIT_MASK(16);
   } else {
-	wordCount = memory->getHalf(CNT_L) & NBIT_MASK(14);
+	wordCount = memory->GetHalf(CNT_L) & NBIT_MASK(14);
   }
   if (wordCount == 0) {
 	wordCount = (ID == 3) ? 0x10000 : 0x4000;
   }
 }
 
-void DMAChannel::CalculateTransferSteps() {
+void Channel::CalculateTransferSteps() {
   switch (destAddrCtl) {
 	case 0:
 	case 3: {
@@ -68,9 +69,9 @@ void DMAChannel::CalculateTransferSteps() {
   }
 }
 
-void DMAChannel::UpdateDetails(std::uint16_t value) {
+void Channel::UpdateDetails(std::uint16_t value) {
   auto prevEnable = enable;
-  memory->setHalf(CNT_H, value);
+  memory->SetHalf(CNT_H, value);
   dmaCnt = value;
   enable = BIT_RANGE(dmaCnt, 15, 15);
 
@@ -100,7 +101,7 @@ void DMAChannel::UpdateDetails(std::uint16_t value) {
       srcStep);
 }
 
-void DMAChannel::DoTransferStep() {
+void Channel::DoTransferStep() {
   if (wordCount > 0) {
 	// TODO: if first recent transfer NSEQ
 	if (transferType) {
@@ -120,7 +121,7 @@ void DMAChannel::DoTransferStep() {
 	} else {
 	  // Transfer Finished
 	  BIT_CLEAR(dmaCnt, 15);
-	  memory->setHalf(CNT_H, dmaCnt);
+	  memory->SetHalf(CNT_H, dmaCnt);
 	  enable = 0;
 	  active = false;
 	}

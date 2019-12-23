@@ -37,7 +37,7 @@ struct Timer {
   }
 
   std::uint32_t Update(std::uint32_t ticks, std::uint32_t prevOverflow) {
-	counter = memory->getHalf(CNT_L);
+	counter = memory->GetHalf(CNT_L);
 
 	std::uint32_t overflow = 0;
 
@@ -47,7 +47,7 @@ struct Timer {
 	  } else {
 		overflow = PrescalerTimingUpdate(ticks);
 	  }
-	  memory->setHalf(CNT_L, counter);
+	  memory->SetHalf(CNT_L, counter);
 	}
 
 	return overflow;

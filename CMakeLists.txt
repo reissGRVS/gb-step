@@ -8,11 +8,16 @@ endif()
 # Add main.cpp file of project root directory as source file
 set(SOURCE_FILES
 	src/main.cpp
-	src/memory.cpp
-	src/flash.cpp
+	src/memory/memory.cpp
+	src/memory/flash.cpp
 	src/debugger.cpp
-	src/dma_channel.cpp
+	src/dma/channel.cpp
+	src/dma/controller.cpp
 	src/ppu/ppu.cpp
+	src/ppu/draw_control.cpp
+	src/ppu/draw_util.cpp
+	src/ppu/objects.cpp
+	src/ppu/text_modes.cpp
 	src/joypad.cpp
 	src/arm7tdmi/arm_opcodes.cpp
 	src/arm7tdmi/thumb_opcodes.cpp

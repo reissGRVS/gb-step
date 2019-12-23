@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "memory_regions.hpp"
+#include "memory/regions.hpp"
 #include "utils.hpp"
 
 struct ObjAttributes {
@@ -16,33 +16,33 @@ struct ObjAttributes {
   union {
 	uint16_t full;
 	struct {
-	  unsigned yCoord : 8;
-	  unsigned rotationScalingFlag : 1;
-	  unsigned objDisable : 1;
-	  unsigned objMode : 2;
-	  unsigned objMosaic : 1;
-	  unsigned colorsPalettes : 1;
-	  unsigned objShape : 2;
+	  uint8_t yCoord : 8;
+	  uint8_t rotationScalingFlag : 1;
+	  uint8_t objDisable : 1;
+	  uint8_t objMode : 2;
+	  uint8_t objMosaic : 1;
+	  uint8_t colorsPalettes : 1;
+	  uint8_t objShape : 2;
 	} b;
   } attr0;
 
   union {
 	uint16_t full;
 	struct {
-	  unsigned xCoord : 9;
-	  unsigned unused : 3;
-	  unsigned horizontalFlip : 1;
-	  unsigned verticalFlip : 1;
-	  unsigned objSize : 2;
+	  uint16_t xCoord : 9;
+	  uint8_t unused : 3;
+	  uint8_t horizontalFlip : 1;
+	  uint8_t verticalFlip : 1;
+	  uint8_t objSize : 2;
 	} b;
   } attr1;
 
   union {
 	uint16_t full;
 	struct {
-	  unsigned characterName : 10;
-	  unsigned priority : 2;
-	  unsigned paletteNumber : 4;
+	  uint16_t characterName : 10;
+	  uint8_t priority : 2;
+	  uint8_t paletteNumber : 4;
 	} b;
   } attr2;
 };

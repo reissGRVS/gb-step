@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include "arm7tdmi/stateview.hpp"
 #include "arm7tdmi/types.hpp"
-#include "memory.hpp"
+#include "memory/memory.hpp"
 
 class Debugger {
  public:

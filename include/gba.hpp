@@ -4,8 +4,8 @@
 #include <functional>
 #include "arm7tdmi/cpu.hpp"
 #include "debugger.hpp"
-#include "dma_controller.hpp"
-#include "memory.hpp"
+#include "dma/controller.hpp"
+#include "memory/memory.hpp"
 #include "ppu/ppu.hpp"
 #include "screen.hpp"
 #include "spdlog/spdlog.h"
@@ -17,7 +17,6 @@ struct GBAConfig {
   std::string romPath;
   Screen& screen;
   Joypad& joypad;
-  // TODO: Add interfaces for io here
 };
 
 class GBA {
@@ -37,32 +36,32 @@ class GBA {
 	                                        &debugger, std::placeholders::_1));
 
 	memory->SetIOWriteCallback(IF, [&](std::uint32_t irAcknowledge) {
-	  auto currentIF = memory->getHalf(IF);
+	  auto currentIF = memory->GetHalf(IF);
 	  spdlog::get("std")->debug("IRQ Acknowledge {:B} was {:X}", irAcknowledge,
 	                            currentIF);
 	  currentIF &= ~irAcknowledge;
 
-	  memory->setHalf(IF, currentIF);
+	  memory->SetHalf(IF, currentIF);
 	  spdlog::get("std")->debug("IRQ Acknowledge now {:X}", currentIF);
 	});
 
 	ppu.HBlankCallback =
-	    std::bind(&DMAController::EventCallback, &dma,
-	              DMAController::Event::HBLANK, std::placeholders::_1);
+	    std::bind(&DMA::Controller::EventCallback, &dma,
+	              DMA::Controller::Event::HBLANK, std::placeholders::_1);
 	ppu.VBlankCallback =
-	    std::bind(&DMAController::EventCallback, &dma,
-	              DMAController::Event::VBLANK, std::placeholders::_1);
+	    std::bind(&DMA::Controller::EventCallback, &dma,
+	              DMA::Controller::Event::VBLANK, std::placeholders::_1);
 	memory->SetIOWriteCallback(
-	    DMA0CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 0,
+	    DMA0CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 0,
 	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA1CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 1,
+	    DMA1CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 1,
 	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA2CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 2,
+	    DMA2CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 2,
 	                         std::placeholders::_1));
 	memory->SetIOWriteCallback(
-	    DMA3CNT_H, std::bind(&DMAController::CntHUpdateCallback, &dma, 3,
+	    DMA3CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 3,
 	                         std::placeholders::_1));
 
 	memory->SetIOWriteCallback(
@@ -115,5 +114,5 @@ class GBA {
   PPU ppu;
   Debugger debugger;
   Timers timers;
-  DMAController dma;
+  DMA::Controller dma;
 };

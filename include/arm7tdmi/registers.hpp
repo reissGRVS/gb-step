@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "../memory.hpp"
+#include "memory/memory.hpp"
 
 namespace ARM7TDMI {
 // https://problemkaputt.de/gbatek.htm#armcpuflagsconditionfieldcond

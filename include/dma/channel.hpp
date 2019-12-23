@@ -1,11 +1,12 @@
 #pragma once
-#include "memory.hpp"
+#include "memory/memory.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-class DMAChannel {
+namespace DMA {
+class Channel {
  public:
-  DMAChannel(std::int_fast8_t id, std::shared_ptr<Memory> memory_);
+  Channel(std::int_fast8_t id, std::shared_ptr<Memory> memory_);
 
   void ReloadDAD();
   void ReloadSAD();
@@ -42,3 +43,4 @@ class DMAChannel {
   std::uint32_t dest;
   std::uint16_t wordCount;
 };
+}  // namespace DMA

@@ -2,8 +2,8 @@
 
 #include <array>
 #include <cstdint>
-#include "cart_backup.hpp"
-#include "memory_regions.hpp"
+#include "memory/cart_backup.hpp"
+#include "memory/regions.hpp"
 
 class SRAM : public CartBackup {
  public:

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "memory.hpp"
+#include "memory/memory.hpp"
 #include "ppu/bg_control_info.hpp"
 #include "ppu/obj_attributes.hpp"
+#include "ppu/tile_info.hpp"
 #include "screen.hpp"
 
 #include <optional>
@@ -19,19 +20,37 @@ class PPU {
   std::function<void(bool)> VBlankCallback = [](bool) { return; };
 
  private:
+  // State Management
+  void ToHBlank();
+  void OnHBlankFinish();
+  void ToVBlank();
+  void OnVBlankLineFinish();
+  std::uint16_t GetDispStat(std::uint8_t bit);
+  void UpdateDispStat(std::uint8_t bit, bool set);
+  std::uint16_t IncrementVCount();
+
+  // Draw Control
   void DrawLine();
+  uint8_t GetLayerPriority(uint8_t layer);
+  std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
+                                      uint8_t screenDisplay);
+
+  // Objects
   void DrawObjects();
   void DrawObject(ObjAttributes objAttrs);
-  void DrawTile(std::uint16_t startX,
-                std::uint16_t startY,
-                std::uint16_t tileNumber,
-                std::uint16_t colorDepth,
-                std::uint32_t tileDataBase,
-                bool verticalFlip,
-                bool horizontalFlip,
-                std::uint16_t paletteNumber,
-                std::uint16_t priority);
+  void DrawTile(const TileInfo& info);
 
+  // Text Mode
+  void TextBGLine(const uint32_t& BG_ID);
+  std::optional<std::uint16_t> TilePixelAtAbsoluteBGPosition(
+      const BGControlInfo& bgCnt,
+      const std::uint16_t& x,
+      const std::uint16_t& y);
+  std::uint32_t GetScreenAreaOffset(std::uint32_t mapX,
+                                    std::uint32_t mapY,
+                                    std::uint_fast8_t screenSize);
+
+  // Draw Utils
   std::optional<std::uint16_t> GetTilePixel(std::uint16_t tileNumber,
                                             std::uint16_t x,
                                             std::uint16_t y,
@@ -41,25 +60,11 @@ class PPU {
                                             bool horizontalFlip,
                                             std::uint16_t paletteNumber,
                                             bool obj);
-
-  std::optional<std::uint16_t> TilePixelAtAbsoluteBGPosition(
-      const BGControlInfo& bgCnt,
-      const std::uint16_t& x,
-      const std::uint16_t& y);
-  void TextBGLine(const uint32_t& BG_ID);
-
-  uint8_t GetLayerPriority(uint8_t layer);
-  std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
-                                      uint8_t screenDisplay);
-
   std::uint16_t GetBgColorFromSubPalette(const std::uint32_t& paletteNumber,
                                          const std::uint32_t& colorID,
                                          bool obj = false);
   std::uint16_t GetBgColorFromPalette(const std::uint32_t& colorID,
                                       bool obj = false);
-  std::uint8_t GetByte(const std::uint32_t& address);
-  std::uint16_t GetHalf(const std::uint32_t& address);
-  void SetHalf(const std::uint32_t& address, const std::uint16_t& value);
 
   std::shared_ptr<Memory> memory;
   Screen& screen;
@@ -69,11 +74,13 @@ class PPU {
   State state = Visible;
   std::uint32_t tickCount = 0;
 
-  const std::uint32_t CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
-                      CYCLES_PER_LINE = CYCLES_PER_VISIBLE + CYCLES_PER_HBLANK,
-                      VISIBLE_LINES = 160, VBLANK_LINES = 68,
-                      TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
-                      CYCLES_PER_VBLANK = CYCLES_PER_LINE * VBLANK_LINES;
+  const std::uint16_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
+                      TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32;
+
+  const std::uint32_t TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
+                      OBJ_START_ADDRESS = 0x06010000;
+
+  const std::uint32_t BGCNT[4] = {BG0CNT, BG1CNT, BG2CNT, BG3CNT};
 
   const std::uint16_t MAX_DEPTH = 4;
 };

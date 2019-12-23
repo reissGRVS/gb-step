@@ -1,12 +1,12 @@
-#include "memory.hpp"
+#include "memory/memory.hpp"
 #include <unistd.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 
-#include "flash.hpp"
+#include "memory/flash.hpp"
+#include "memory/sram.hpp"
 #include "spdlog/spdlog.h"
-#include "sram.hpp"
 #include "utils.hpp"
 
 Memory::Memory(std::shared_ptr<SystemClock> clock,
@@ -97,6 +97,7 @@ uint32_t Memory::Read(AccessSize size,
 		return ReadToSize(&mem.gen.bios[address & BIOS_MASK], size);
 	  } else {
 		spdlog::get("std")->error("Reading from Invalid BIOS memory");
+		// exit(-1);
 		return 0;
 	  }
 	case 0x01: {
@@ -135,6 +136,7 @@ uint32_t Memory::Read(AccessSize size,
   spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
   PublishWriteCallback(1);
   return 0;
+  // exit(-1);
 }
 
 void Memory::WriteToSize(std::uint8_t* byte,
@@ -289,7 +291,7 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
 	  // Game Pak ROM/FlashROM - WS0
 	  const std::array<uint8_t, 4> WS0_NSEQ = {4, 3, 2, 8};
 	  const std::array<uint8_t, 2> WS0_SEQ = {2, 1};
-	  auto waitCnt = getHalf(WAITCNT);
+	  auto waitCnt = GetHalf(WAITCNT);
 
 	  auto secondAccess = WS0_SEQ[BIT_RANGE(waitCnt, 4, 4)] + 1;
 	  auto firstAccess =
@@ -303,7 +305,7 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
 	  // Game Pak ROM/FlashROM - WS1
 	  const std::array<uint8_t, 4> WS1_NSEQ = {4, 3, 2, 8};
 	  const std::array<uint8_t, 2> WS1_SEQ = {4, 1};
-	  auto waitCnt = getHalf(WAITCNT);
+	  auto waitCnt = GetHalf(WAITCNT);
 
 	  auto secondAccess = WS1_SEQ[BIT_RANGE(waitCnt, 7, 7)] + 1;
 	  auto firstAccess =
@@ -317,7 +319,7 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
 	  // Game Pak ROM/FlashROM - WS2
 	  const std::array<uint8_t, 4> WS2_NSEQ = {4, 3, 2, 8};
 	  const std::array<uint8_t, 2> WS2_SEQ = {8, 1};
-	  auto waitCnt = getHalf(WAITCNT);
+	  auto waitCnt = GetHalf(WAITCNT);
 
 	  auto secondAccess = WS2_SEQ[BIT_RANGE(waitCnt, 10, 10)] + 1;
 	  auto firstAccess =
@@ -328,7 +330,7 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq) {
 	case 0x0E: {
 	  // Game Pak ROM/FlashROM - WS2
 	  const std::array<uint8_t, 4> SRAM_NSEQ = {4, 3, 2, 8};
-	  auto waitCnt = getHalf(WAITCNT);
+	  auto waitCnt = GetHalf(WAITCNT);
 	  auto firstAccess = SRAM_NSEQ[BIT_RANGE(waitCnt, 0, 1)] + 1;
 	  clock->Tick(firstAccess);
 	  break;
