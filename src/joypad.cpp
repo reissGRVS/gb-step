@@ -18,9 +18,9 @@ void Joypad::keyUpdate()
 	bp = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
 }
 
-std::uint16_t Joypad::getKeyStatus()
+U16 Joypad::getKeyStatus()
 {
-	std::uint16_t keyStatus = NBIT_MASK(16);
+	U16 keyStatus = NBIT_MASK(16);
 
 	if (a)
 		BIT_CLEAR(keyStatus, 0);

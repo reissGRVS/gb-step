@@ -2,13 +2,13 @@
 
 #include "memory/regions.hpp"
 #include "utils.hpp"
-#include <cstdint>
+#include "int.hpp"
 
-const std::uint32_t BG_TILE_DATA_UNITSIZE = 0x4000u;
-const std::uint32_t BG_MAP_DATA_UNITSIZE = 0x800u;
+const U32 BG_TILE_DATA_UNITSIZE = 0x4000u;
+const U32 BG_MAP_DATA_UNITSIZE = 0x800u;
 
 struct BGControlInfo {
-	BGControlInfo(const std::uint_fast8_t& bgID, const uint32_t& bgCnt)
+	BGControlInfo(const U8& bgID, const uint32_t& bgCnt)
 		: ID(bgID)
 		, priority(BIT_RANGE(bgCnt, 0, 1))
 		, tileDataBase(VRAM_START + BIT_RANGE(bgCnt, 2, 3) * BG_TILE_DATA_UNITSIZE)
@@ -19,15 +19,15 @@ struct BGControlInfo {
 		, wrapAround(BIT_RANGE(bgCnt, 13, 13) || ID == 0 || ID == 1)
 		, screenSize(BIT_RANGE(bgCnt, 14, 15)){};
 
-	const std::uint_fast8_t ID;
+	const U8 ID;
 
-	const std::uint_fast8_t priority;
-	const std::uint32_t tileDataBase;
+	const U8 priority;
+	const U32 tileDataBase;
 	const bool mosaic;
 	const uint_fast8_t colorsPalettes;
 	const uint_fast8_t colorDepth;
 
-	const std::uint32_t mapDataBase;
+	const U32 mapDataBase;
 	const bool wrapAround;
 	const uint_fast8_t screenSize;
 };

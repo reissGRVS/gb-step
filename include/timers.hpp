@@ -12,9 +12,9 @@ public:
 	Timers(std::shared_ptr<Memory> memory)
 		: memory(memory){};
 
-	void Update(const std::uint32_t ticks)
+	void Update(const U32 ticks)
 	{
-		std::uint32_t overflow = 0;
+		U32 overflow = 0;
 		for (auto timerIndex = 0u; timerIndex < 4u; timerIndex++) {
 			overflow = timers[timerIndex].Update(ticks, overflow);
 
@@ -25,12 +25,12 @@ public:
 		}
 	}
 
-	void SetReloadValue(std::uint_fast8_t id, std::uint16_t value)
+	void SetReloadValue(U8 id, U16 value)
 	{
 		timers[id].reloadValue = value;
 	}
 
-	void TimerCntHUpdate(std::uint_fast8_t id, std::uint16_t value)
+	void TimerCntHUpdate(U8 id, U16 value)
 	{
 		if (BIT_RANGE(timers[id].cntHData, 7, 7) == 0 && BIT_RANGE(value, 7, 7) == 1) {
 			memory->SetHalf(timers[id].CNT_L, timers[id].reloadValue);

@@ -3,14 +3,14 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-std::uint16_t PPU::GetBgColorFromSubPalette(const std::uint32_t& paletteNumber,
-	const std::uint32_t& colorID,
+U16 PPU::GetBgColorFromSubPalette(const U32& paletteNumber,
+	const U32& colorID,
 	bool obj)
 {
 	return GetBgColorFromPalette(paletteNumber * 16u + colorID, obj);
 }
 
-std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& colorID,
+U16 PPU::GetBgColorFromPalette(const U32& colorID,
 	bool obj)
 {
 	auto paletteStart = PRAM_START;
@@ -19,14 +19,14 @@ std::uint16_t PPU::GetBgColorFromPalette(const std::uint32_t& colorID,
 	return memory->GetHalf(colorID * 2 + paletteStart);
 }
 
-std::optional<std::uint16_t> PPU::GetTilePixel(std::uint16_t tileNumber,
-	std::uint16_t x,
-	std::uint16_t y,
-	std::uint16_t colorDepth,
-	std::uint32_t tileDataBase,
+std::optional<U16> PPU::GetTilePixel(U16 tileNumber,
+	U16 x,
+	U16 y,
+	U16 colorDepth,
+	U32 tileDataBase,
 	bool verticalFlip,
 	bool horizontalFlip,
-	std::uint16_t paletteNumber,
+	U16 paletteNumber,
 	bool obj)
 {
 	// Deal with flips

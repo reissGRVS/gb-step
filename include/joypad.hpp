@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+#include "int.hpp"
 
 class Joypad {
 public:
@@ -36,7 +36,7 @@ public:
 			return false;
 		}
 	}
-	std::uint16_t getKeyStatus();
+	U16 getKeyStatus();
 
 private:
 	// Key state

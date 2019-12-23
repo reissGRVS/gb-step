@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
+#include "int.hpp"
 #include <memory>
 
 #include "memory/memory.hpp"
@@ -51,8 +51,8 @@ enum Register {
 
 namespace SRFlag {
 	struct BitLocation {
-		const std::uint8_t bit;
-		const std::uint8_t size;
+		const U8 bit;
+		const U8 size;
 	};
 
 	enum ModeBits {
@@ -76,8 +76,8 @@ namespace SRFlag {
 	const BitLocation z = { 30, 1 };
 	const BitLocation n = { 31, 1 };
 
-	uint8_t get(const std::uint32_t& sr, const BitLocation& flag);
-	void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val);
+	uint8_t get(const U32& sr, const BitLocation& flag);
+	void set(U32& sr, const BitLocation& flag, U8 val);
 } // namespace SRFlag
 
 enum ModeBank {
@@ -93,10 +93,10 @@ ModeBank getModeBank(SRFlag::ModeBits modeBits);
 
 class RegisterSet {
 public:
-	std::uint32_t view(Register reg);
-	std::uint32_t& get(Register reg);
+	U32 view(Register reg);
+	U32& get(Register reg);
 
-	std::uint32_t& get(ModeBank mode, Register reg);
+	U32& get(ModeBank mode, Register reg);
 
 	// https://problemkaputt.de/gbatek.htm#armcpuflagsconditionfieldcond
 	bool conditionCheck(Condition cond);
@@ -107,13 +107,13 @@ private:
 	ModeBank currentBank = ModeBank::SYS;
 
 	struct Registers {
-		std::array<std::uint32_t, 13> GPR{}; // R0-12
-		std::array<std::uint32_t, 5> GPR_FIQ{}; // R8-12 FIQ
-		std::array<std::uint32_t, 6> SP{}; // R13 All modes
-		std::array<std::uint32_t, 6> LR{}; // R14 All modes
-		std::uint32_t PC{}; // R15
-		std::uint32_t CPSR{ 0x1F };
-		std::array<std::uint32_t, 5> SPSR{}; // System/Usr mode has no SPSR
+		std::array<U32, 13> GPR{}; // R0-12
+		std::array<U32, 5> GPR_FIQ{}; // R8-12 FIQ
+		std::array<U32, 6> SP{}; // R13 All modes
+		std::array<U32, 6> LR{}; // R14 All modes
+		U32 PC{}; // R15
+		U32 CPSR{ 0x1F };
+		std::array<U32, 5> SPSR{}; // System/Usr mode has no SPSR
 	} registers;
 };
 

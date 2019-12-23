@@ -1,15 +1,15 @@
 #pragma once
 
-#include <cstdint>
+#include "int.hpp"
 
 struct TileInfo {
-	const std::uint16_t startX;
-	const std::uint16_t startY;
-	const std::uint16_t tileNumber;
-	const std::uint16_t colorDepth;
-	const std::uint32_t tileDataBase;
-	const std::uint8_t verticalFlip;
-	const std::uint8_t horizontalFlip;
-	const std::uint8_t paletteNumber;
-	const std::uint8_t priority;
+	const U16 startX;
+	const U16 startY;
+	const U16 tileNumber;
+	const U16 colorDepth;
+	const U32 tileDataBase;
+	const U8 verticalFlip;
+	const U8 horizontalFlip;
+	const U8 paletteNumber;
+	const U8 priority;
 };

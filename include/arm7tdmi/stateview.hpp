@@ -1,8 +1,8 @@
 
 #pragma once
 
+#include "arm7tdmi/types.hpp"
 #include "opbacktrace.hpp"
-#include "types.hpp"
 
 namespace ARM7TDMI {
 

@@ -1,7 +1,7 @@
 #include "utils.hpp"
 
 struct Timer {
-	Timer(std::uint8_t ID, std::uint32_t CNT_L, std::shared_ptr<Memory> memory)
+	Timer(U8 ID, U32 CNT_L, std::shared_ptr<Memory> memory)
 		: ID(ID)
 		, CNT_L(CNT_L)
 		, CNT_H(CNT_L + 2)
@@ -9,7 +9,7 @@ struct Timer {
 	{
 	}
 
-	void UpdateCntH(std::uint16_t value)
+	void UpdateCntH(U16 value)
 	{
 		cntHData = value;
 		prescaler = BIT_RANGE(cntHData, 0, 1);
@@ -18,9 +18,9 @@ struct Timer {
 		timerStart = BIT_RANGE(cntHData, 7, 7);
 	}
 
-	std::uint32_t CounterUpdate(std::uint32_t ticks)
+	U32 CounterUpdate(U32 ticks)
 	{
-		std::uint32_t overflow = 0;
+		U32 overflow = 0;
 
 		auto ticksLeft = 0x10000u - counter;
 
@@ -36,7 +36,7 @@ struct Timer {
 		return overflow;
 	}
 
-	std::uint32_t PrescalerTimingUpdate(std::uint32_t ticks)
+	U32 PrescalerTimingUpdate(U32 ticks)
 	{
 		prescalerCount += ticks;
 		auto realTicks = prescalerCount / PRESCALER_SELECTION[prescaler];
@@ -44,11 +44,11 @@ struct Timer {
 		return CounterUpdate(realTicks);
 	}
 
-	std::uint32_t Update(std::uint32_t ticks, std::uint32_t prevOverflow)
+	U32 Update(U32 ticks, U32 prevOverflow)
 	{
 		counter = memory->GetHalf(CNT_L);
 
-		std::uint32_t overflow = 0;
+		U32 overflow = 0;
 
 		if (timerStart) {
 			if (countUp && !(ID == 0)) {
@@ -62,21 +62,21 @@ struct Timer {
 		return overflow;
 	};
 
-	const std::uint8_t ID;
-	const std::uint32_t CNT_L;
-	const std::uint32_t CNT_H;
+	const U8 ID;
+	const U32 CNT_L;
+	const U32 CNT_H;
 
-	std::uint16_t cntHData;
-	std::uint16_t prescaler;
-	std::uint16_t countUp;
-	std::uint16_t irqEnable;
-	std::uint16_t timerStart;
+	U16 cntHData;
+	U16 prescaler;
+	U16 countUp;
+	U16 irqEnable;
+	U16 timerStart;
 
-	std::uint16_t counter;
-	std::uint16_t reloadValue;
-	std::uint32_t prescalerCount;
+	U16 counter;
+	U16 reloadValue;
+	U32 prescalerCount;
 
-	const std::array<std::uint16_t, 4> PRESCALER_SELECTION{ 1, 64, 256, 1024 };
+	const std::array<U16, 4> PRESCALER_SELECTION{ 1, 64, 256, 1024 };
 
 	std::shared_ptr<Memory> memory;
 };

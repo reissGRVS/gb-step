@@ -2,7 +2,7 @@
 
 #include "memory/regions.hpp"
 #include "utils.hpp"
-#include <cstdint>
+#include "int.hpp"
 
 struct ObjAttributes {
 	ObjAttributes(const uint16_t& objAttr0,

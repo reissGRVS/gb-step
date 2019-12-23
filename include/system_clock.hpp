@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include <cstdint>
+#include "int.hpp"
 
 class SystemClock {
 public:
-	void Tick(std::uint32_t ticks) { total += ticks; }
+	void Tick(U32 ticks) { total += ticks; }
 
-	std::uint32_t SinceLastCheck()
+	U32 SinceLastCheck()
 	{
 		auto since = total - lastCheck;
 		lastCheck = total;
@@ -15,6 +15,6 @@ public:
 	}
 
 private:
-	std::uint32_t total = 0;
-	std::uint32_t lastCheck = 0;
+	U32 total = 0;
+	U32 lastCheck = 0;
 };

@@ -19,7 +19,7 @@ public:
 		, screen(screen_)
 	{
 	}
-	void Execute(std::uint32_t ticks);
+	void Execute(U32 ticks);
 
 	std::function<void(bool)> HBlankCallback = [](bool) { return; };
 	std::function<void(bool)> VBlankCallback = [](bool) { return; };
@@ -30,9 +30,9 @@ private:
 	void OnHBlankFinish();
 	void ToVBlank();
 	void OnVBlankLineFinish();
-	std::uint16_t GetDispStat(std::uint8_t bit);
-	void UpdateDispStat(std::uint8_t bit, bool set);
-	std::uint16_t IncrementVCount();
+	U16 GetDispStat(U8 bit);
+	void UpdateDispStat(U8 bit, bool set);
+	U16 IncrementVCount();
 
 	// Draw Control
 	void DrawLine();
@@ -47,28 +47,28 @@ private:
 
 	// Text Mode
 	void TextBGLine(const uint32_t& BG_ID);
-	std::optional<std::uint16_t> TilePixelAtAbsoluteBGPosition(
+	std::optional<U16> TilePixelAtAbsoluteBGPosition(
 		const BGControlInfo& bgCnt,
-		const std::uint16_t& x,
-		const std::uint16_t& y);
-	std::uint32_t GetScreenAreaOffset(std::uint32_t mapX,
-		std::uint32_t mapY,
-		std::uint_fast8_t screenSize);
+		const U16& x,
+		const U16& y);
+	U32 GetScreenAreaOffset(U32 mapX,
+		U32 mapY,
+		U8 screenSize);
 
 	// Draw Utils
-	std::optional<std::uint16_t> GetTilePixel(std::uint16_t tileNumber,
-		std::uint16_t x,
-		std::uint16_t y,
-		std::uint16_t colorDepth,
-		std::uint32_t tileDataBase,
+	std::optional<U16> GetTilePixel(U16 tileNumber,
+		U16 x,
+		U16 y,
+		U16 colorDepth,
+		U32 tileDataBase,
 		bool verticalFlip,
 		bool horizontalFlip,
-		std::uint16_t paletteNumber,
+		U16 paletteNumber,
 		bool obj);
-	std::uint16_t GetBgColorFromSubPalette(const std::uint32_t& paletteNumber,
-		const std::uint32_t& colorID,
+	U16 GetBgColorFromSubPalette(const U32& paletteNumber,
+		const U32& colorID,
 		bool obj = false);
-	std::uint16_t GetBgColorFromPalette(const std::uint32_t& colorID,
+	U16 GetBgColorFromPalette(const U32& colorID,
 		bool obj = false);
 
 	std::shared_ptr<Memory> memory;
@@ -77,15 +77,15 @@ private:
 	Screen::Framebuffer depth{ 4 };
 	Screen::Framebuffer fb{};
 	State state = Visible;
-	std::uint32_t tickCount = 0;
+	U32 tickCount = 0;
 
-	const std::uint16_t TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
+	const U16 TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
 						TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32;
 
-	const std::uint32_t TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
+	const U32 TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
 						OBJ_START_ADDRESS = 0x06010000;
 
-	const std::uint32_t BGCNT[4] = { BG0CNT, BG1CNT, BG2CNT, BG3CNT };
+	const U32 BGCNT[4] = { BG0CNT, BG1CNT, BG2CNT, BG3CNT };
 
-	const std::uint16_t MAX_DEPTH = 4;
+	const U16 MAX_DEPTH = 4;
 };

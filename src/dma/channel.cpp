@@ -75,7 +75,7 @@ void Channel::CalculateTransferSteps()
 	}
 }
 
-void Channel::UpdateDetails(std::uint16_t value)
+void Channel::UpdateDetails(U16 value)
 {
 	auto prevEnable = enable;
 	memory->SetHalf(CNT_H, value);

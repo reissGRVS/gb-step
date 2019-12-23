@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
+#include "int.hpp"
 #include <iomanip>
 #include <iostream>
 #include <utility>
@@ -9,9 +9,9 @@
 namespace ARM7TDMI {
 
 class OpBacktrace {
-	static const std::uint32_t BUFFER_SIZE = 10;
-	using PCVal = std::uint32_t;
-	using OpcodeVal = std::uint32_t;
+	static const U32 BUFFER_SIZE = 10;
+	using PCVal = U32;
+	using OpcodeVal = U32;
 	using OpcodePCPair = std::pair<PCVal, OpcodeVal>;
 
 public:
@@ -35,7 +35,7 @@ public:
 	}
 
 private:
-	std::uint32_t last = 0;
+	U32 last = 0;
 	std::array<OpcodePCPair, BUFFER_SIZE> buffer{};
 };
 

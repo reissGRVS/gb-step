@@ -12,35 +12,35 @@ public:
 	void ReloadSAD();
 	void ReloadWordCount();
 	void CalculateTransferSteps();
-	void UpdateDetails(std::uint16_t value);
+	void UpdateDetails(U16 value);
 
 	void DoTransferStep();
 
 	const std::int_fast8_t ID;
-	const std::uint32_t SAD;
-	const std::uint32_t DAD;
-	const std::uint32_t CNT_L;
-	const std::uint32_t CNT_H;
+	const U32 SAD;
+	const U32 DAD;
+	const U32 CNT_L;
+	const U32 CNT_H;
 
 	bool active = false;
 
-	std::uint16_t dmaCnt;
-	std::uint16_t enable = 0;
-	std::uint16_t repeat;
-	std::uint16_t startTiming;
-	std::uint16_t irqAtEnd;
-	std::uint16_t transferType;
-	std::uint16_t transferSize;
-	std::uint16_t srcStep;
-	std::uint16_t destStep;
-	std::uint16_t destAddrCtl;
-	std::uint16_t srcAddrCtl;
+	U16 dmaCnt;
+	U16 enable = 0;
+	U16 repeat;
+	U16 startTiming;
+	U16 irqAtEnd;
+	U16 transferType;
+	U16 transferSize;
+	U16 srcStep;
+	U16 destStep;
+	U16 destAddrCtl;
+	U16 srcAddrCtl;
 
 private:
 	std::shared_ptr<Memory> memory;
 
-	std::uint32_t source;
-	std::uint32_t dest;
-	std::uint16_t wordCount;
+	U32 source;
+	U32 dest;
+	U16 wordCount;
 };
 } // namespace DMA

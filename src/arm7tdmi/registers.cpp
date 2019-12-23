@@ -4,15 +4,15 @@
 namespace ARM7TDMI {
 
 namespace SRFlag {
-	uint8_t get(const std::uint32_t& sr, const BitLocation& flag)
+	uint8_t get(const U32& sr, const BitLocation& flag)
 	{
-		std::uint32_t mask = (1 << flag.size) - 1;
+		U32 mask = (1 << flag.size) - 1;
 		return (sr >> flag.bit) & mask;
 	}
 
-	void set(std::uint32_t& sr, const BitLocation& flag, std::uint8_t val)
+	void set(U32& sr, const BitLocation& flag, U8 val)
 	{
-		std::uint32_t mask = (1 << flag.size) - 1;
+		U32 mask = (1 << flag.size) - 1;
 		if ((mask & val) != val) {
 			spdlog::get("std")->warn(
 				"Tried to set invalid size of value for bitlocation");
@@ -47,16 +47,16 @@ ModeBank getModeBank(SRFlag::ModeBits modeBits)
 	}
 }
 
-std::uint32_t RegisterSet::view(Register reg)
+U32 RegisterSet::view(Register reg)
 {
 	return get(currentBank, reg);
 }
-std::uint32_t& RegisterSet::get(Register reg)
+U32& RegisterSet::get(Register reg)
 {
 	return get(currentBank, reg);
 }
 
-std::uint32_t& RegisterSet::get(ModeBank mode, Register reg)
+U32& RegisterSet::get(ModeBank mode, Register reg)
 {
 	if (reg <= Register::R12) {
 		if (mode == ModeBank::FIQ && reg >= Register::R8) {

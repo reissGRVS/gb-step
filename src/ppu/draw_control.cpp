@@ -31,14 +31,14 @@ void PPU::DrawLine()
 		TextBGLine(2);
 		break;
 	case 3: {
-		for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
+		for (U16 pixel = (vCount * Screen::SCREEN_WIDTH);
 			 pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
 			fb[pixel] = memory->GetHalf(VRAM_START + pixel * 2);
 		}
 	} break;
 	case 4:
 	case 5: {
-		for (std::uint16_t pixel = (vCount * Screen::SCREEN_WIDTH);
+		for (U16 pixel = (vCount * Screen::SCREEN_WIDTH);
 			 pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {
 			auto colorID = memory->GetByte(VRAM_START + (frame * 0xA000) + pixel);
 			fb[pixel] = GetBgColorFromPalette(colorID);

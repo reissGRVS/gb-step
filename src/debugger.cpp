@@ -41,10 +41,10 @@ std::vector<std::string> SplitString(std::string str, char delimiter)
 	return tokens;
 }
 
-std::optional<std::uint32_t> GetIntSafe(std::string str, int base = 10)
+std::optional<U32> GetIntSafe(std::string str, int base = 10)
 {
 	try {
-		std::uint32_t stepCount = std::stoi(str, 0, base);
+		U32 stepCount = std::stoi(str, 0, base);
 		return stepCount;
 	} catch (std::exception& e) {
 		return {};
@@ -161,12 +161,12 @@ void Debugger::PrintMemoryBPs()
 	std::cout << std::endl;
 }
 
-void Debugger::WriteHalfToMemory(std::uint32_t address, std::uint16_t value)
+void Debugger::WriteHalfToMemory(U32 address, U16 value)
 {
 	memory->Write(Half, address, value, FREE);
 }
 
-void Debugger::PrintMemorySection(std::uint32_t address, std::uint32_t count)
+void Debugger::PrintMemorySection(U32 address, U32 count)
 {
 	for (auto i = 0u; i < count; i++) {
 		if (i % 4 == 0) {
@@ -244,12 +244,12 @@ void Debugger::CheckForBreakpoint(ARM7TDMI::StateView view_)
 
 void Debugger::ClearBreakpoints()
 {
-	regWatchedValues.fill(std::optional<std::uint32_t>());
+	regWatchedValues.fill(std::optional<U32>());
 	noRegBP = true;
 	watchedAddresses.clear();
 }
 
-void Debugger::NotifyMemoryWrite(std::uint32_t address)
+void Debugger::NotifyMemoryWrite(U32 address)
 {
 	memoryBreakpoint = !(watchedAddresses.find(address) == watchedAddresses.end());
 }

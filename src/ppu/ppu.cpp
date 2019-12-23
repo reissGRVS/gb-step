@@ -4,7 +4,7 @@
 #include "utils.hpp"
 #include <map>
 
-const std::uint32_t CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
+const U32 CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
 					CYCLES_PER_LINE = CYCLES_PER_VISIBLE + CYCLES_PER_HBLANK,
 					VISIBLE_LINES = 160, VBLANK_LINES = 68,
 					TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
@@ -20,7 +20,7 @@ enum DispStatInfo {
 	VCountSetting = 6
 };
 
-void PPU::Execute(std::uint32_t ticks)
+void PPU::Execute(U32 ticks)
 {
 	tickCount += ticks;
 
@@ -110,7 +110,7 @@ void PPU::OnVBlankLineFinish()
 	}
 }
 
-std::uint16_t PPU::GetDispStat(std::uint8_t bit)
+U16 PPU::GetDispStat(U8 bit)
 {
 	auto dispStat = memory->GetHalf(DISPSTAT);
 	if (bit == VCountSetting) {
@@ -120,7 +120,7 @@ std::uint16_t PPU::GetDispStat(std::uint8_t bit)
 	}
 }
 
-void PPU::UpdateDispStat(std::uint8_t bit, bool set)
+void PPU::UpdateDispStat(U8 bit, bool set)
 {
 	auto dispStat = memory->GetHalf(DISPSTAT);
 	if (set)
@@ -130,7 +130,7 @@ void PPU::UpdateDispStat(std::uint8_t bit, bool set)
 	memory->SetHalf(DISPSTAT, dispStat);
 }
 
-std::uint16_t PPU::IncrementVCount()
+U16 PPU::IncrementVCount()
 {
 	auto vCount = memory->GetHalf(VCOUNT);
 	vCount++;

@@ -2,7 +2,7 @@
 #include "spdlog/spdlog.h"
 #include <algorithm>
 
-std::uint8_t Flash::Read(std::uint32_t address)
+U8 Flash::Read(U32 address)
 {
 	address &= FLASH_BANK_MASK;
 
@@ -23,7 +23,7 @@ std::uint8_t Flash::Read(std::uint32_t address)
 	}
 }
 
-void Flash::Write(std::uint32_t address, std::uint8_t value)
+void Flash::Write(U32 address, U8 value)
 {
 	address &= FLASH_BANK_MASK;
 
@@ -71,7 +71,7 @@ void Flash::Write(std::uint32_t address, std::uint8_t value)
 	}
 }
 
-void Flash::EraseSector(std::uint32_t sector)
+void Flash::EraseSector(U32 sector)
 {
 	const auto SECTOR_SIZE = 0x1000u;
 	auto bankStart = currentBank ? bank2.begin() : bank1.begin();
@@ -80,7 +80,7 @@ void Flash::EraseSector(std::uint32_t sector)
 	state = INIT0;
 }
 
-void Flash::HandleOperation(std::uint8_t value)
+void Flash::HandleOperation(U8 value)
 {
 	switch (value) {
 	case CHIP_ID_ENABLE: {

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "int.hpp"
 #include <array>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -49,10 +49,10 @@ private:
 
 	ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
 
-	void Shift(std::uint32_t& value,
-		const std::uint32_t amount,
-		const std::uint32_t& shiftType,
-		std::uint8_t& carryOut,
+	void Shift(U32& value,
+		const U32 amount,
+		const U32& shiftType,
+		U8& carryOut,
 		bool regProvidedAmount);
 
 	// Thumb Operations
@@ -101,107 +101,107 @@ private:
 	};
 	void ArmDataProcessing_P(ParamList params);
 	void ArmDataProcessing(
-		std::uint32_t I,
-		std::uint32_t OpCode,
-		std::uint32_t S,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t Op2);
-	void ArmMRS(bool Ps, std::uint8_t Rd);
-	void ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source);
+		U32 I,
+		U32 OpCode,
+		U32 S,
+		U32 Rn,
+		U32 Rd,
+		U32 Op2);
+	void ArmMRS(bool Ps, U8 Rd);
+	void ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source);
 
-	void ICyclesMultiply(const std::uint32_t& mulop);
+	void ICyclesMultiply(const U32& mulop);
 	void ArmMultiply_P(ParamList params);
 	void ArmMultiply(
-		std::uint32_t A,
-		std::uint32_t S,
-		std::uint32_t Rd,
-		std::uint32_t Rn,
-		std::uint32_t Rs,
-		std::uint32_t Rm);
+		U32 A,
+		U32 S,
+		U32 Rd,
+		U32 Rn,
+		U32 Rs,
+		U32 Rm);
 
 	void ArmMultiplyLong_P(ParamList params);
 	void ArmMultiplyLong(
-		std::uint32_t U,
-		std::uint32_t A,
-		std::uint32_t S,
-		std::uint32_t RdHi,
-		std::uint32_t RdLo,
-		std::uint32_t Rs,
-		std::uint32_t Rm);
+		U32 U,
+		U32 A,
+		U32 S,
+		U32 RdHi,
+		U32 RdLo,
+		U32 Rs,
+		U32 Rm);
 
 	void ArmSingleDataSwap_P(ParamList params);
 	void ArmSingleDataSwap(
-		std::uint32_t B,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t Rm);
+		U32 B,
+		U32 Rn,
+		U32 Rd,
+		U32 Rm);
 
 	void ArmBranchAndExchange_P(ParamList params);
-	void ArmBranchAndExchange(std::uint32_t Rn);
+	void ArmBranchAndExchange(U32 Rn);
 
 	void ArmHalfwordDT(
-		std::uint32_t P,
-		std::uint32_t U,
-		std::uint32_t W,
-		std::uint32_t L,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t S,
-		std::uint32_t H,
-		std::uint32_t Offset);
+		U32 P,
+		U32 U,
+		U32 W,
+		U32 L,
+		U32 Rn,
+		U32 Rd,
+		U32 S,
+		U32 H,
+		U32 Offset);
 	void ArmHalfwordDTRegOffset_P(ParamList params);
 	void ArmHalfwordDTRegOffset(
-		std::uint32_t P,
-		std::uint32_t U,
-		std::uint32_t W,
-		std::uint32_t L,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t S,
-		std::uint32_t H,
-		std::uint32_t Rm);
+		U32 P,
+		U32 U,
+		U32 W,
+		U32 L,
+		U32 Rn,
+		U32 Rd,
+		U32 S,
+		U32 H,
+		U32 Rm);
 
 	void ArmHalfwordDTImmOffset_P(ParamList params);
 	void ArmHalfwordDTImmOffset(
-		std::uint32_t P,
-		std::uint32_t U,
-		std::uint32_t W,
-		std::uint32_t L,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t OffsetHi,
-		std::uint32_t S,
-		std::uint32_t H,
-		std::uint32_t OffsetLo);
+		U32 P,
+		U32 U,
+		U32 W,
+		U32 L,
+		U32 Rn,
+		U32 Rd,
+		U32 OffsetHi,
+		U32 S,
+		U32 H,
+		U32 OffsetLo);
 
 	void ArmSingleDataTransfer_P(ParamList params);
 	void ArmSingleDataTransfer(
-		std::uint32_t I,
-		std::uint32_t P,
-		std::uint32_t U,
-		std::uint32_t B,
-		std::uint32_t W,
-		std::uint32_t L,
-		std::uint32_t Rn,
-		std::uint32_t Rd,
-		std::uint32_t Offset);
+		U32 I,
+		U32 P,
+		U32 U,
+		U32 B,
+		U32 W,
+		U32 L,
+		U32 Rn,
+		U32 Rd,
+		U32 Offset);
 	// No Params
 	void ArmUndefined_P(ParamList params);
 	void ArmUndefined();
 
 	void ArmBlockDataTransfer_P(ParamList params);
 	void ArmBlockDataTransfer(
-		std::uint32_t P,
-		std::uint32_t U,
-		std::uint32_t S,
-		std::uint32_t W,
-		std::uint32_t L,
-		std::uint32_t Rn,
-		std::uint32_t RegList);
+		U32 P,
+		U32 U,
+		U32 S,
+		U32 W,
+		U32 L,
+		U32 Rn,
+		U32 RegList);
 
 	void ArmBranch_P(ParamList params);
-	void ArmBranch(std::uint32_t L, std::uint32_t Offset);
+	void ArmBranch(U32 L, U32 Offset);
 	// No Params
 	void ArmSWI_P(ParamList params);
 	void ArmSWI();

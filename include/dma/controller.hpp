@@ -17,7 +17,7 @@ public:
 
 	void Execute();
 	bool IsActive();
-	void CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value);
+	void CntHUpdateCallback(U8 id, U16 value);
 	void EventCallback(Event event, bool start);
 
 private:

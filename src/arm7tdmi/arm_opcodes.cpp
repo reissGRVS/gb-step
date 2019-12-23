@@ -38,10 +38,10 @@ const ParamSegments BlockDataTransferSegments
 
 const ParamSegments BranchSegments{ { 24, 24 }, { 23, 0 } };
 
-void CPU::Shift(std::uint32_t& value,
-	std::uint32_t amount,
-	const std::uint32_t& shiftType,
-	std::uint8_t& carryOut,
+void CPU::Shift(U32& value,
+	U32 amount,
+	const U32& shiftType,
+	U8& carryOut,
 	bool regProvidedAmount)
 {
 	switch (shiftType) {
@@ -82,7 +82,7 @@ void CPU::Shift(std::uint32_t& value,
 		carryOut = value & 1;
 		value >>= 1;
 		if (neg && shiftType == 0b10) {
-			std::uint32_t mask = (NBIT_MASK(amount) << (32 - amount));
+			U32 mask = (NBIT_MASK(amount) << (32 - amount));
 			value |= mask;
 		}
 		break;
@@ -163,7 +163,7 @@ std::function<void()> CPU::ArmOperation(OpCode opcode)
 	}
 	case 0b01: // SDT and Undef
 	{
-		std::uint32_t undefMask = (0b11 << 25) | (0b1 << 4);
+		U32 undefMask = (0b11 << 25) | (0b1 << 4);
 
 		if ((opcode & undefMask) == undefMask) {
 			return std::bind(&CPU::ArmUndefined_P, this, ParamList());
@@ -198,7 +198,7 @@ std::function<void()> CPU::ArmOperation(OpCode opcode)
 	}
 	}
 }
-void CPU::ArmMRS(bool Ps, std::uint8_t Rd)
+void CPU::ArmMRS(bool Ps, U8 Rd)
 {
 	auto& dest = registers.get((Register)Rd);
 	if (Ps) {
@@ -210,7 +210,7 @@ void CPU::ArmMRS(bool Ps, std::uint8_t Rd)
 	}
 }
 
-void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source)
+void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source)
 {
 	auto value = registers.get((Register)(source & NBIT_MASK(4)));
 	if (!flagsOnly) {
@@ -226,7 +226,7 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source)
 		if (I) {
 			value = (source & NBIT_MASK(8));
 			auto rotate = (source >> 8) * 2;
-			const std::uint32_t ROR = 0b11;
+			const U32 ROR = 0b11;
 			// Maybe this should do RRX as well?
 			uint8_t carry = 0;
 			if (rotate) {
@@ -247,17 +247,17 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, std::uint16_t source)
 
 void CPU::ArmDataProcessing_P(ParamList params)
 {
-	const std::uint32_t Op2 = params[0], Rd = params[1], Rn = params[2],
+	const U32 Op2 = params[0], Rd = params[1], Rn = params[2],
 						S = params[3], OpCode = params[4], I = params[5];
 	ArmDataProcessing(I, OpCode, S, Rn, Rd, Op2);
 }
 
-void CPU::ArmDataProcessing(std::uint32_t I,
-	std::uint32_t OpCode,
-	std::uint32_t S,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t Op2)
+void CPU::ArmDataProcessing(U32 I,
+	U32 OpCode,
+	U32 S,
+	U32 Rn,
+	U32 Rd,
+	U32 Op2)
 {
 	spdlog::get("std")->trace(
 		"DP I:{:X} OpCode:{:X} S:{:X} Rn:{:X} Rd:{:X} Op2:{:X}", I, OpCode, S, Rn,
@@ -275,7 +275,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 		return;
 	}
 
-	std::uint32_t Op1Val = registers.get((Register)Rn);
+	U32 Op1Val = registers.get((Register)Rn);
 
 	// If using PC, bit 1 is cleared
 	if (Rn == 15) {
@@ -284,7 +284,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	auto& dest = registers.get((Register)Rd);
 	auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-	std::uint32_t Op2Val = 0;
+	U32 Op2Val = 0;
 
 	if (!I) {
 		auto Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
@@ -314,7 +314,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	} else {
 		auto Imm = Op2 & NBIT_MASK(8);
 		auto rotate = (Op2 >> 8) * 2;
-		const std::uint32_t ROR = 0b11;
+		const U32 ROR = 0b11;
 		// Maybe this should do RRX as well?
 		if (rotate) {
 			Shift(Imm, rotate, ROR, carry, false);
@@ -323,13 +323,13 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 		Op2Val = Imm;
 	}
 
-	auto SetFlags = [this](const std::uint32_t& S, const std::uint32_t& result,
-						const std::uint8_t& carry) {
+	auto SetFlags = [this](const U32& S, const U32& result,
+						const U8& carry) {
 		if (S) {
 			auto& cpsr = registers.get(CPSR);
 
-			std::uint8_t zVal = result == 0;
-			std::uint8_t nVal = BIT_RANGE(result, 31, 31);
+			U8 zVal = result == 0;
+			U8 nVal = BIT_RANGE(result, 31, 31);
 			SRFlag::set(cpsr, SRFlag::n, nVal);
 			SRFlag::set(cpsr, SRFlag::z, zVal);
 			SRFlag::set(cpsr, SRFlag::c, carry);
@@ -403,7 +403,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::SBC: {
 		carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-		std::uint32_t Op3Val = carry ^ 1;
+		U32 Op3Val = carry ^ 1;
 		dest = Op1Val - Op2Val - Op3Val;
 		spdlog::get("std")->trace("	SBC {:X} {:X} {:X} {:X}", Op1Val, Op2Val,
 			Op3Val, dest);
@@ -415,7 +415,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::RSC: {
 		carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
-		std::uint32_t Op3Val = carry ^ 1;
+		U32 Op3Val = carry ^ 1;
 		dest = Op2Val - Op1Val - Op3Val;
 		spdlog::get("std")->trace("	RSC {:X} {:X} {:X} {:X}", Op1Val, Op2Val,
 			Op3Val, dest);
@@ -449,7 +449,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 			result);
 		carry = Op1Val >= Op2Val;
 		SetFlags(1, result, carry);
-		auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ ((std::uint32_t)result))) >> 31;
+		auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ ((U32)result))) >> 31;
 		SRFlag::set(cpsr, SRFlag::v, overflow);
 		spdlog::get("std")->trace("	V set to: {:X}", overflow);
 		S = 0;
@@ -458,7 +458,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 
 	case DPOps::CMN: {
 		auto resultBig = (std::uint64_t)Op1Val + Op2Val;
-		std::uint32_t result = (uint32_t)resultBig;
+		U32 result = (uint32_t)resultBig;
 		spdlog::get("std")->trace("	CMN {:X} {:X} {:X}", Op1Val, Op2Val,
 			result);
 		carry = resultBig >> 32;
@@ -504,7 +504,7 @@ void CPU::ArmDataProcessing(std::uint32_t I,
 	SetFlags(S, dest, carry);
 }
 
-void CPU::ICyclesMultiply(const std::uint32_t& mulop)
+void CPU::ICyclesMultiply(const U32& mulop)
 {
 	auto ticks = 1u;
 	auto mask = 0xFFFFFFFF;
@@ -523,17 +523,17 @@ void CPU::ICyclesMultiply(const std::uint32_t& mulop)
 void CPU::ArmMultiply_P(ParamList params)
 {
 	spdlog::get("std")->trace("MUL");
-	const std::uint32_t Rm = params[0], Rs = params[1], Rn = params[2],
+	const U32 Rm = params[0], Rs = params[1], Rn = params[2],
 						Rd = params[3], S = params[4], A = params[5];
 	ArmMultiply(A, S, Rd, Rn, Rs, Rm);
 }
 
-void CPU::ArmMultiply(std::uint32_t A,
-	std::uint32_t S,
-	std::uint32_t Rd,
-	std::uint32_t Rn,
-	std::uint32_t Rs,
-	std::uint32_t Rm)
+void CPU::ArmMultiply(U32 A,
+	U32 S,
+	U32 Rd,
+	U32 Rn,
+	U32 Rs,
+	U32 Rm)
 {
 	auto& dest = registers.get((Register)Rd);
 
@@ -547,10 +547,10 @@ void CPU::ArmMultiply(std::uint32_t A,
 		return;
 	}
 
-	std::int32_t op1 = registers.get((Register)Rm);
-	std::int32_t op2 = registers.get((Register)Rs);
+	S32 op1 = registers.get((Register)Rm);
+	S32 op2 = registers.get((Register)Rs);
 	ICyclesMultiply(op2);
-	std::int32_t op3 = registers.get((Register)Rn);
+	S32 op3 = registers.get((Register)Rn);
 
 	if (A) {
 		clock->Tick(1);
@@ -561,8 +561,8 @@ void CPU::ArmMultiply(std::uint32_t A,
 
 	if (S) {
 		auto& cpsr = registers.get(CPSR);
-		std::uint8_t zVal = dest == 0;
-		std::uint8_t nVal = dest >> 31;
+		U8 zVal = dest == 0;
+		U8 nVal = dest >> 31;
 		SRFlag::set(cpsr, SRFlag::n, nVal);
 		SRFlag::set(cpsr, SRFlag::z, zVal);
 	}
@@ -571,19 +571,19 @@ void CPU::ArmMultiply(std::uint32_t A,
 void CPU::ArmMultiplyLong_P(ParamList params)
 {
 	spdlog::get("std")->trace("MULLONG");
-	const std::uint32_t Rm = params[0], Rs = params[1], RdLo = params[2],
+	const U32 Rm = params[0], Rs = params[1], RdLo = params[2],
 						RdHi = params[3], S = params[4], A = params[5],
 						U = params[6];
 	ArmMultiplyLong(U, A, S, RdHi, RdLo, Rs, Rm);
 }
 
-void CPU::ArmMultiplyLong(std::uint32_t U,
-	std::uint32_t A,
-	std::uint32_t S,
-	std::uint32_t RdHi,
-	std::uint32_t RdLo,
-	std::uint32_t Rs,
-	std::uint32_t Rm)
+void CPU::ArmMultiplyLong(U32 U,
+	U32 A,
+	U32 S,
+	U32 RdHi,
+	U32 RdLo,
+	U32 Rs,
+	U32 Rm)
 {
 	spdlog::get("std")->trace(
 		"MULLONG Rm {} Rs {} RdHi {} RdLo {} U {} A {} S {}", Rm, Rs, RdHi, RdLo,
@@ -600,11 +600,11 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 
 	clock->Tick(1);
 	std::int64_t result = 0;
-	std::uint32_t op1 = registers.get((Register)Rm);
-	std::uint32_t op2 = registers.get((Register)Rs);
+	U32 op1 = registers.get((Register)Rm);
+	U32 op2 = registers.get((Register)Rs);
 	ICyclesMultiply(op2);
-	std::uint32_t op3 = registers.get((Register)RdLo);
-	std::uint32_t op4 = registers.get((Register)RdHi);
+	U32 op3 = registers.get((Register)RdLo);
+	U32 op4 = registers.get((Register)RdHi);
 
 	if (A) {
 		clock->Tick(1);
@@ -628,8 +628,8 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 
 	if (S) {
 		auto& cpsr = registers.get(CPSR);
-		std::uint8_t zVal = result == (int64_t)0;
-		std::uint8_t nVal = result < 0;
+		U8 zVal = result == (int64_t)0;
+		U8 nVal = result < 0;
 
 		SRFlag::set(cpsr, SRFlag::n, nVal);
 		SRFlag::set(cpsr, SRFlag::z, zVal);
@@ -639,15 +639,15 @@ void CPU::ArmMultiplyLong(std::uint32_t U,
 void CPU::ArmSingleDataSwap_P(ParamList params)
 {
 	spdlog::get("std")->trace("SDS");
-	const std::uint32_t Rm = params[0], Rd = params[1], Rn = params[2],
+	const U32 Rm = params[0], Rd = params[1], Rn = params[2],
 						B = params[3];
 	ArmSingleDataSwap(B, Rn, Rd, Rm);
 }
 
-void CPU::ArmSingleDataSwap(std::uint32_t B,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t Rm)
+void CPU::ArmSingleDataSwap(U32 B,
+	U32 Rn,
+	U32 Rd,
+	U32 Rm)
 {
 	if (Rm == 15 || Rn == 15 || Rd == 15) {
 		spdlog::get("std")->error("Invalid Arm SDS Using PC");
@@ -673,11 +673,11 @@ void CPU::ArmSingleDataSwap(std::uint32_t B,
 
 void CPU::ArmBranchAndExchange_P(ParamList params)
 {
-	const std::uint32_t Rn = params[0];
+	const U32 Rn = params[0];
 	ArmBranchAndExchange(Rn);
 }
 
-void CPU::ArmBranchAndExchange(std::uint32_t Rn)
+void CPU::ArmBranchAndExchange(U32 Rn)
 {
 	auto val = registers.get((Register)Rn);
 
@@ -690,21 +690,21 @@ void CPU::ArmBranchAndExchange(std::uint32_t Rn)
 void CPU::ArmHalfwordDTRegOffset_P(ParamList params)
 {
 	spdlog::get("std")->trace("HDT Reg");
-	std::uint32_t Rm = params[0], H = params[1], S = params[2], Rd = params[3],
+	U32 Rm = params[0], H = params[1], S = params[2], Rd = params[3],
 				  Rn = params[4], L = params[5], W = params[6], U = params[7],
 				  P = params[8];
 	ArmHalfwordDTRegOffset(P, U, W, L, Rn, Rd, S, H, Rm);
 }
 
-void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
-	std::uint32_t U,
-	std::uint32_t W,
-	std::uint32_t L,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t S,
-	std::uint32_t H,
-	std::uint32_t Rm)
+void CPU::ArmHalfwordDTRegOffset(U32 P,
+	U32 U,
+	U32 W,
+	U32 L,
+	U32 Rn,
+	U32 Rd,
+	U32 S,
+	U32 H,
+	U32 Rm)
 {
 	auto Offset = registers.get((Register)Rm);
 	spdlog::get("std")->trace("HDT Reg Offset {:X}", Offset);
@@ -714,23 +714,23 @@ void CPU::ArmHalfwordDTRegOffset(std::uint32_t P,
 void CPU::ArmHalfwordDTImmOffset_P(ParamList params)
 {
 	spdlog::get("std")->trace("HDT Imm");
-	const std::uint32_t OffsetLo = params[0], H = params[1], S = params[2],
+	const U32 OffsetLo = params[0], H = params[1], S = params[2],
 						OffsetHi = params[3], Rd = params[4], Rn = params[5],
 						L = params[6], W = params[7], U = params[8],
 						P = params[9];
 	ArmHalfwordDTImmOffset(P, U, W, L, Rn, Rd, OffsetHi, S, H, OffsetLo);
 }
 
-void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
-	std::uint32_t U,
-	std::uint32_t W,
-	std::uint32_t L,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t OffsetHi,
-	std::uint32_t S,
-	std::uint32_t H,
-	std::uint32_t OffsetLo)
+void CPU::ArmHalfwordDTImmOffset(U32 P,
+	U32 U,
+	U32 W,
+	U32 L,
+	U32 Rn,
+	U32 Rd,
+	U32 OffsetHi,
+	U32 S,
+	U32 H,
+	U32 OffsetLo)
 {
 	spdlog::get("std")->trace(
 		"HDT Imm P{} U{} W{} L{} Rn{} Rd{} OffsetHi{} S{} H{} OffsetLo{}", P, U,
@@ -739,15 +739,15 @@ void CPU::ArmHalfwordDTImmOffset(std::uint32_t P,
 	ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
 
-void CPU::ArmHalfwordDT(std::uint32_t P,
-	std::uint32_t U,
-	std::uint32_t W,
-	std::uint32_t L,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t S,
-	std::uint32_t H,
-	std::uint32_t Offset)
+void CPU::ArmHalfwordDT(U32 P,
+	U32 U,
+	U32 W,
+	U32 L,
+	U32 Rn,
+	U32 Rd,
+	U32 S,
+	U32 H,
+	U32 Offset)
 {
 	auto base = registers.get((Register)Rn);
 	auto baseOffset = base;
@@ -810,21 +810,21 @@ void CPU::ArmHalfwordDT(std::uint32_t P,
 void CPU::ArmSingleDataTransfer_P(ParamList params)
 {
 	spdlog::get("std")->trace("SDT");
-	std::uint32_t Offset = params[0], Rd = params[1], Rn = params[2],
+	U32 Offset = params[0], Rd = params[1], Rn = params[2],
 				  L = params[3], W = params[4], B = params[5], U = params[6],
 				  P = params[7], I = params[8];
 	ArmSingleDataTransfer(I, P, U, B, W, L, Rn, Rd, Offset);
 }
 
-void CPU::ArmSingleDataTransfer(std::uint32_t I,
-	std::uint32_t P,
-	std::uint32_t U,
-	std::uint32_t B,
-	std::uint32_t W,
-	std::uint32_t L,
-	std::uint32_t Rn,
-	std::uint32_t Rd,
-	std::uint32_t Offset)
+void CPU::ArmSingleDataTransfer(U32 I,
+	U32 P,
+	U32 U,
+	U32 B,
+	U32 W,
+	U32 L,
+	U32 Rn,
+	U32 Rd,
+	U32 Offset)
 {
 	spdlog::get("std")->trace("SDT I{} P{} U{} B{} W{} L{} Rn{} Rd{} Offset{}", I,
 		P, U, B, W, L, Rn, Rd, Offset);
@@ -866,8 +866,8 @@ void CPU::ArmSingleDataTransfer(std::uint32_t I,
 			auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
 				Sequentiality::NSEQ);
 			if (wordBoundaryOffset) {
-				std::uint8_t emptyCarry = 0;
-				const std::uint32_t ROR = 0b11;
+				U8 emptyCarry = 0;
+				const U32 ROR = 0b11;
 				spdlog::get("std")->trace("Word Boundary Offset {} for value {:X}",
 					wordBoundaryOffset, value);
 				Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
@@ -909,18 +909,18 @@ void CPU::ArmUndefined()
 void CPU::ArmBlockDataTransfer_P(ParamList params)
 {
 	spdlog::get("std")->trace("BDT");
-	std::uint32_t RegList = params[0], Rn = params[1], L = params[2],
+	U32 RegList = params[0], Rn = params[1], L = params[2],
 				  W = params[3], S = params[4], U = params[5], P = params[6];
 	ArmBlockDataTransfer(P, U, S, W, L, Rn, RegList);
 }
 
-void CPU::ArmBlockDataTransfer(std::uint32_t P,
-	std::uint32_t U,
-	std::uint32_t S,
-	std::uint32_t W,
-	std::uint32_t L,
-	std::uint32_t Rn,
-	std::uint32_t RegList)
+void CPU::ArmBlockDataTransfer(U32 P,
+	U32 U,
+	U32 S,
+	U32 W,
+	U32 L,
+	U32 Rn,
+	U32 RegList)
 {
 	auto base = registers.get((Register)Rn);
 	spdlog::get("std")->trace(
@@ -1013,15 +1013,15 @@ void CPU::ArmBlockDataTransfer(std::uint32_t P,
 void CPU::ArmBranch_P(ParamList params)
 {
 	spdlog::get("std")->trace("BRANCH");
-	std::uint32_t Offset = params[0], L = params[1];
+	U32 Offset = params[0], L = params[1];
 	ArmBranch(L, Offset);
 }
 
-void CPU::ArmBranch(std::uint32_t L, std::uint32_t Offset)
+void CPU::ArmBranch(U32 L, U32 Offset)
 {
 	Offset <<= 2;
 	spdlog::get("std")->trace("BRANCH L{:X} Offset:{:X}", L, Offset);
-	std::int32_t signedOffset = (Offset & NBIT_MASK(25));
+	S32 signedOffset = (Offset & NBIT_MASK(25));
 	if (Offset >> 25) {
 		signedOffset -= (1 << 25);
 	}

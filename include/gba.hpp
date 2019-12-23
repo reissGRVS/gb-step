@@ -36,7 +36,7 @@ public:
 		memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 			&debugger, std::placeholders::_1));
 
-		memory->SetIOWriteCallback(IF, [&](std::uint32_t irAcknowledge) {
+		memory->SetIOWriteCallback(IF, [&](U32 irAcknowledge) {
 			auto currentIF = memory->GetHalf(IF);
 			spdlog::get("std")->debug("IRQ Acknowledge {:B} was {:X}", irAcknowledge,
 				currentIF);

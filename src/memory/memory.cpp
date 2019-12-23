@@ -67,7 +67,7 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 
 std::string Memory::FindBackupID(size_t length)
 {
-	for (std::uint32_t romAddr = 0u; romAddr < length; romAddr += 4) {
+	for (U32 romAddr = 0u; romAddr < length; romAddr += 4) {
 		for (const auto& idString : BACKUP_ID_STRINGS) {
 			if (std::memcmp(idString.c_str(), mem.ext.rom.data() + romAddr,
 					idString.size())
@@ -80,14 +80,14 @@ std::string Memory::FindBackupID(size_t length)
 	return "NONE";
 }
 
-uint32_t Memory::ReadToSize(std::uint8_t* byte, AccessSize size)
+uint32_t Memory::ReadToSize(U8* byte, AccessSize size)
 {
-	auto word = reinterpret_cast<std::uint32_t*>(byte);
+	auto word = reinterpret_cast<U32*>(byte);
 	return (*word) & size;
 }
 
 uint32_t Memory::Read(AccessSize size,
-	std::uint32_t address,
+	U32 address,
 	Sequentiality seq)
 {
 	auto page = address >> 24;
@@ -145,8 +145,8 @@ uint32_t Memory::Read(AccessSize size,
 	// exit(-1);
 }
 
-void Memory::WriteToSize(std::uint8_t* byte,
-	std::uint32_t value,
+void Memory::WriteToSize(U8* byte,
+	U32 value,
 	AccessSize size)
 {
 	switch (size) {
@@ -155,12 +155,12 @@ void Memory::WriteToSize(std::uint8_t* byte,
 		break;
 	}
 	case AccessSize::Half: {
-		auto half = reinterpret_cast<std::uint16_t*>(byte);
+		auto half = reinterpret_cast<U16*>(byte);
 		(*half) = value;
 		break;
 	}
 	case AccessSize::Word: {
-		auto word = reinterpret_cast<std::uint32_t*>(byte);
+		auto word = reinterpret_cast<U32*>(byte);
 		(*word) = value;
 		break;
 	}
@@ -168,8 +168,8 @@ void Memory::WriteToSize(std::uint8_t* byte,
 }
 
 void Memory::Write(AccessSize size,
-	std::uint32_t address,
-	std::uint32_t value,
+	U32 address,
+	U32 value,
 	Sequentiality seq)
 {
 	auto page = address >> 24;
@@ -240,9 +240,9 @@ void Memory::Write(AccessSize size,
 }
 
 void Memory::TickBySize(AccessSize size,
-	std::uint32_t ticks8,
-	std::uint32_t ticks16,
-	std::uint32_t ticks32)
+	U32 ticks8,
+	U32 ticks16,
+	U32 ticks32)
 {
 	switch (size) {
 	case Byte:
@@ -257,7 +257,7 @@ void Memory::TickBySize(AccessSize size,
 	}
 }
 
-void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq)
+void Memory::Tick(AccessSize size, U32 page, Sequentiality seq)
 {
 	if (seq != NSEQ && seq != SEQ) {
 		return;
@@ -348,13 +348,13 @@ void Memory::Tick(AccessSize size, std::uint32_t page, Sequentiality seq)
 }
 
 void Memory::SetDebugWriteCallback(
-	std::function<void(std::uint32_t)> callback)
+	std::function<void(U32)> callback)
 {
 	PublishWriteCallback = callback;
 }
 
-void Memory::SetIOWriteCallback(std::uint32_t address,
-	std::function<void(std::uint32_t)> callback)
+void Memory::SetIOWriteCallback(U32 address,
+	std::function<void(U32)> callback)
 {
 	ioCallbacks.emplace(address, callback);
 }

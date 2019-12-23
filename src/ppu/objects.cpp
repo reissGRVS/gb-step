@@ -7,11 +7,11 @@ const uint16_t OBJ_DIMENSIONS[4][3][2] = { { { 1, 1 }, { 2, 1 }, { 1, 2 } },
 	{ { 2, 2 }, { 4, 1 }, { 1, 4 } },
 	{ { 4, 4 }, { 4, 2 }, { 2, 4 } },
 	{ { 8, 8 }, { 8, 4 }, { 4, 8 } } };
-const std::uint32_t OAM_ENTRIES = 128;
+const U32 OAM_ENTRIES = 128;
 
 void PPU::DrawObjects()
 {
-	for (std::int32_t i = OAM_ENTRIES - 1; i >= 0; i--) {
+	for (S32 i = OAM_ENTRIES - 1; i >= 0; i--) {
 		auto objAddress = OAM_START + (i * 8);
 		auto objAttr0 = memory->GetHalf(objAddress);
 		auto drawObjectEnabled = BIT_RANGE(objAttr0, 8, 9) != 0b10;
@@ -30,12 +30,12 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	auto topLeftTile = objAttrs.attr2.b.characterName;
 	auto characterMapping = BIT_RANGE(memory->GetHalf(DISPCNT), 6, 6);
 	auto halfTiles = objAttrs.attr0.b.colorsPalettes ? 2u : 1u;
-	std::uint16_t colorDepth = objAttrs.attr0.b.colorsPalettes ? 8u : 4u;
+	U16 colorDepth = objAttrs.attr0.b.colorsPalettes ? 8u : 4u;
 	auto tileYIncrement = characterMapping ? (halfTiles * spriteWidth) : 0x20;
 
-	for (std::uint16_t tileX = 0; tileX < spriteWidth; tileX++) {
-		for (std::uint16_t tileY = 0; tileY < spriteHeight; tileY++) {
-			std::uint16_t tileNumber = topLeftTile + (tileX * halfTiles) + (tileY * tileYIncrement);
+	for (U16 tileX = 0; tileX < spriteWidth; tileX++) {
+		for (U16 tileY = 0; tileY < spriteHeight; tileY++) {
+			U16 tileNumber = topLeftTile + (tileX * halfTiles) + (tileY * tileYIncrement);
 
 			if (colorDepth == 8)
 				tileNumber /= 2;
@@ -48,8 +48,8 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 			if (objAttrs.attr1.b.verticalFlip)
 				actualTileY = spriteHeight - tileY - 1;
 
-			std::uint16_t x = objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX;
-			std::uint16_t y = objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY;
+			U16 x = objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX;
+			U16 y = objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY;
 			auto tileInfo = TileInfo{ x,
 				y,
 				tileNumber,

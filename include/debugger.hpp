@@ -33,7 +33,7 @@ public:
 
 	void CheckForBreakpoint(ARM7TDMI::StateView view_);
 
-	void NotifyMemoryWrite(std::uint32_t address);
+	void NotifyMemoryWrite(U32 address);
 
 private:
 	debugOp StringToOp(std::string str);
@@ -42,8 +42,8 @@ private:
 	void OnBreakpoint();
 	void PrintMemoryBPs();
 	void PrintRegView();
-	void PrintMemorySection(std::uint32_t address, std::uint32_t count);
-	void WriteHalfToMemory(std::uint32_t address, std::uint16_t value);
+	void PrintMemorySection(U32 address, U32 count);
+	void WriteHalfToMemory(U32 address, U16 value);
 	void ClearBreakpoints();
 	void SetRun();
 	void SetStep(int x);
@@ -56,6 +56,6 @@ private:
 	bool noRegBP = true;
 	bool memoryBreakpoint = false;
 	ARM7TDMI::StateView view;
-	std::array<std::optional<std::uint32_t>, 16> regWatchedValues{};
-	std::unordered_set<std::uint32_t> watchedAddresses;
+	std::array<std::optional<U32>, 16> regWatchedValues{};
+	std::unordered_set<U32> watchedAddresses;
 };

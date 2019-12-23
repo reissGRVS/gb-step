@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
+#include "int.hpp"
 #include <string>
 
 const std::string EEPROM_V = "EEPROM_V";
@@ -14,6 +14,6 @@ const std::array<std::string, 5> BACKUP_ID_STRINGS = { EEPROM_V, SRAM_V, FLASH_V
 
 class CartBackup {
 public:
-	virtual std::uint8_t Read(std::uint32_t address) = 0;
-	virtual void Write(std::uint32_t address, std::uint8_t value) = 0;
+	virtual U8 Read(U32 address) = 0;
+	virtual void Write(U32 address, U8 value) = 0;
 };

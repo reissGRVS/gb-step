@@ -1,17 +1,17 @@
 #pragma once
-#include <cstdint>
+#include "int.hpp"
 #include <unordered_map>
 
-#define REGION_INFO(NAME, SIZE, START, MASK)         \
-	static const std::uint32_t NAME##_SIZE = SIZE;   \
-	static const std::uint32_t NAME##_START = START; \
-	static const std::uint32_t NAME##_MASK = MASK;
+#define REGION_INFO(NAME, SIZE, START, MASK) \
+	static const U32 NAME##_SIZE = SIZE;     \
+	static const U32 NAME##_START = START;   \
+	static const U32 NAME##_MASK = MASK;
 
-#define IOREG_INFO(NAME, ADDRESS)              \
-	static const std::uint32_t NAME = ADDRESS; \
+#define IOREG_INFO(NAME, ADDRESS)    \
+	static const U32 NAME = ADDRESS; \
 	static const std::string NAME##_STR = #NAME;
 
-static const std::uint32_t PAGE_MASK = 0xFFFFFF;
+static const U32 PAGE_MASK = 0xFFFFFF;
 REGION_INFO(BIOS, 0x04000, 0x0000000, 0x03FFF)
 REGION_INFO(WRAMB, 0x40000, 0x2000000, 0x3FFFF)
 REGION_INFO(WRAMC, 0x08000, 0x3000000, 0x07FFF)

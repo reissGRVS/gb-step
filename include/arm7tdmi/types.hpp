@@ -1,17 +1,17 @@
 #pragma once
 
+#include "int.hpp"
 #include <array>
-#include <cstdint>
 #include <utility>
 #include <vector>
 namespace ARM7TDMI {
 
-using OpCode = std::uint32_t;
-using BitSegment = std::pair<std::uint8_t, std::uint8_t>;
+using OpCode = U32;
+using BitSegment = std::pair<U8, U8>;
 using ParamSegments = std::vector<BitSegment>;
 
 // Params should be stored from LSB to MSB
-using ParamList = std::vector<std::uint32_t>;
+using ParamList = std::vector<U32>;
 
 using RegisterView = std::array<std::uint64_t, 16>;
 

@@ -1,16 +1,18 @@
 #pragma once
 
+#include "int.hpp"
 #include <array>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
 
+#include "arm7tdmi/types.hpp"
+
 #include "joypad.hpp"
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
+#include "memory/types.hpp"
 #include "system_clock.hpp"
-#include "types.hpp"
 #include "utils.hpp"
 
 class Memory {
@@ -20,35 +22,35 @@ public:
 		std::string romPath,
 		Joypad& joypad);
 
-	std::uint32_t Read(AccessSize size,
-		std::uint32_t address,
+	U32 Read(AccessSize size,
+		U32 address,
 		Sequentiality type);
 	void Write(AccessSize size,
-		std::uint32_t address,
-		std::uint32_t value,
+		U32 address,
+		U32 value,
 		Sequentiality type);
 
-	std::uint8_t GetByte(const std::uint32_t& address)
+	U8 GetByte(const U32& address)
 	{
 		return Read(AccessSize::Byte, address, Sequentiality::FREE);
 	}
-	std::uint16_t GetHalf(const std::uint32_t& address)
+	U16 GetHalf(const U32& address)
 	{
 		return Read(AccessSize::Half, address, Sequentiality::FREE);
 	}
-	std::uint32_t GetWord(const std::uint32_t& address)
+	U32 GetWord(const U32& address)
 	{
 		return Read(AccessSize::Word, address, Sequentiality::FREE);
 	}
-	void SetByte(const std::uint32_t& address, const std::uint8_t& value)
+	void SetByte(const U32& address, const U8& value)
 	{
 		Write(AccessSize::Byte, address, value, Sequentiality::FREE);
 	}
-	void SetHalf(const std::uint32_t& address, const std::uint16_t& value)
+	void SetHalf(const U32& address, const U16& value)
 	{
 		Write(AccessSize::Half, address, value, Sequentiality::FREE);
 	}
-	void SetWord(const std::uint32_t& address, const std::uint32_t& value)
+	void SetWord(const U32& address, const U32& value)
 	{
 		Write(AccessSize::Word, address, value, Sequentiality::FREE);
 	}
@@ -60,44 +62,44 @@ public:
 		SetHalf(IF, intReq);
 	}
 
-	void SetIOWriteCallback(std::uint32_t address,
-		std::function<void(std::uint32_t)> callback);
-	void SetDebugWriteCallback(std::function<void(std::uint32_t)> callback);
+	void SetIOWriteCallback(U32 address,
+		std::function<void(U32)> callback);
+	void SetDebugWriteCallback(std::function<void(U32)> callback);
 
 private:
 	std::shared_ptr<SystemClock> clock;
-	std::unordered_map<std::uint32_t, std::function<void(std::uint32_t)>>
+	std::unordered_map<U32, std::function<void(U32)>>
 		ioCallbacks;
 
 	std::string FindBackupID(size_t length);
 
-	std::uint32_t ReadToSize(std::uint8_t* byte, AccessSize size);
-	void WriteToSize(std::uint8_t* byte, std::uint32_t value, AccessSize size);
+	U32 ReadToSize(U8* byte, AccessSize size);
+	void WriteToSize(U8* byte, U32 value, AccessSize size);
 
-	void Tick(AccessSize size, std::uint32_t page, Sequentiality seq);
+	void Tick(AccessSize size, U32 page, Sequentiality seq);
 	void TickBySize(AccessSize size,
-		std::uint32_t ticks8,
-		std::uint32_t ticks16,
-		std::uint32_t ticks32);
+		U32 ticks8,
+		U32 ticks16,
+		U32 ticks32);
 	// https://problemkaputt.de/gbatek.htm#gbamemorymap
-	std::function<void(std::uint32_t)> PublishWriteCallback;
+	std::function<void(U32)> PublishWriteCallback;
 	Joypad& joypad;
 	struct MemoryMap {
 		struct {
-			std::array<std::uint8_t, BIOS_SIZE> bios{};
-			std::array<std::uint8_t, WRAMB_SIZE> wramb{};
-			std::array<std::uint8_t, WRAMC_SIZE> wramc{};
-			std::array<std::uint8_t, IOREG_SIZE> ioreg{};
+			std::array<U8, BIOS_SIZE> bios{};
+			std::array<U8, WRAMB_SIZE> wramb{};
+			std::array<U8, WRAMC_SIZE> wramc{};
+			std::array<U8, IOREG_SIZE> ioreg{};
 		} gen;
 
 		struct {
-			std::array<std::uint8_t, PRAM_SIZE> pram{};
-			std::array<std::uint8_t, VRAM_SIZE> vram{};
-			std::array<std::uint8_t, OAM_SIZE> oam{};
+			std::array<U8, PRAM_SIZE> pram{};
+			std::array<U8, VRAM_SIZE> vram{};
+			std::array<U8, OAM_SIZE> oam{};
 		} disp;
 
 		struct {
-			std::array<std::uint8_t, ROM_SIZE> rom{};
+			std::array<U8, ROM_SIZE> rom{};
 			std::unique_ptr<CartBackup> backup;
 		} ext;
 	} mem;

@@ -22,7 +22,7 @@ bool Controller::IsActive()
 	return false;
 }
 
-void Controller::CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value)
+void Controller::CntHUpdateCallback(U8 id, U16 value)
 {
 	channels[id]->UpdateDetails(value);
 
@@ -34,7 +34,7 @@ void Controller::CntHUpdateCallback(std::uint_fast8_t id, std::uint16_t value)
 void Controller::EventCallback(Event event, bool start)
 {
 	for (const auto& c : channels) {
-		if (c->enable && c->startTiming == (std::uint16_t)event) {
+		if (c->enable && c->startTiming == (U16)event) {
 			if (start) {
 				c->active = true;
 			} else {

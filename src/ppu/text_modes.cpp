@@ -3,14 +3,14 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-const std::uint32_t BGHOFS[4] = { BG0HOFS, BG1HOFS, BG2HOFS, BG3HOFS };
-const std::uint32_t BGVOFS[4] = { BG0VOFS, BG1VOFS, BG2VOFS, BG3VOFS };
-const std::uint16_t TEXT_BGMAP_SIZES[4][2] = { { 256, 256 },
+const U32 BGHOFS[4] = { BG0HOFS, BG1HOFS, BG2HOFS, BG3HOFS };
+const U32 BGVOFS[4] = { BG0VOFS, BG1VOFS, BG2VOFS, BG3VOFS };
+const U16 TEXT_BGMAP_SIZES[4][2] = { { 256, 256 },
 	{ 512, 256 },
 	{ 256, 512 },
 	{ 512, 512 } };
 
-void PPU::TextBGLine(const std::uint32_t& BG_ID)
+void PPU::TextBGLine(const U32& BG_ID)
 {
 	auto bgCnt = BGControlInfo(BG_ID, memory->GetHalf(BGCNT[BG_ID]));
 	auto bgXOffset = memory->GetHalf(BGHOFS[BG_ID]) & NBIT_MASK(9);
@@ -34,10 +34,10 @@ void PPU::TextBGLine(const std::uint32_t& BG_ID)
 	}
 }
 
-std::optional<std::uint16_t> PPU::TilePixelAtAbsoluteBGPosition(
+std::optional<U16> PPU::TilePixelAtAbsoluteBGPosition(
 	const BGControlInfo& bgCnt,
-	const std::uint16_t& x,
-	const std::uint16_t& y)
+	const U16& x,
+	const U16& y)
 {
 	// Get tile coords
 	auto mapX = x / TILE_PIXEL_WIDTH;
@@ -59,9 +59,9 @@ std::optional<std::uint16_t> PPU::TilePixelAtAbsoluteBGPosition(
 		paletteNumber, false);
 }
 
-std::uint32_t PPU::GetScreenAreaOffset(std::uint32_t mapX,
-	std::uint32_t mapY,
-	std::uint_fast8_t screenSize)
+U32 PPU::GetScreenAreaOffset(U32 mapX,
+	U32 mapY,
+	U8 screenSize)
 {
 	auto screenX = mapX / TILE_AREA_WIDTH;
 	auto screenY = mapY / TILE_AREA_HEIGHT;

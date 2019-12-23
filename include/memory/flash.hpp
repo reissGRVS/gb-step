@@ -3,7 +3,7 @@
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
 #include <array>
-#include <cstdint>
+#include "int.hpp"
 
 enum FlashSize { Single = 0,
 	Double = 1 };
@@ -16,12 +16,12 @@ public:
 	{
 	}
 
-	std::uint8_t Read(std::uint32_t address) override;
-	void Write(std::uint32_t address, std::uint8_t value) override;
+	U8 Read(U32 address) override;
+	void Write(U32 address, U8 value) override;
 
 private:
-	void HandleOperation(std::uint8_t value);
-	void EraseSector(std::uint32_t sector);
+	void HandleOperation(U8 value);
+	void EraseSector(U32 sector);
 
 	// TODO: Support Atmel devices?
 	// TODO: Terminate command for Macronix devices
@@ -50,7 +50,7 @@ private:
 	bool idMode = false;
 	bool eraseEnable = false;
 
-	std::array<std::uint8_t, FLASH_BANK_SIZE> bank1{ 0xFF };
+	std::array<U8, FLASH_BANK_SIZE> bank1{ 0xFF };
 	// Only used for FLASH1M
-	std::array<std::uint8_t, FLASH_BANK_SIZE> bank2{ 0xFF };
+	std::array<U8, FLASH_BANK_SIZE> bank2{ 0xFF };
 };
