@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "arm7tdmi/types.hpp"
-#include "memory/memory.hpp"
+#include "memory/read_write_interface.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
 #include "stateview.hpp"
@@ -17,7 +17,7 @@
 namespace ARM7TDMI {
 class CPU {
 public:
-	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<Memory> memory)
+	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<ReadWriteInterface> memory)
 		: clock(clock)
 		, memory(memory)
 	{
@@ -41,7 +41,7 @@ public:
 private:
 	bool slow = false;
 	std::shared_ptr<SystemClock> clock;
-	std::shared_ptr<Memory> memory;
+	std::shared_ptr<ReadWriteInterface> memory;
 	std::array<OpCode, 2> pipeline;
 
 	void PipelineFlush();

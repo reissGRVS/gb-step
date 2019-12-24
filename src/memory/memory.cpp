@@ -65,6 +65,11 @@ Memory::Memory(std::shared_ptr<SystemClock> clock,
 	}
 }
 
+void Memory::AttachIORegisters(std::shared_ptr<IORegisters> io)
+{
+	mem.gen.io = io;
+}
+
 std::string Memory::FindBackupID(size_t length)
 {
 	for (U32 romAddr = 0u; romAddr < length; romAddr += 4) {
@@ -78,12 +83,6 @@ std::string Memory::FindBackupID(size_t length)
 		}
 	}
 	return "NONE";
-}
-
-uint32_t Memory::ReadToSize(U8* byte, AccessSize size)
-{
-	auto word = reinterpret_cast<U32*>(byte);
-	return (*word) & size;
 }
 
 uint32_t Memory::Read(AccessSize size,
@@ -115,11 +114,7 @@ uint32_t Memory::Read(AccessSize size,
 	case 0x03:
 		return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
 	case 0x04:
-		if (seq != Sequentiality::FREE) {
-			spdlog::get("std")->debug("IORead {:X} size: {:X}", address,
-				(uint32_t)size);
-		}
-		return ReadToSize(&mem.gen.ioreg[address & IOREG_MASK], size);
+		return mem.gen.io->Read(size, address, seq);
 	case 0x05:
 		return ReadToSize(&mem.disp.pram[address & PRAM_MASK], size);
 	case 0x06:
@@ -145,28 +140,6 @@ uint32_t Memory::Read(AccessSize size,
 	// exit(-1);
 }
 
-void Memory::WriteToSize(U8* byte,
-	U32 value,
-	AccessSize size)
-{
-	switch (size) {
-	case AccessSize::Byte: {
-		(*byte) = value;
-		break;
-	}
-	case AccessSize::Half: {
-		auto half = reinterpret_cast<U16*>(byte);
-		(*half) = value;
-		break;
-	}
-	case AccessSize::Word: {
-		auto word = reinterpret_cast<U32*>(byte);
-		(*word) = value;
-		break;
-	}
-	}
-}
-
 void Memory::Write(AccessSize size,
 	U32 address,
 	U32 value,
@@ -185,44 +158,9 @@ void Memory::Write(AccessSize size,
 	case 0x03:
 		WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
 		break;
-	case 0x04: {
-		if (seq == Sequentiality::FREE) {
-			spdlog::get("std")->trace("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
-				value, address, (uint32_t)size, seq);
-			WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
-		} else {
-			if (address < 0x40000E0 && address > 0x40000AF)
-				spdlog::get("std")->debug("IOWrite {:X} @ {:X} size: {:X} type: {:X}",
-					value, address, (uint32_t)size, seq);
-			if (size == Half || size == Byte) {
-				auto callback = ioCallbacks.find(address);
-				if (callback != ioCallbacks.end()) {
-					callback->second(value);
-				} else {
-					WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, size);
-				}
-			}
-
-			if (size == Word) {
-				auto callback = ioCallbacks.find(address);
-				if (callback != ioCallbacks.end()) {
-					callback->second(value);
-				} else {
-					WriteToSize(&mem.gen.ioreg[address & IOREG_MASK], value, Half);
-				}
-
-				callback = ioCallbacks.find(address + 2);
-				if (callback != ioCallbacks.end()) {
-					callback->second(value >> 16);
-				} else {
-					WriteToSize(&mem.gen.ioreg[(address + 2) & IOREG_MASK], value >> 16,
-						Half);
-				}
-			}
-		}
-
+	case 0x04:
+		mem.gen.io->Write(size, address, value, seq);
 		break;
-	}
 	case 0x05:
 		WriteToSize(&mem.disp.pram[address & PRAM_MASK], value, size);
 		break;
@@ -357,4 +295,34 @@ void Memory::SetIOWriteCallback(U32 address,
 	std::function<void(U32)> callback)
 {
 	ioCallbacks.emplace(address, callback);
+}
+
+U8 Memory::GetByte(const U32& address)
+{
+	return Read(AccessSize::Byte, address, Sequentiality::FREE);
+}
+
+U16 Memory::GetHalf(const U32& address)
+{
+	return Read(AccessSize::Half, address, Sequentiality::FREE);
+}
+
+U32 Memory::GetWord(const U32& address)
+{
+	return Read(AccessSize::Word, address, Sequentiality::FREE);
+}
+
+void Memory::SetByte(const U32& address, const U8& value)
+{
+	Write(AccessSize::Byte, address, value, Sequentiality::FREE);
+}
+
+void Memory::SetHalf(const U32& address, const U16& value)
+{
+	Write(AccessSize::Half, address, value, Sequentiality::FREE);
+}
+
+void Memory::SetWord(const U32& address, const U32& value)
+{
+	Write(AccessSize::Word, address, value, Sequentiality::FREE);
 }

@@ -10,12 +10,15 @@ set(SOURCE_FILES
 	src/main.cpp
 	src/memory/memory.cpp
 	src/memory/flash.cpp
+	src/memory/io_registers.cpp
+	src/memory/read_write_interface.cpp
 	src/debugger.cpp
 	src/dma/channel.cpp
 	src/dma/controller.cpp
 	src/ppu/ppu.cpp
 	src/ppu/draw_control.cpp
 	src/ppu/draw_util.cpp
+	src/ppu/lcd_io_registers.cpp
 	src/ppu/objects.cpp
 	src/ppu/text_modes.cpp
 	src/joypad.cpp

@@ -10,50 +10,36 @@
 
 #include "joypad.hpp"
 #include "memory/cart_backup.hpp"
+#include "memory/io_registers.hpp"
+#include "memory/read_write_interface.hpp"
 #include "memory/regions.hpp"
 #include "memory/types.hpp"
 #include "system_clock.hpp"
 #include "utils.hpp"
 
-class Memory {
+class Memory : public ReadWriteInterface {
 public:
 	Memory(std::shared_ptr<SystemClock> clock,
 		std::string biosPath,
 		std::string romPath,
 		Joypad& joypad);
 
+	void AttachIORegisters(std::shared_ptr<IORegisters> io);
+
 	U32 Read(AccessSize size,
 		U32 address,
-		Sequentiality type);
+		Sequentiality type) override;
 	void Write(AccessSize size,
 		U32 address,
 		U32 value,
-		Sequentiality type);
+		Sequentiality type) override;
 
-	U8 GetByte(const U32& address)
-	{
-		return Read(AccessSize::Byte, address, Sequentiality::FREE);
-	}
-	U16 GetHalf(const U32& address)
-	{
-		return Read(AccessSize::Half, address, Sequentiality::FREE);
-	}
-	U32 GetWord(const U32& address)
-	{
-		return Read(AccessSize::Word, address, Sequentiality::FREE);
-	}
-	void SetByte(const U32& address, const U8& value)
-	{
-		Write(AccessSize::Byte, address, value, Sequentiality::FREE);
-	}
-	void SetHalf(const U32& address, const U16& value)
-	{
-		Write(AccessSize::Half, address, value, Sequentiality::FREE);
-	}
-	void SetWord(const U32& address, const U32& value)
-	{
-		Write(AccessSize::Word, address, value, Sequentiality::FREE);
-	}
+	U8 GetByte(const U32& address);
+	U16 GetHalf(const U32& address);
+	U32 GetWord(const U32& address);
+	void SetByte(const U32& address, const U8& value);
+	void SetHalf(const U32& address, const U16& value);
+	void SetWord(const U32& address, const U32& value);
 
 	void RequestInterrupt(Interrupt i)
 	{
@@ -73,9 +59,6 @@ private:
 
 	std::string FindBackupID(size_t length);
 
-	U32 ReadToSize(U8* byte, AccessSize size);
-	void WriteToSize(U8* byte, U32 value, AccessSize size);
-
 	void Tick(AccessSize size, U32 page, Sequentiality seq);
 	void TickBySize(AccessSize size,
 		U32 ticks8,
@@ -89,7 +72,7 @@ private:
 			std::array<U8, BIOS_SIZE> bios{};
 			std::array<U8, WRAMB_SIZE> wramb{};
 			std::array<U8, WRAMC_SIZE> wramc{};
-			std::array<U8, IOREG_SIZE> ioreg{};
+			std::shared_ptr<IORegisters> io{};
 		} gen;
 
 		struct {

@@ -2,13 +2,16 @@
 
 #include "memory/memory.hpp"
 #include "ppu/bg_control_info.hpp"
+#include "ppu/lcd_io_registers.hpp"
 #include "ppu/obj_attributes.hpp"
 #include "ppu/tile_info.hpp"
 #include "screen.hpp"
 
+#include "memory/regions.hpp"
+
 #include <optional>
 #include <vector>
-class PPU {
+class PPU : public LCDIORegisters {
 	enum State { Visible,
 		HBlank,
 		VBlank };
@@ -19,7 +22,16 @@ public:
 		, screen(screen_)
 	{
 	}
+
 	void Execute(U32 ticks);
+
+	U32 Read(AccessSize size,
+		U32 address,
+		Sequentiality) override;
+	void Write(AccessSize size,
+		U32 address,
+		U32 value,
+		Sequentiality) override;
 
 	std::function<void(bool)> HBlankCallback = [](bool) { return; };
 	std::function<void(bool)> VBlankCallback = [](bool) { return; };
@@ -80,10 +92,10 @@ private:
 	U32 tickCount = 0;
 
 	const U16 TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
-						TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32;
+			  TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32;
 
 	const U32 TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
-						OBJ_START_ADDRESS = 0x06010000;
+			  OBJ_START_ADDRESS = 0x06010000;
 
 	const U32 BGCNT[4] = { BG0CNT, BG1CNT, BG2CNT, BG3CNT };
 
