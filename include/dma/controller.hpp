@@ -6,7 +6,7 @@
 #include <array>
 
 namespace DMA {
-class Controller : DMAIORegisters {
+class Controller : public DMAIORegisters {
 public:
 	Controller(std::shared_ptr<Memory> memory)
 		: memory(memory){};

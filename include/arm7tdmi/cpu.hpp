@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "arm7tdmi/ir_io_registers.hpp"
 #include "arm7tdmi/types.hpp"
 #include "memory/read_write_interface.hpp"
 #include "opbacktrace.hpp"
@@ -15,7 +16,8 @@
 #include "system_clock.hpp"
 
 namespace ARM7TDMI {
-class CPU {
+
+class CPU : public IRIORegisters {
 public:
 	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<ReadWriteInterface> memory)
 		: clock(clock)
@@ -33,6 +35,15 @@ public:
 	};
 
 	void Execute();
+
+	//For Interrupt IO Registers
+	U32 Read(AccessSize size,
+		U32 address,
+		Sequentiality) override;
+	void Write(AccessSize size,
+		U32 address,
+		U32 value,
+		Sequentiality) override;
 
 	StateView ViewState();
 	RegisterSet registers;

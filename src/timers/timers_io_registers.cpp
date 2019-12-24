@@ -13,7 +13,7 @@ void Timers::Write(AccessSize size,
 	U32 value,
 	Sequentiality)
 {
-	//TODO:special stuff, for DMA
+	//TODO:special stuff, for Timers
 	U32 actualIndex = address - TIMER_IO_START;
 	WriteToSize(&registers[actualIndex], value, size);
 }

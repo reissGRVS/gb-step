@@ -27,23 +27,27 @@ public:
 			  cfg.biosPath,
 			  cfg.romPath,
 			  cfg.joypad))
-		, cpu(sysClock, memory)
+		, cpu(std::make_shared<ARM7TDMI::CPU>(sysClock, memory))
 		, ppu(std::make_shared<PPU>(memory, cfg.screen))
 		, debugger(memory)
-		, timers(memory)
-		, dma(memory)
+		, timers(std::make_shared<Timers>(memory))
+		, dma(std::make_shared<DMA::Controller>(memory))
 	{
 		memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 			&debugger, std::placeholders::_1));
 
 		auto ioRegisters = std::make_shared<IORegisters>(
-			std::static_pointer_cast<LCDIORegisters>(ppu));
+			std::static_pointer_cast<TimersIORegisters>(timers),
+			std::static_pointer_cast<DMAIORegisters>(dma),
+			std::static_pointer_cast<LCDIORegisters>(ppu),
+			std::static_pointer_cast<IRIORegisters>(cpu));
 		memory->AttachIORegisters(ioRegisters);
 
 		ppu->HBlankCallback
-			= std::bind(&DMA::Controller::EventCallback, &dma,
+			= std::bind(&DMA::Controller::EventCallback, dma,
 				DMA::Controller::Event::HBLANK, std::placeholders::_1);
-		ppu->VBlankCallback = std::bind(&DMA::Controller::EventCallback, &dma,
+
+		ppu->VBlankCallback = std::bind(&DMA::Controller::EventCallback, dma,
 			DMA::Controller::Event::VBLANK, std::placeholders::_1);
 
 		//TODO: Replace these with RegisterSets
@@ -95,26 +99,26 @@ public:
 	{
 		while (true) {
 #ifndef NDEBUG
-			debugger.CheckForBreakpoint(cpu.ViewState());
+			debugger.CheckForBreakpoint(cpu->ViewState());
 #endif
-			if (dma.IsActive()) {
-				dma.Execute();
+			if (dma->IsActive()) {
+				dma->Execute();
 			} else {
-				cpu.Execute();
+				cpu->Execute();
 			}
 
 			auto ticks = sysClock->SinceLastCheck();
 			ppu->Execute(ticks);
-			timers.Update(ticks);
+			timers->Update(ticks);
 		}
 	};
 
 private:
 	std::shared_ptr<SystemClock> sysClock;
 	std::shared_ptr<Memory> memory;
-	ARM7TDMI::CPU cpu;
+	std::shared_ptr<ARM7TDMI::CPU> cpu;
 	std::shared_ptr<PPU> ppu;
 	Debugger debugger;
-	Timers timers;
-	DMA::Controller dma;
+	std::shared_ptr<Timers> timers;
+	std::shared_ptr<DMA::Controller> dma;
 };

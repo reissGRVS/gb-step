@@ -1,8 +1,8 @@
 #pragma once
 #include "int.hpp"
 #include "memory/read_write_interface.hpp"
+#include <array>
 
-namespace DMA {
 class DMAIORegisters : public ReadWriteInterface {
 
 public:
@@ -12,4 +12,3 @@ public:
 protected:
 	std::array<U8, DMA_IO_SIZE> registers{};
 };
-}

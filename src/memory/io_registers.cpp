@@ -1,7 +1,13 @@
 #include "memory/io_registers.hpp"
 
-IORegisters::IORegisters(std::shared_ptr<LCDIORegisters> lcd)
-	: lcd(lcd)
+IORegisters::IORegisters(std::shared_ptr<TimersIORegisters> timers,
+	std::shared_ptr<DMAIORegisters> dma,
+	std::shared_ptr<LCDIORegisters> lcd,
+	std::shared_ptr<IRIORegisters> ir)
+	: timers(timers)
+	, dma(dma)
+	, lcd(lcd)
+	, ir(ir)
 {
 }
 
@@ -9,7 +15,12 @@ std::shared_ptr<ReadWriteInterface> IORegisters::GetRegisterSet(U32 address)
 {
 	if (IN_RANGE(address, LCDIORegisters::LCD_IO_START, LCDIORegisters::LCD_IO_END)) {
 		return lcd;
-		//TODO: Add other range checks here
+	} else if (IN_RANGE(address, DMAIORegisters::DMA_IO_START, DMAIORegisters::DMA_IO_END)) {
+		return dma;
+	} else if (IN_RANGE(address, IRIORegisters::IR_IO_START, IRIORegisters::IR_IO_END)) {
+		return ir;
+	} else if (IN_RANGE(address, TimersIORegisters::TIMER_IO_START, TimersIORegisters::TIMER_IO_END)) {
+		return timers;
 	}
 
 	return {};

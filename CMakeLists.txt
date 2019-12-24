@@ -10,9 +10,10 @@ set(SOURCE_FILES
 	src/main.cpp
 	src/joypad.cpp
 	src/arm7tdmi/arm_opcodes.cpp
-	src/arm7tdmi/thumb_opcodes.cpp
-	src/arm7tdmi/registers.cpp
 	src/arm7tdmi/cpu.cpp
+	src/arm7tdmi/ir_io_registers.cpp
+	src/arm7tdmi/registers.cpp
+	src/arm7tdmi/thumb_opcodes.cpp
 	src/debugger.cpp
 	src/dma/channel.cpp
 	src/dma/controller.cpp
