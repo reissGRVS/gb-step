@@ -45,8 +45,6 @@ U32 Timer::PrescalerTimingUpdate(U32 ticks)
 
 U32 Timer::Update(U32 ticks, U32 prevOverflow)
 {
-	counter = memory->GetHalf(CNT_L);
-
 	U32 overflow = 0;
 
 	if (timerStart) {
@@ -55,7 +53,6 @@ U32 Timer::Update(U32 ticks, U32 prevOverflow)
 		} else {
 			overflow = PrescalerTimingUpdate(ticks);
 		}
-		memory->SetHalf(CNT_L, counter);
 	}
 
 	return overflow;

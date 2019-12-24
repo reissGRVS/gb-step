@@ -25,10 +25,10 @@ void Timers::SetReloadValue(U8 id, U16 value)
 
 void Timers::TimerCntHUpdate(U8 id, U16 value)
 {
-	if (BIT_RANGE(timers[id].cntHData, 7, 7) == 0 && BIT_RANGE(value, 7, 7) == 1) {
-		memory->SetHalf(timers[id].CNT_L, timers[id].reloadValue);
+	auto oldStart = timers[id].timerStart;
+	timers[id].UpdateCntH(value);
+
+	if (oldStart == 0 && timers[id].timerStart == 1) {
 		timers[id].prescalerCount = 0;
 	}
-	timers[id].UpdateCntH(value);
-	memory->SetHalf(timers[id].CNT_H, value);
 }

@@ -70,6 +70,11 @@ void Memory::AttachIORegisters(std::shared_ptr<IORegisters> io)
 	mem.gen.io = io;
 }
 
+void Memory::AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio_)
+{
+	irio = irio_;
+}
+
 std::string Memory::FindBackupID(size_t length)
 {
 	for (U32 romAddr = 0u; romAddr < length; romAddr += 4) {
@@ -113,8 +118,9 @@ uint32_t Memory::Read(AccessSize size,
 		return ReadToSize(&mem.gen.wramb[address & WRAMB_MASK], size);
 	case 0x03:
 		return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
-	case 0x04:
+	case 0x04: {
 		return mem.gen.io->Read(size, address, seq);
+	}
 	case 0x05:
 		return ReadToSize(&mem.disp.pram[address & PRAM_MASK], size);
 	case 0x06:
@@ -237,47 +243,31 @@ void Memory::Tick(AccessSize size, U32 page, Sequentiality seq)
 	case 0x08:
 	case 0x09: {
 		// Game Pak ROM/FlashROM - WS0
-		const std::array<uint8_t, 4> WS0_NSEQ = { 4, 3, 2, 8 };
-		const std::array<uint8_t, 2> WS0_SEQ = { 2, 1 };
-		auto waitCnt = GetHalf(WAITCNT);
-
-		auto secondAccess = WS0_SEQ[BIT_RANGE(waitCnt, 4, 4)] + 1;
-		auto firstAccess = (seq == SEQ) ? secondAccess : WS0_NSEQ[BIT_RANGE(waitCnt, 2, 3)] + 1;
-
-		TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
+		auto [nseqTicks, seqTicks] = irio->GetWaitstateTicks(IRIORegisters::Waitstate::WS0);
+		auto firstAccess = (seq == SEQ) ? seqTicks : nseqTicks;
+		TickBySize(size, firstAccess, firstAccess, firstAccess + seqTicks);
 		break;
 	}
 	case 0x0A:
 	case 0x0B: {
 		// Game Pak ROM/FlashROM - WS1
-		const std::array<uint8_t, 4> WS1_NSEQ = { 4, 3, 2, 8 };
-		const std::array<uint8_t, 2> WS1_SEQ = { 4, 1 };
-		auto waitCnt = GetHalf(WAITCNT);
-
-		auto secondAccess = WS1_SEQ[BIT_RANGE(waitCnt, 7, 7)] + 1;
-		auto firstAccess = (seq == SEQ) ? secondAccess : WS1_NSEQ[BIT_RANGE(waitCnt, 5, 6)] + 1;
-
-		TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
+		auto [nseqTicks, seqTicks] = irio->GetWaitstateTicks(IRIORegisters::Waitstate::WS1);
+		auto firstAccess = (seq == SEQ) ? seqTicks : nseqTicks;
+		TickBySize(size, firstAccess, firstAccess, firstAccess + seqTicks);
 		break;
 	}
 	case 0x0C:
 	case 0x0D: {
 		// Game Pak ROM/FlashROM - WS2
-		const std::array<uint8_t, 4> WS2_NSEQ = { 4, 3, 2, 8 };
-		const std::array<uint8_t, 2> WS2_SEQ = { 8, 1 };
-		auto waitCnt = GetHalf(WAITCNT);
-
-		auto secondAccess = WS2_SEQ[BIT_RANGE(waitCnt, 10, 10)] + 1;
-		auto firstAccess = (seq == SEQ) ? secondAccess : WS2_NSEQ[BIT_RANGE(waitCnt, 8, 9)] + 1;
-		TickBySize(size, firstAccess, firstAccess, firstAccess + secondAccess);
+		auto [nseqTicks, seqTicks] = irio->GetWaitstateTicks(IRIORegisters::Waitstate::WS2);
+		auto firstAccess = (seq == SEQ) ? seqTicks : nseqTicks;
+		TickBySize(size, firstAccess, firstAccess, firstAccess + seqTicks);
 		break;
 	}
 	case 0x0E: {
-		// Game Pak ROM/FlashROM - WS2
-		const std::array<uint8_t, 4> SRAM_NSEQ = { 4, 3, 2, 8 };
-		auto waitCnt = GetHalf(WAITCNT);
-		auto firstAccess = SRAM_NSEQ[BIT_RANGE(waitCnt, 0, 1)] + 1;
-		clock->Tick(firstAccess);
+		// Game Pak ROM/FlashROM
+		auto nseqTicks = irio->GetWaitstateTicks(IRIORegisters::Waitstate::WS2).nseq;
+		clock->Tick(nseqTicks);
 		break;
 	} break;
 	default:

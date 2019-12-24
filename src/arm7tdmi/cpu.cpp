@@ -5,6 +5,19 @@
 #include <unistd.h>
 
 namespace ARM7TDMI {
+
+void CPU::Reset()
+{
+	// Skip BIOS
+	registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
+	registers.get(ModeBank::IRQ, Register::R13) = 0x03007FA0;
+	registers.get(Register::R13) = 0x03007F00;
+	registers.switchMode(SRFlag::ModeBits::USR);
+	registers.get(Register::R15) = 0x08000000;
+
+	PipelineFlush();
+}
+
 void CPU::Execute()
 {
 	auto opcode = pipeline[0];
@@ -60,18 +73,9 @@ StateView CPU::ViewState()
 bool CPU::HandleInterruptRequests()
 {
 	auto& cpsr = registers.get(CPSR);
-	if (SRFlag::get(cpsr, SRFlag::irqDisable)) {
-		return false;
-	}
-	auto ie = memory->Read(Half, IE, FREE);
-	auto irf = memory->Read(Half, IF, FREE);
-	auto ime = memory->Read(Half, IME, FREE);
+	if (interruptReady && !SRFlag::get(cpsr, SRFlag::irqDisable)) {
 
-	if (ime && (ie & irf)) {
-		spdlog::get("std")->debug("IRQ Successful {:B} from {:X}", (ie & irf),
-			registers.get(R15));
 		registers.switchMode(SRFlag::ModeBits::IRQ);
-
 		registers.get(R14) = registers.get(R15);
 		if (SRFlag::get(cpsr, SRFlag::thumb)) {
 			registers.get(R14) += 2;
@@ -83,6 +87,7 @@ bool CPU::HandleInterruptRequests()
 		PipelineFlush();
 		return true;
 	}
+
 	return false;
 }
 

@@ -23,16 +23,9 @@ public:
 		: clock(clock)
 		, memory(memory)
 	{
-		// Skip BIOS
+	}
 
-		registers.get(ModeBank::SVC, Register::R13) = 0x03007FE0;
-		registers.get(ModeBank::IRQ, Register::R13) = 0x03007FA0;
-		registers.get(Register::R13) = 0x03007F00;
-		registers.switchMode(SRFlag::ModeBits::USR);
-		registers.get(Register::R15) = 0x08000000;
-
-		PipelineFlush();
-	};
+	void Reset();
 
 	void Execute();
 

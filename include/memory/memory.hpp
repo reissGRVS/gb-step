@@ -8,6 +8,7 @@
 
 #include "arm7tdmi/types.hpp"
 
+#include "arm7tdmi/ir_io_registers.hpp"
 #include "joypad.hpp"
 #include "memory/cart_backup.hpp"
 #include "memory/io_registers.hpp"
@@ -25,6 +26,7 @@ public:
 		Joypad& joypad);
 
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
+	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
 	U32 Read(AccessSize size,
 		U32 address,
@@ -67,6 +69,8 @@ private:
 	// https://problemkaputt.de/gbatek.htm#gbamemorymap
 	std::function<void(U32)> PublishWriteCallback;
 	Joypad& joypad;
+	std::shared_ptr<IRIORegisters> irio;
+
 	struct MemoryMap {
 		struct {
 			std::array<U8, BIOS_SIZE> bios{};

@@ -5,10 +5,10 @@
 #include <map>
 
 const U32 CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
-					CYCLES_PER_LINE = CYCLES_PER_VISIBLE + CYCLES_PER_HBLANK,
-					VISIBLE_LINES = 160, VBLANK_LINES = 68,
-					TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
-					CYCLES_PER_VBLANK = CYCLES_PER_LINE * VBLANK_LINES;
+		  CYCLES_PER_LINE = CYCLES_PER_VISIBLE + CYCLES_PER_HBLANK,
+		  VISIBLE_LINES = 160, VBLANK_LINES = 68,
+		  TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES,
+		  CYCLES_PER_VBLANK = CYCLES_PER_LINE * VBLANK_LINES;
 
 enum DispStatInfo {
 	VBlankFlag = 0,
@@ -69,7 +69,6 @@ void PPU::OnHBlankFinish()
 	UpdateDispStat(HBlankFlag, false);
 
 	auto vCount = IncrementVCount();
-
 	if (vCount >= VISIBLE_LINES) {
 		ToVBlank();
 	} else {
@@ -112,7 +111,7 @@ void PPU::OnVBlankLineFinish()
 
 U16 PPU::GetDispStat(U8 bit)
 {
-	auto dispStat = memory->GetHalf(DISPSTAT);
+	auto dispStat = Read(Half, DISPSTAT, FREE);
 	if (bit == VCountSetting) {
 		return BIT_RANGE(dispStat, 8, 15);
 	} else {
@@ -122,19 +121,19 @@ U16 PPU::GetDispStat(U8 bit)
 
 void PPU::UpdateDispStat(U8 bit, bool set)
 {
-	auto dispStat = memory->GetHalf(DISPSTAT);
+	auto dispStat = Read(Half, DISPSTAT, FREE);
 	if (set)
 		BIT_SET(dispStat, bit);
 	else
 		BIT_CLEAR(dispStat, bit);
-	memory->SetHalf(DISPSTAT, dispStat);
+	Write(Half, DISPSTAT, dispStat, FREE);
 }
 
 U16 PPU::IncrementVCount()
 {
-	auto vCount = memory->GetHalf(VCOUNT);
+	auto vCount = Read(Half, VCOUNT, FREE);
 	vCount++;
-	memory->SetHalf(VCOUNT, vCount);
+	Write(Half, VCOUNT, vCount, FREE);
 
 	if (GetDispStat(VCountSetting) == vCount) {
 		UpdateDispStat(VCounterFlag, true);

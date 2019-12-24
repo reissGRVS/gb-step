@@ -1,11 +1,14 @@
 #include "ppu/ppu.hpp"
+#include "spdlog/spdlog.h"
 
 U32 PPU::Read(AccessSize size,
 	U32 address,
 	Sequentiality)
 {
 	U32 actualIndex = address - LCD_IO_START;
-	return ReadToSize(&registers[actualIndex], size);
+	auto value = ReadToSize(&registers[actualIndex], size);
+	spdlog::get("std")->trace("PPU Read {:X} @ {:X}/{:X}", value, address, actualIndex);
+	return value;
 }
 
 void PPU::Write(AccessSize size,
@@ -13,7 +16,8 @@ void PPU::Write(AccessSize size,
 	U32 value,
 	Sequentiality)
 {
-	//TODO:special stuff, maybe on DISPCNT, BGNCNT
 	U32 actualIndex = address - LCD_IO_START;
+
+	spdlog::get("std")->trace("PPU Write {:X} @ {:X}/{:X}", value, address, actualIndex);
 	WriteToSize(&registers[actualIndex], value, size);
 }

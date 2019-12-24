@@ -1,4 +1,5 @@
 #include "memory/io_registers.hpp"
+#include "spdlog/spdlog.h"
 
 IORegisters::IORegisters(std::shared_ptr<TimersIORegisters> timers,
 	std::shared_ptr<DMAIORegisters> dma,
@@ -30,6 +31,7 @@ U32 IORegisters::Read(AccessSize size,
 	U32 address,
 	Sequentiality seq)
 {
+	spdlog::get("std")->trace("IO Read @ {:X}", address);
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
 		return regSet->Read(size, address, seq);
@@ -44,9 +46,11 @@ void IORegisters::Write(AccessSize size,
 	U32 value,
 	Sequentiality seq)
 {
+	spdlog::get("std")->trace("IO Write {:X} @ {:X}", value, address);
+
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
-		regSet->Read(size, address, seq);
+		regSet->Write(size, address, value, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
 		WriteToSize(&backup[actualIndex], value, size);
