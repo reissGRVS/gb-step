@@ -8,25 +8,29 @@ endif()
 # Add main.cpp file of project root directory as source file
 set(SOURCE_FILES
 	src/main.cpp
+	src/joypad.cpp
+	src/arm7tdmi/arm_opcodes.cpp
+	src/arm7tdmi/thumb_opcodes.cpp
+	src/arm7tdmi/registers.cpp
+	src/arm7tdmi/cpu.cpp
+	src/debugger.cpp
+	src/dma/channel.cpp
+	src/dma/controller.cpp
+	src/dma/dma_io_registers.cpp
 	src/memory/memory.cpp
 	src/memory/flash.cpp
 	src/memory/io_registers.cpp
 	src/memory/read_write_interface.cpp
-	src/debugger.cpp
-	src/dma/channel.cpp
-	src/dma/controller.cpp
+	src/platform/sfml/window.cpp
 	src/ppu/ppu.cpp
 	src/ppu/draw_control.cpp
 	src/ppu/draw_util.cpp
 	src/ppu/lcd_io_registers.cpp
 	src/ppu/objects.cpp
 	src/ppu/text_modes.cpp
-	src/joypad.cpp
-	src/arm7tdmi/arm_opcodes.cpp
-	src/arm7tdmi/thumb_opcodes.cpp
-	src/arm7tdmi/registers.cpp
-	src/arm7tdmi/cpu.cpp
-	src/platform/sfml/window.cpp
+	src/timers/timer.cpp
+	src/timers/timers.cpp
+	src/timers/timers_io_registers.cpp
 	)
 
 # Add executable target with source files listed in SOURCE_FILES variable

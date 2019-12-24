@@ -1,11 +1,12 @@
 #pragma once
 
 #include "dma/channel.hpp"
+#include "dma/dma_io_registers.hpp"
 #include "memory/memory.hpp"
 #include <array>
 
 namespace DMA {
-class Controller {
+class Controller : DMAIORegisters {
 public:
 	Controller(std::shared_ptr<Memory> memory)
 		: memory(memory){};
@@ -19,6 +20,14 @@ public:
 	bool IsActive();
 	void CntHUpdateCallback(U8 id, U16 value);
 	void EventCallback(Event event, bool start);
+
+	U32 Read(AccessSize size,
+		U32 address,
+		Sequentiality) override;
+	void Write(AccessSize size,
+		U32 address,
+		U32 value,
+		Sequentiality) override;
 
 private:
 	std::shared_ptr<Memory> memory;

@@ -8,7 +8,7 @@
 #include "screen.hpp"
 #include "spdlog/spdlog.h"
 #include "system_clock.hpp"
-#include "timers.hpp"
+#include "timers/timers.hpp"
 #include <functional>
 #include <unistd.h>
 
