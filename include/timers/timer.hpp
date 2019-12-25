@@ -17,15 +17,15 @@ struct Timer {
 	const U32 CNT_L;
 	const U32 CNT_H;
 
-	U16 cntHData;
-	U16 prescaler;
-	U16 countUp;
-	U16 irqEnable;
-	U16 timerStart;
+	U16 cntHData = 0;
+	U16 prescaler = 0;
+	U16 countUp = 0;
+	U16 irqEnable = 0;
+	U16 timerStart = 0;
 
-	U16 counter;
-	U16 reloadValue;
-	U32 prescalerCount;
+	U16 counter = 0;
+	U16 reloadValue = 0;
+	U32 prescalerCount = 0;
 
 	const std::array<U16, 4> PRESCALER_SELECTION{ 1, 64, 256, 1024 };
 

@@ -104,7 +104,7 @@ uint32_t Memory::Read(AccessSize size,
 	switch (page) {
 	case 0x00:
 		if ((address & PAGE_MASK) < BIOS_SIZE) {
-			return ReadToSize(&mem.gen.bios[address & BIOS_MASK], size);
+			return ReadToSize(mem.gen.bios, address & BIOS_MASK, size);
 		} else {
 			spdlog::get("std")->error("Reading from Invalid BIOS memory");
 			// exit(-1);
@@ -115,25 +115,25 @@ uint32_t Memory::Read(AccessSize size,
 		break;
 	}
 	case 0x02:
-		return ReadToSize(&mem.gen.wramb[address & WRAMB_MASK], size);
+		return ReadToSize(mem.gen.wramb, address & WRAMB_MASK, size);
 	case 0x03:
-		return ReadToSize(&mem.gen.wramc[address & WRAMC_MASK], size);
+		return ReadToSize(mem.gen.wramc, address & WRAMC_MASK, size);
 	case 0x04: {
 		return mem.gen.io->Read(size, address, seq);
 	}
 	case 0x05:
-		return ReadToSize(&mem.disp.pram[address & PRAM_MASK], size);
+		return ReadToSize(mem.disp.pram, address & PRAM_MASK, size);
 	case 0x06:
-		return ReadToSize(&mem.disp.vram[address & VRAM_MASK], size);
+		return ReadToSize(mem.disp.vram, address & VRAM_MASK, size);
 	case 0x07:
-		return ReadToSize(&mem.disp.oam[address & OAM_MASK], size);
+		return ReadToSize(mem.disp.oam, address & OAM_MASK, size);
 	case 0x08:
 	case 0x09:
 	case 0x0A:
 	case 0x0B:
 	case 0x0C:
 	case 0x0D:
-		return ReadToSize(&mem.ext.rom[address & ROM_MASK], size);
+		return ReadToSize(mem.ext.rom, address & ROM_MASK, size);
 	case 0x0E:
 		return mem.ext.backup->Read(address);
 	default:
@@ -159,22 +159,22 @@ void Memory::Write(AccessSize size,
 	// TODO: Check if bus widths affect anything
 	switch (page) {
 	case 0x02:
-		WriteToSize(&mem.gen.wramb[address & WRAMB_MASK], value, size);
+		WriteToSize(mem.gen.wramb, address & WRAMB_MASK, value, size);
 		break;
 	case 0x03:
-		WriteToSize(&mem.gen.wramc[address & WRAMC_MASK], value, size);
+		WriteToSize(mem.gen.wramc, address & WRAMC_MASK, value, size);
 		break;
 	case 0x04:
 		mem.gen.io->Write(size, address, value, seq);
 		break;
 	case 0x05:
-		WriteToSize(&mem.disp.pram[address & PRAM_MASK], value, size);
+		WriteToSize(mem.disp.pram, address & PRAM_MASK, value, size);
 		break;
 	case 0x06:
-		WriteToSize(&mem.disp.vram[address & VRAM_MASK], value, size);
+		WriteToSize(mem.disp.vram, address & VRAM_MASK, value, size);
 		break;
 	case 0x07:
-		WriteToSize(&mem.disp.oam[address & OAM_MASK], value, size);
+		WriteToSize(mem.disp.oam, address & OAM_MASK, value, size);
 		break;
 	case 0x0E:
 		mem.ext.backup->Write(address, value);

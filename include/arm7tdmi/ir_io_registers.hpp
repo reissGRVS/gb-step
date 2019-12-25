@@ -8,8 +8,8 @@
 class IRIORegisters : public ReadWriteInterface {
 
 public:
-	static const U32 IR_IO_START = 0x04000200, IR_IO_END = 0x04000210;
-	static const U32 IR_IO_SIZE = IR_IO_END - IR_IO_START;
+	static const U32 IR_IO_START = 0x04000200, IR_IO_END = 0x04000302;
+	static const U32 IR_IO_SIZE = IR_IO_END - IR_IO_START + 1;
 
 	enum Waitstate {
 		WS0,
@@ -35,6 +35,8 @@ protected:
 	bool interruptReady = false;
 	void InterruptUpdate();
 
+	bool halt = false;
+
 	//Pairs of NSEQ and SEQ times
 	std::array<WaitstatePair, NUM_WAITSTATES> waitstateCounts = {};
 	void WaitstateControlUpdate();
@@ -44,4 +46,5 @@ private:
 	const U32 IR_IF = IF - IR_IO_START;
 	const U32 IR_WAITCNT = WAITCNT - IR_IO_START;
 	const U32 IR_IME = IME - IR_IO_START;
+	const U32 IR_HALTCNT = HALTCNT - IR_IO_START;
 };

@@ -11,15 +11,21 @@
 
 #include <optional>
 #include <vector>
+
+#define GET_HALF(A) Read(Half, A, FREE)
 class PPU : public LCDIORegisters {
 	enum State { Visible,
 		HBlank,
 		VBlank };
 
 public:
-	PPU(std::shared_ptr<Memory> memory_, Screen& screen_)
+	PPU(std::shared_ptr<Memory> memory_, Screen& screen_,
+		std::function<void(bool)> HBlankCallback_,
+		std::function<void(bool)> VBlankCallback_)
 		: memory(memory_)
 		, screen(screen_)
+		, HBlankCallback(HBlankCallback_)
+		, VBlankCallback(VBlankCallback_)
 	{
 	}
 
@@ -32,9 +38,6 @@ public:
 		U32 address,
 		U32 value,
 		Sequentiality) override;
-
-	std::function<void(bool)> HBlankCallback = [](bool) { return; };
-	std::function<void(bool)> VBlankCallback = [](bool) { return; };
 
 private:
 	// State Management
@@ -85,6 +88,8 @@ private:
 
 	std::shared_ptr<Memory> memory;
 	Screen& screen;
+	std::function<void(bool)> HBlankCallback;
+	std::function<void(bool)> VBlankCallback;
 
 	Screen::Framebuffer depth{ 4 };
 	Screen::Framebuffer fb{};

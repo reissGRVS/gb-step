@@ -28,7 +28,7 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 {
 	auto [spriteWidth, spriteHeight] = OBJ_DIMENSIONS[objAttrs.attr1.b.objSize][objAttrs.attr0.b.objShape];
 	auto topLeftTile = objAttrs.attr2.b.characterName;
-	auto characterMapping = BIT_RANGE(memory->GetHalf(DISPCNT), 6, 6);
+	auto characterMapping = BIT_RANGE(GET_HALF(DISPCNT), 6, 6);
 	auto halfTiles = objAttrs.attr0.b.colorsPalettes ? 2u : 1u;
 	U16 colorDepth = objAttrs.attr0.b.colorsPalettes ? 8u : 4u;
 	auto tileYIncrement = characterMapping ? (halfTiles * spriteWidth) : 0x20;

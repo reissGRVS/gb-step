@@ -78,7 +78,6 @@ void Channel::CalculateTransferSteps()
 void Channel::UpdateDetails(U16 value)
 {
 	auto prevEnable = enable;
-	memory->SetHalf(CNT_H, value);
 	dmaCnt = value;
 	enable = BIT_RANGE(dmaCnt, 15, 15);
 
@@ -115,7 +114,7 @@ void Channel::DoTransferStep()
 		if (transferType) {
 			memory->Write(Word, dest, memory->Read(Word, source, SEQ), SEQ);
 		} else {
-			memory->Write(Word, dest, memory->Read(Word, source, SEQ), SEQ);
+			memory->Write(Half, dest, memory->Read(Half, source, SEQ), SEQ);
 		}
 		dest += destStep;
 		source += srcStep;

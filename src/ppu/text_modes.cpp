@@ -12,11 +12,11 @@ const U16 TEXT_BGMAP_SIZES[4][2] = { { 256, 256 },
 
 void PPU::TextBGLine(const U32& BG_ID)
 {
-	auto bgCnt = BGControlInfo(BG_ID, memory->GetHalf(BGCNT[BG_ID]));
-	auto bgXOffset = memory->GetHalf(BGHOFS[BG_ID]) & NBIT_MASK(9);
-	auto bgYOffset = memory->GetHalf(BGVOFS[BG_ID]) & NBIT_MASK(9);
+	auto bgCnt = BGControlInfo(BG_ID, GET_HALF(BGCNT[BG_ID]));
+	auto bgXOffset = GET_HALF(BGHOFS[BG_ID]) & NBIT_MASK(9);
+	auto bgYOffset = GET_HALF(BGVOFS[BG_ID]) & NBIT_MASK(9);
 
-	auto y = memory->GetHalf(VCOUNT);
+	auto y = GET_HALF(VCOUNT);
 	for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
 		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
 		auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];

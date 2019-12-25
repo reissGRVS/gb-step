@@ -31,13 +31,21 @@ U32 IORegisters::Read(AccessSize size,
 	U32 address,
 	Sequentiality seq)
 {
+	if (size == Word) {
+		auto lowerHalf = Read(Half, address, seq);
+		auto upperHalf = Read(Half, address + 2, seq);
+		return lowerHalf + (upperHalf << 16);
+	}
+
 	spdlog::get("std")->trace("IO Read @ {:X}", address);
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
 		return regSet->Read(size, address, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
-		return ReadToSize(&backup[actualIndex], size);
+		auto value = ReadToSize(backup, actualIndex, size);
+		spdlog::get("std")->info("Unhandled IO Read {:X} @ {:X}", value, address);
+		return value;
 	}
 }
 
@@ -46,13 +54,20 @@ void IORegisters::Write(AccessSize size,
 	U32 value,
 	Sequentiality seq)
 {
-	spdlog::get("std")->trace("IO Write {:X} @ {:X}", value, address);
 
+	if (size == Word) {
+		Write(Half, address, value & Half, seq);
+		Write(Half, address + 2, value >> 16, seq);
+		return;
+	}
+
+	spdlog::get("std")->trace("IO Write {:X} @ {:X}", value, address);
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
 		regSet->Write(size, address, value, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
-		WriteToSize(&backup[actualIndex], value, size);
+		spdlog::get("std")->info("Unhandled IO Write {:X} @ {:X}", value, address);
+		WriteToSize(backup, actualIndex, value, size);
 	}
 }

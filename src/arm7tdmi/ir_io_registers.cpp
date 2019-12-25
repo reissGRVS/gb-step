@@ -3,10 +3,14 @@
 
 void IRIORegisters::InterruptUpdate()
 {
-	auto ie = ReadToSize(&ioregisters[IR_IE], Half);
-	auto irf = ReadToSize(&ioregisters[IR_IF], Half);
-	auto ime = ReadToSize(&ioregisters[IR_IME], Half);
-	interruptReady = ime && (ie & irf);
+	auto ie = ReadToSize(ioregisters, IR_IE, Half);
+	auto irf = ReadToSize(ioregisters, IR_IF, Half);
+	auto ime = ReadToSize(ioregisters, IR_IME, Half);
+	auto interruptMatch = ie & irf;
+	if (interruptMatch) {
+		halt = false;
+	}
+	interruptReady = ime && interruptMatch;
 }
 
 void IRIORegisters::WaitstateControlUpdate()
@@ -17,7 +21,7 @@ void IRIORegisters::WaitstateControlUpdate()
 	const std::array<uint8_t, 2> WS1_SEQ = { 4, 1 };
 	const std::array<uint8_t, 2> WS2_SEQ = { 8, 1 };
 
-	auto waitCnt = ReadToSize(&ioregisters[IR_WAITCNT], Half);
+	auto waitCnt = ReadToSize(ioregisters, IR_WAITCNT, Half);
 
 	waitstateCounts[WS0].nseq = NSEQ[BIT_RANGE(waitCnt, 2, 3)] + 1;
 	waitstateCounts[WS0].seq = WS0_SEQ[BIT_RANGE(waitCnt, 4, 4)] + 1;
@@ -38,7 +42,7 @@ U32 CPU::Read(AccessSize size,
 	Sequentiality)
 {
 	U32 actualIndex = address - IR_IO_START;
-	return ReadToSize(&ioregisters[actualIndex], size);
+	return ReadToSize(ioregisters, actualIndex, size);
 }
 
 void CPU::Write(AccessSize size,
@@ -47,27 +51,30 @@ void CPU::Write(AccessSize size,
 	Sequentiality seq)
 {
 	if (size == Word) {
-		Write(Half, address, value & Half, seq);
-		Write(Half, address + 2, value >> 16, seq);
-		return;
+		spdlog::get("std")->error("Word writes should not reach ir io registers");
+		exit(-1);
 	}
 
 	U32 actualIndex = address - IR_IO_START;
 	if (seq != FREE) {
 		if (address == IF || address == IF + 1) {
 			value &= size;
-			auto curIF = ReadToSize(&ioregisters[actualIndex], size);
+			auto curIF = ReadToSize(ioregisters, actualIndex, size);
 			spdlog::get("std")->trace("IRQ Acknowledge {:X} was {:X} @ {:X}", value, curIF, address);
 			value = curIF & ~value;
 			spdlog::get("std")->trace("IRQ Acknowledge now {:X} @ {:X}", value, address);
+		} else if (address == HALTCNT) {
+			halt = true;
 		}
 	}
 
-	WriteToSize(&ioregisters[actualIndex], value, size);
+	WriteToSize(ioregisters, actualIndex, value, size);
 
 	if (address == WAITCNT || address == WAITCNT + 1) {
 		WaitstateControlUpdate();
 	}
-	InterruptUpdate();
+	if (IN_RANGE(address, IE, IME + 2)) {
+		InterruptUpdate();
+	}
 }
 }

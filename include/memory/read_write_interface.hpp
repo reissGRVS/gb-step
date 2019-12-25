@@ -1,6 +1,8 @@
 #pragma once
 
 #include "int.hpp"
+#include "spdlog/spdlog.h"
+#include <array>
 
 enum Sequentiality { NSEQ,
 	SEQ,
@@ -23,8 +25,77 @@ public:
 		Sequentiality type)
 		= 0;
 
-	uint32_t ReadToSize(U8* byte, AccessSize size);
-	void WriteToSize(U8* byte,
-		U32 value,
-		AccessSize size);
+	template <std::size_t SIZE>
+	uint32_t ReadToSize(std::array<U8, SIZE>& arr,
+		U32 address, AccessSize size)
+	{
+
+		switch (size) {
+		case AccessSize::Byte: {
+			if (address >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds byte read @ {:X}", address);
+				exit(20);
+			}
+			return arr[address];
+		}
+		case AccessSize::Half: {
+			if (address + 1 >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds half read @ {:X}", address);
+				exit(20);
+			}
+			return (arr[address] + (arr[address + 1] << 8));
+		}
+		case AccessSize::Word: {
+			if (address + 3 >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds word read @ {:X}", address);
+				exit(20);
+			}
+			return (arr[address] + (arr[address + 1] << 8)
+				+ (arr[address + 2] << 16) + (arr[address + 3] << 24));
+		}
+		}
+		spdlog::get("std")->error("Read to size no match");
+		exit(1);
+	}
+
+	template <std::size_t SIZE>
+	void WriteToSize(std::array<U8, SIZE>& arr,
+		U32 address, U32 value, AccessSize size)
+	{
+		switch (size) {
+		case AccessSize::Byte: {
+			if (address >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds byte write @ {:X}", address);
+				exit(20);
+			}
+			arr[address] = (U8)value;
+			break;
+		}
+		case AccessSize::Half: {
+			if (address + 1 >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds half write @ {:X}", address);
+				exit(20);
+			}
+			arr[address] = (U8)value;
+			value >>= 8;
+			arr[address + 1] = (U8)value;
+			break;
+		}
+		case AccessSize::Word: {
+			if (address + 3 >= arr.size()) {
+				spdlog::get("std")->error("Out of bounds word write @ {:X}", address);
+				exit(20);
+			}
+
+			arr[address] = (U8)value;
+			value >>= 8;
+			arr[address + 1] = (U8)value;
+			value >>= 8;
+			arr[address + 2] = (U8)value;
+			value >>= 8;
+			arr[address + 3] = (U8)value;
+			break;
+		}
+		}
+	}
 };

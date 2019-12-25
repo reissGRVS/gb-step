@@ -21,7 +21,6 @@ set(SOURCE_FILES
 	src/memory/memory.cpp
 	src/memory/flash.cpp
 	src/memory/io_registers.cpp
-	src/memory/read_write_interface.cpp
 	src/platform/sfml/window.cpp
 	src/ppu/ppu.cpp
 	src/ppu/draw_control.cpp

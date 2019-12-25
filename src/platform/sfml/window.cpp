@@ -1,4 +1,5 @@
 #include "platform/sfml/window.hpp"
+#include "spdlog/spdlog.h"
 #include "utils.hpp"
 
 WindowSFML::WindowSFML()
@@ -20,7 +21,7 @@ void WindowSFML::render(const Framebuffer& fb)
 	window.clear();
 	window.draw(b);
 
-	sf::Event ev;
+	sf::Event ev{};
 	window.pollEvent(ev);
 	if (ev.key.code == sf::Keyboard::BackSpace && ev.type == sf::Event::KeyPressed) {
 		window.setFramerateLimit(1);

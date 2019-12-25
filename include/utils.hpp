@@ -8,4 +8,4 @@
 #define BIT_SET(V, N) (V |= (1 << (N)))
 #define BIT_CLEAR(V, N) (V &= ~(1 << (N)))
 
-#define IN_RANGE(V, LOWER, UPPER) ((V >= LOWER) && (V <= UPPER))
+#define IN_RANGE(V, LOWER, UPPER) ((V >= LOWER) && (V < UPPER))

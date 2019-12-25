@@ -6,8 +6,8 @@
 
 void PPU::DrawLine()
 {
-	auto vCount = memory->GetHalf(VCOUNT);
-	auto dispCnt = memory->GetHalf(DISPCNT);
+	auto vCount = GET_HALF(VCOUNT);
+	auto dispCnt = GET_HALF(DISPCNT);
 	auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
 	auto bgMode = BIT_RANGE(dispCnt, 0, 2);
 	auto frame = BIT_RANGE(dispCnt, 4, 4);
@@ -28,7 +28,6 @@ void PPU::DrawLine()
 		break;
 	}
 	case 2:
-		TextBGLine(2);
 		break;
 	case 3: {
 		for (U16 pixel = (vCount * Screen::SCREEN_WIDTH);
@@ -54,7 +53,7 @@ void PPU::DrawLine()
 
 uint8_t PPU::GetLayerPriority(uint8_t layer)
 {
-	auto bgCnt = memory->GetHalf(BGCNT[layer]);
+	auto bgCnt = GET_HALF(BGCNT[layer]);
 	auto bgPriority = BIT_RANGE(bgCnt, 0, 1);
 	return bgPriority;
 }

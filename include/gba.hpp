@@ -28,10 +28,16 @@ public:
 			  cfg.romPath,
 			  cfg.joypad))
 		, cpu(std::make_shared<ARM7TDMI::CPU>(sysClock, memory))
-		, ppu(std::make_shared<PPU>(memory, cfg.screen))
+		, dma(std::make_shared<DMA::Controller>(memory))
+		, ppu(std::make_shared<PPU>(
+			  memory,
+			  cfg.screen,
+			  std::bind(&DMA::Controller::EventCallback, dma,
+				  DMA::Controller::Event::HBLANK, std::placeholders::_1),
+			  std::bind(&DMA::Controller::EventCallback, dma,
+				  DMA::Controller::Event::VBLANK, std::placeholders::_1)))
 		, debugger(memory)
 		, timers(std::make_shared<Timers>(memory))
-		, dma(std::make_shared<DMA::Controller>(memory))
 	{
 		memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
 			&debugger, std::placeholders::_1));
@@ -44,21 +50,6 @@ public:
 		memory->AttachIORegisters(ioRegisters);
 		memory->AttachIRIORegisters(std::static_pointer_cast<IRIORegisters>(cpu));
 		cpu->Reset();
-
-		ppu->HBlankCallback
-			= std::bind(&DMA::Controller::EventCallback, dma,
-				DMA::Controller::Event::HBLANK, std::placeholders::_1);
-		ppu->VBlankCallback = std::bind(&DMA::Controller::EventCallback, dma,
-			DMA::Controller::Event::VBLANK, std::placeholders::_1);
-
-		// memory->SetIOWriteCallback(
-		// 	DMA0CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 0, std::placeholders::_1));
-		// memory->SetIOWriteCallback(
-		// 	DMA1CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 1, std::placeholders::_1));
-		// memory->SetIOWriteCallback(
-		// 	DMA2CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 2, std::placeholders::_1));
-		// memory->SetIOWriteCallback(
-		// 	DMA3CNT_H, std::bind(&DMA::Controller::CntHUpdateCallback, &dma, 3, std::placeholders::_1));
 	};
 
 	void run()
@@ -83,8 +74,8 @@ private:
 	std::shared_ptr<SystemClock> sysClock;
 	std::shared_ptr<Memory> memory;
 	std::shared_ptr<ARM7TDMI::CPU> cpu;
+	std::shared_ptr<DMA::Controller> dma;
 	std::shared_ptr<PPU> ppu;
 	Debugger debugger;
 	std::shared_ptr<Timers> timers;
-	std::shared_ptr<DMA::Controller> dma;
 };

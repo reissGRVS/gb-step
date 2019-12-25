@@ -13,10 +13,6 @@ U32 Timers::Read(AccessSize size,
 		} else {
 			return half & Byte;
 		}
-	} else if (size == Word) {
-		auto topHalf = (Read(Half, address + 2, seq) << 16);
-		auto bottomHalf = Read(Half, address, seq);
-		return topHalf + bottomHalf;
 	}
 
 	switch (address) {
@@ -46,15 +42,11 @@ U32 Timers::Read(AccessSize size,
 void Timers::Write(AccessSize size,
 	U32 address,
 	U32 value,
-	Sequentiality seq)
+	Sequentiality)
 {
 	if (size == Byte) {
 		spdlog::get("std")->error("Byte Timer Write - Needs implemented?");
 		exit(-1);
-	} else if (size == Word) {
-		Write(Half, address + 2, value >> 16, seq);
-		Write(Half, address, value & Half, seq);
-		return;
 	}
 
 	switch (address) {
@@ -82,9 +74,7 @@ void Timers::Write(AccessSize size,
 	case TM3CNT_H:
 		TimerCntHUpdate(3, value);
 		break;
-	default: {
-		spdlog::get("std")->error("Invalid Timer Write");
-		exit(-1);
-	}
+	default:
+		break;
 	}
 }
