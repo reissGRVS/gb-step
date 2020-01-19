@@ -141,9 +141,7 @@ uint32_t Memory::Read(AccessSize size,
 	}
 
 	spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
-	PublishWriteCallback(1);
-	return 0;
-	// exit(-1);
+	exit(-1);
 }
 
 void Memory::Write(AccessSize size,

@@ -25,6 +25,7 @@ public:
 		std::string romPath,
 		Joypad& joypad);
 
+	std::string Name() override { return "MEMORY"; };
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 

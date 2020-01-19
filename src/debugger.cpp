@@ -2,6 +2,7 @@
 #include "joypad.hpp"
 #include <iomanip>
 #include <optional>
+#include <spdlog/spdlog.h>
 #include <string>
 
 Debugger::debugOp Debugger::StringToOp(std::string str)
@@ -140,6 +141,7 @@ void Debugger::OnBreakpoint()
 			}
 			case debugOp::backtrace: {
 				view.backtrace.printBacktrace();
+				spdlog::get("std")->dump_backtrace();
 				break;
 			}
 			case debugOp::noOp: {

@@ -76,5 +76,11 @@ void CPU::Write(AccessSize size,
 	if (IN_RANGE(address, IE, IME + 2)) {
 		InterruptUpdate();
 	}
+
+	//Internal Memory Control
+	if (BIT_RANGE(address, 0, 11) == 0x800) {
+		spdlog::get("std")->error("Internal Memory Control not implemented");
+		exit(-1);
+	}
 }
 }

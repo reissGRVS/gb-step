@@ -17,6 +17,7 @@ public:
 		std::shared_ptr<LCDIORegisters> lcd,
 		std::shared_ptr<IRIORegisters> ir);
 
+	std::string Name() override { return "IO_BASE"; };
 	U32 Read(AccessSize size,
 		U32 address,
 		Sequentiality seq) override;

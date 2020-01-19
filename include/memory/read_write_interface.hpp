@@ -3,6 +3,7 @@
 #include "int.hpp"
 #include "spdlog/spdlog.h"
 #include <array>
+#include <string>
 
 enum Sequentiality { NSEQ,
 	SEQ,
@@ -15,6 +16,7 @@ enum AccessSize { Byte = 0xFFu,
 class ReadWriteInterface {
 
 public:
+	virtual std::string Name() = 0;
 	virtual U32 Read(AccessSize size,
 		U32 address,
 		Sequentiality type)
@@ -33,21 +35,21 @@ public:
 		switch (size) {
 		case AccessSize::Byte: {
 			if (address >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds byte read @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds byte read @ {:X} in {}", address, Name());
 				exit(20);
 			}
 			return arr[address];
 		}
 		case AccessSize::Half: {
 			if (address + 1 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds half read @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds half read @ {:X} in {}", address, Name());
 				exit(20);
 			}
 			return (arr[address] + (arr[address + 1] << 8));
 		}
 		case AccessSize::Word: {
 			if (address + 3 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds word read @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds word read @ {:X} in {}", address, Name());
 				exit(20);
 			}
 			return (arr[address] + (arr[address + 1] << 8)
@@ -65,7 +67,7 @@ public:
 		switch (size) {
 		case AccessSize::Byte: {
 			if (address >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds byte write @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds byte write @ {:X} in {}", address, Name());
 				exit(20);
 			}
 			arr[address] = (U8)value;
@@ -73,7 +75,7 @@ public:
 		}
 		case AccessSize::Half: {
 			if (address + 1 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds half write @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds half write @ {:X} in {}", address, Name());
 				exit(20);
 			}
 			arr[address] = (U8)value;
@@ -83,7 +85,7 @@ public:
 		}
 		case AccessSize::Word: {
 			if (address + 3 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds word write @ {:X}", address);
+				spdlog::get("std")->error("Out of bounds word write @ {:X} in {}", address, Name());
 				exit(20);
 			}
 

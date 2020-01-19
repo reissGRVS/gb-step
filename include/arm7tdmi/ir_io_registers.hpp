@@ -8,6 +8,7 @@
 class IRIORegisters : public ReadWriteInterface {
 
 public:
+	std::string Name() override { return "IR_IO"; };
 	static const U32 IR_IO_START = 0x04000200, IR_IO_END = 0x04000302;
 	static const U32 IR_IO_SIZE = IR_IO_END - IR_IO_START + 1;
 
