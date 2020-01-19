@@ -41,6 +41,6 @@ private:
 
 	U32 source;
 	U32 dest;
-	U16 wordCount;
+	U32 wordCount;
 };
 } // namespace DMA

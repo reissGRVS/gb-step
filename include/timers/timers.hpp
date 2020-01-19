@@ -11,6 +11,7 @@
 class Timers : public TimersIORegisters {
 public:
 	Timers(std::shared_ptr<Memory> memory);
+	virtual ~Timers() = default;
 	void Update(const U32 ticks);
 	void SetReloadValue(U8 id, U16 value);
 	void TimerCntHUpdate(U8 id, U16 value);

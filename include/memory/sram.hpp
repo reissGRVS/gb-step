@@ -1,9 +1,9 @@
 #pragma once
 
+#include "int.hpp"
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
 #include <array>
-#include "int.hpp"
 
 class SRAM : public CartBackup {
 public:
@@ -17,6 +17,8 @@ public:
 		address &= address & SRAM_MASK;
 		sram[address] = value;
 	}
+
+	virtual ~SRAM() = default;
 
 private:
 	std::array<U8, SRAM_SIZE> sram{};

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include "int.hpp"
+#include <array>
 #include <string>
 
 const std::string EEPROM_V = "EEPROM_V";
@@ -16,4 +16,5 @@ class CartBackup {
 public:
 	virtual U8 Read(U32 address) = 0;
 	virtual void Write(U32 address, U8 value) = 0;
+	virtual ~CartBackup() = default;
 };

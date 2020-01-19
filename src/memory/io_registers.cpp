@@ -44,7 +44,7 @@ U32 IORegisters::Read(AccessSize size,
 	} else {
 		U32 actualIndex = address - IOREG_START;
 		auto value = ReadToSize(backup, actualIndex, size);
-		spdlog::get("std")->info("Unhandled IO Read {:X} @ {:X}", value, address);
+		spdlog::get("std")->debug("Unhandled IO Read {:X} @ {:X}", value, address);
 		return value;
 	}
 }
@@ -67,7 +67,7 @@ void IORegisters::Write(AccessSize size,
 		regSet->Write(size, address, value, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
-		spdlog::get("std")->info("Unhandled IO Write {:X} @ {:X}", value, address);
+		spdlog::get("std")->debug("Unhandled IO Write {:X} @ {:X}", value, address);
 		WriteToSize(backup, actualIndex, value, size);
 	}
 }

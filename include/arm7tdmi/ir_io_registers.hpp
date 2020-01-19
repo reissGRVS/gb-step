@@ -46,5 +46,4 @@ private:
 	const U32 IR_IF = IF - IR_IO_START;
 	const U32 IR_WAITCNT = WAITCNT - IR_IO_START;
 	const U32 IR_IME = IME - IR_IO_START;
-	const U32 IR_HALTCNT = HALTCNT - IR_IO_START;
 };

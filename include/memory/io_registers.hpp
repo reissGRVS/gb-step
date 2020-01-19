@@ -25,6 +25,8 @@ public:
 		U32 value,
 		Sequentiality seq) override;
 
+	virtual ~IORegisters() = default;
+
 private:
 	std::shared_ptr<ReadWriteInterface> GetRegisterSet(U32 address);
 

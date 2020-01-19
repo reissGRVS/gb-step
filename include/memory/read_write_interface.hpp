@@ -98,4 +98,7 @@ public:
 		}
 		}
 	}
+
+protected:
+	virtual ~ReadWriteInterface() = default;
 };

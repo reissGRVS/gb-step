@@ -1,23 +1,24 @@
 #pragma once
 
+#include "int.hpp"
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
 #include <array>
-#include "int.hpp"
 
 enum FlashSize { Single = 0,
 	Double = 1 };
 class Flash : public CartBackup {
 public:
 	Flash(FlashSize size)
-		: size(size)
-		, manufacturerID((size == Single) ? 0xBF : 0xC2)
+		: manufacturerID((size == Single) ? 0xBF : 0xC2)
 		, deviceID((size == Single) ? 0xD4 : 0x09)
 	{
 	}
 
 	U8 Read(U32 address) override;
 	void Write(U32 address, U8 value) override;
+
+	virtual ~Flash() = default;
 
 private:
 	void HandleOperation(U8 value);
@@ -41,7 +42,6 @@ private:
 		BANK_SWITCH = 0xB0
 	};
 
-	FlashSize size;
 	uint8_t manufacturerID;
 	uint8_t deviceID;
 

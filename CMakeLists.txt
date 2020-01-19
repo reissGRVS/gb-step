@@ -40,5 +40,5 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 find_package(SFML 2 REQUIRED graphics window system audio)
 include_directories(${SFML_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
-target_compile_options(gba PRIVATE -O3 -Wall -Wextra -pedantic -Werror -fmax-errors=10)
+target_compile_options(gba PRIVATE -O3 -Wall -Wextra -pedantic -Werror)
 target_link_libraries(gba PRIVATE ${SFML_LIBRARIES} ${SFML_DEPENDENCIES} spdlog::spdlog)
