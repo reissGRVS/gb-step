@@ -57,7 +57,7 @@ void PPU::ToHBlank()
 	UpdateDispStat(HBlankFlag, true);
 
 	if (GetDispStat(HBlankIRQEnable)) {
-		spdlog::get("std")->debug("HBlank IntReq");
+		
 		memory->RequestInterrupt(Interrupt::HBlank);
 	}
 }
@@ -87,7 +87,7 @@ void PPU::ToVBlank()
 	UpdateDispStat(VBlankFlag, true);
 
 	if (GetDispStat(VBlankIRQEnable)) {
-		spdlog::get("std")->debug("VBlank IntReq");
+		
 		memory->RequestInterrupt(Interrupt::VBlank);
 	}
 	VBlankCallback(true);
@@ -101,7 +101,7 @@ void PPU::OnVBlankLineFinish()
 		UpdateDispStat(VBlankFlag, false);
 	}
 	if (vCount >= TOTAL_LINES) {
-		spdlog::get("std")->debug("VBlank Finished");
+		
 		memory->SetHalf(VCOUNT, 0);
 		VBlankCallback(false);
 		state = Visible;
@@ -137,7 +137,7 @@ U16 PPU::IncrementVCount()
 	if (GetDispStat(VCountSetting) == vCount) {
 		UpdateDispStat(VCounterFlag, true);
 		if (GetDispStat(VCounterIRQEnable)) {
-			spdlog::get("std")->debug("VCounter IntReq");
+			
 			memory->RequestInterrupt(Interrupt::VCounter);
 		}
 	} else {

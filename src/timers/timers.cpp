@@ -12,7 +12,7 @@ void Timers::Update(const U32 ticks)
 		overflow = timers[timerIndex].Update(ticks, overflow);
 
 		if (overflow && timers[timerIndex].irqEnable) {
-			spdlog::get("std")->debug("Timer {:X} IntReq", timerIndex);
+			
 			memory->RequestInterrupt(timerInterrupts[timerIndex]);
 		}
 	}

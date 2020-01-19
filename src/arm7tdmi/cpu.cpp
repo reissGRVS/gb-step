@@ -26,11 +26,6 @@ void CPU::Execute() {
   auto &pc = registers.get(R15);
 
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
-    spdlog::get("std")->debug(
-        "PC:{:X} - Op:{:X} - R0:{:X} - R1:{:X} - R2:{:X} - R3:{:X} - R4:{:X} - "
-        "R5:{:X}",
-        pc - 2, opcode, registers.get(R0), registers.get(R1), registers.get(R2),
-        registers.get(R3), registers.get(R4), registers.get(R5));
     backtrace.addOpPCPair(pc - 2, opcode);
 
     pc &= ~1;
@@ -41,11 +36,6 @@ void CPU::Execute() {
 
     ThumbOperation(opcode)();
   } else {
-    spdlog::get("std")->debug(
-        "PC:{:X} - Op:{:X} - R0:{:X} - R1:{:X} - R2:{:X} - R3:{:X} - R4:{:X} - "
-        "R5:{:X}",
-        pc - 4, opcode, registers.get(R0), registers.get(R1), registers.get(R2),
-        registers.get(R3), registers.get(R4), registers.get(R5));
     backtrace.addOpPCPair(pc - 4, opcode);
 
     pc &= ~3;
@@ -56,7 +46,7 @@ void CPU::Execute() {
     ArmOperation(opcode)();
   }
 
-  spdlog::get("std")->trace("************************");
+  //
 }
 
 StateView CPU::ViewState() {
@@ -93,14 +83,14 @@ void CPU::PipelineFlush() {
   if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
     auto &pc = registers.get(R15);
     pc &= ~1;
-    spdlog::get("std")->trace("Flush to THUMB {:X}", pc);
+
     pipeline[0] = memory->Read(Half, pc, NSEQ);
     pc += 2;
     pipeline[1] = memory->Read(Half, pc, SEQ);
   } else {
     auto &pc = registers.get(R15);
     pc &= ~3;
-    spdlog::get("std")->trace("Flush to ARM {:X}", pc);
+
     pipeline[0] = memory->Read(Word, pc, NSEQ);
     pc += 4;
     pipeline[1] = memory->Read(Word, pc, SEQ);

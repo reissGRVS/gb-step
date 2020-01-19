@@ -8,10 +8,10 @@ U8 Flash::Read(U32 address)
 
 	if (idMode) {
 		if (address == 0) {
-			spdlog::get("std")->info("Returning manID");
+			
 			return manufacturerID;
 		} else if (address == 1) {
-			spdlog::get("std")->info("Returning devID");
+			
 			return deviceID;
 		}
 	}
@@ -84,13 +84,13 @@ void Flash::HandleOperation(U8 value)
 {
 	switch (value) {
 	case CHIP_ID_ENABLE: {
-		spdlog::get("std")->info("CHIP ID ENABLE");
+		
 		idMode = true;
 		state = INIT0;
 		break;
 	}
 	case CHIP_ID_DISABLE: {
-		spdlog::get("std")->info("CHIP ID DISABLE");
+		
 		idMode = false;
 		state = INIT0;
 		break;
