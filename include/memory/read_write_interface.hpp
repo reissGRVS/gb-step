@@ -34,24 +34,24 @@ public:
 
 		switch (size) {
 		case AccessSize::Byte: {
-			if (address >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds byte read @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds byte read @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 			return arr[address];
 		}
 		case AccessSize::Half: {
-			if (address + 1 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds half read @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address + 1 >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds half read @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 			return (arr[address] + (arr[address + 1] << 8));
 		}
 		case AccessSize::Word: {
-			if (address + 3 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds word read @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address + 3 >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds word read @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 			return (arr[address] + (arr[address + 1] << 8)
 				+ (arr[address + 2] << 16) + (arr[address + 3] << 24));
 		}

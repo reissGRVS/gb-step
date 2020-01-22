@@ -58,6 +58,11 @@ U32& RegisterSet::get(Register reg)
 
 U32& RegisterSet::get(ModeBank mode, Register reg)
 {
+
+	if (reg == Register::R15) {
+		return registers.PC;
+	}
+
 	if (reg <= Register::R12) {
 		if (mode == ModeBank::FIQ && reg >= Register::R8) {
 			return registers.GPR_FIQ[reg - Register::R8];
@@ -68,8 +73,6 @@ U32& RegisterSet::get(ModeBank mode, Register reg)
 		return registers.SP[(uint8_t)mode];
 	} else if (reg == Register::R14) {
 		return registers.LR[(uint8_t)mode];
-	} else if (reg == Register::R15) {
-		return registers.PC;
 	} else if (reg == Register::CPSR) {
 		return registers.CPSR;
 	} else if (reg == Register::SPSR) {
