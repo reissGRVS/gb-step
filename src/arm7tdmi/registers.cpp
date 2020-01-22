@@ -128,8 +128,6 @@ bool RegisterSet::conditionCheck(Condition cond)
 void RegisterSet::switchMode(SRFlag::ModeBits mode)
 {
 	auto newBank = getModeBank(mode);
-	spdlog::get("std")->trace("Changing to bank {:X} -> {:X}", currentBank,
-		newBank);
 
 	if (newBank == currentBank)
 		return;

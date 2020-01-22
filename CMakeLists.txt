@@ -5,6 +5,10 @@ if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
+
 # Add main.cpp file of project root directory as source file
 set(SOURCE_FILES
 	src/main.cpp

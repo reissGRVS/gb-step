@@ -66,28 +66,28 @@ public:
 	{
 		switch (size) {
 		case AccessSize::Byte: {
-			if (address >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds byte write @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds byte write @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 			arr[address] = (U8)value;
 			break;
 		}
 		case AccessSize::Half: {
-			if (address + 1 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds half write @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address + 1 >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds half write @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 			arr[address] = (U8)value;
 			value >>= 8;
 			arr[address + 1] = (U8)value;
 			break;
 		}
 		case AccessSize::Word: {
-			if (address + 3 >= arr.size()) {
-				spdlog::get("std")->error("Out of bounds word write @ {:X} in {}", address, Name());
-				exit(20);
-			}
+			// if (address + 3 >= arr.size()) {
+			// 	spdlog::get("std")->error("Out of bounds word write @ {:X} in {}", address, Name());
+			// 	exit(20);
+			// }
 
 			arr[address] = (U8)value;
 			value >>= 8;

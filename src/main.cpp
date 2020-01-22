@@ -12,7 +12,6 @@
 
 int main(int argc, char* argv[])
 {
-	spdlog::enable_backtrace(100);
 	auto standardLog = spdlog::stdout_color_mt("std");
 	spdlog::set_level(spdlog::level::info); // Set global log level to info
 	// spdlog::set_pattern("[%H:%M:%S] [%^%L%$] %v");

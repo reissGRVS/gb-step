@@ -141,7 +141,6 @@ void Debugger::OnBreakpoint()
 			}
 			case debugOp::backtrace: {
 				view.backtrace.printBacktrace();
-				spdlog::get("std")->dump_backtrace();
 				break;
 			}
 			case debugOp::noOp: {

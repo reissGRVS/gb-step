@@ -527,9 +527,6 @@ void CPU::ArmMultiplyLong_P(ParamList params) {
 
 void CPU::ArmMultiplyLong(U32 U, U32 A, U32 S, U32 RdHi, U32 RdLo, U32 Rs,
                           U32 Rm) {
-  spdlog::get("std")->trace(
-      "MULLONG Rm {} Rs {} RdHi {} RdLo {} U {} A {} S {}", Rm, Rs, RdHi, RdLo,
-      U, A, S);
   if (RdLo == Rm || RdHi == Rm || RdLo == RdHi) {
 
     return;
@@ -645,9 +642,6 @@ void CPU::ArmHalfwordDTImmOffset_P(ParamList params) {
 
 void CPU::ArmHalfwordDTImmOffset(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd,
                                  U32 OffsetHi, U32 S, U32 H, U32 OffsetLo) {
-  spdlog::get("std")->trace(
-      "HDT Imm P{} U{} W{} L{} Rn{} Rd{} OffsetHi{} S{} H{} OffsetLo{}", P, U,
-      W, L, Rn, Rd, OffsetHi, S, H, OffsetLo);
   auto Offset = OffsetLo + (OffsetHi << 4);
   ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
@@ -664,8 +658,6 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
   }
 
   auto memAddr = base;
-  spdlog::get("std")->trace("HDT memAddr {:X} baseOffset {:X}", memAddr,
-                            baseOffset);
   if (P) {
     memAddr = baseOffset;
   }
@@ -705,8 +697,6 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
   {
     if (H) // HalfWord
     {
-      spdlog::get("std")->trace("HDT Store memAddr {:X} value {:X}", memAddr,
-                                destReg);
       memory->Write(AccessSize::Half, memAddr, destReg, Sequentiality::NSEQ);
     }
   }
@@ -721,8 +711,6 @@ void CPU::ArmSingleDataTransfer_P(ParamList params) {
 
 void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
                                 U32 Rn, U32 Rd, U32 Offset) {
-  spdlog::get("std")->trace("SDT I{} P{} U{} B{} W{} L{} Rn{} Rd{} Offset{}", I,
-                            P, U, B, W, L, Rn, Rd, Offset);
   if (I) {
     auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
     auto Rm = registers.get((Register)(BIT_RANGE(Offset, 0, 3)));
@@ -763,8 +751,6 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
       if (wordBoundaryOffset) {
         U8 emptyCarry = 0;
         const U32 ROR = 0b11;
-        spdlog::get("std")->trace("Word Boundary Offset {} for value {:X}",
-                                  wordBoundaryOffset, value);
         Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
       }
 
@@ -806,9 +792,6 @@ void CPU::ArmBlockDataTransfer_P(ParamList params) {
 void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
                                U32 RegList) {
   auto base = registers.get((Register)Rn);
-  spdlog::get("std")->trace(
-      "BDT P{:X} U{:X} S{:X} W{:X} L{:X} Rn{:X} RegList{:X}", P, U, S, W, L, Rn,
-      RegList);
   std::vector<Register> toSave;
   for (uint8_t i = 0; i < 16; i++) {
     if ((RegList >> i) & NBIT_MASK(1)) {

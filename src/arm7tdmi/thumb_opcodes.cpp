@@ -326,9 +326,6 @@ void CPU::ThumbLSRegOff_P(ParamList params) {
   U16 Rd = params[0], Rb = params[1], Ro = params[2], B = params[3],
       L = params[4];
 
-  spdlog::get("std")->trace(
-      "THUMB LS RegOff - Rd {:X}, Rb {:X}, Ro {:X}, B{:X}, L{:X}", Rd, Rb, Ro,
-      B, L);
   ArmSingleDataTransfer(1, 1, 1, B, 0, L, Rb, Rd, Ro);
 }
 
@@ -336,8 +333,6 @@ void CPU::ThumbLSSignExt_P(ParamList params) {
   U16 Rd = params[0], Rb = params[1], Ro = params[2], S = params[3],
       H = params[4];
 
-  spdlog::get("std")->trace("THUMB LS SignExt Rd {} Rb {} Ro {} S {} H {}", Rd,
-                            Rb, Ro, S, H);
   if (S | H) {
     // Loads
     ArmHalfwordDTRegOffset(1, 1, 0, 1, Rb, Rd, S, H, Ro);

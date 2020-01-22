@@ -86,7 +86,6 @@ void Channel::UpdateDetails(U16 value)
 		ReloadSAD();
 		ReloadDAD();
 		ReloadWordCount();
-		spdlog::get("std")->debug("DMA Set Internal Registers");
 	} else if (enable == 0) {
 		active = false;
 	}
@@ -100,11 +99,6 @@ void Channel::UpdateDetails(U16 value)
 	srcAddrCtl = BIT_RANGE(dmaCnt, 7, 8);
 	CalculateTransferSteps();
 
-	spdlog::get("std")->debug(
-		"DMA Details Ch {}: enable {}, startTiming {}, src {:X}, dst {:X}, "
-		"irqAtEnd {}, repeat {}, destStp {:X}, srcStp {:X}",
-		ID, enable, startTiming, source, dest, irqAtEnd, repeat, destStep,
-		srcStep);
 }
 
 void Channel::DoTransferStep()
