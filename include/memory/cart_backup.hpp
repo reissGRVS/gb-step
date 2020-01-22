@@ -16,5 +16,6 @@ class CartBackup {
 public:
 	virtual U8 Read(U32 address) = 0;
 	virtual void Write(U32 address, U8 value) = 0;
+	virtual void Save() {};
 	virtual ~CartBackup() = default;
 };

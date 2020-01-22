@@ -2,6 +2,20 @@
 #include "spdlog/spdlog.h"
 #include <algorithm>
 
+
+void Flash::Save() {
+
+  std::cout << "Saving file" << std::endl;
+  std::ofstream outfile (saveFilePath, std::ofstream::binary);
+  outfile.write(reinterpret_cast<char *>(bank1.data()), FLASH_BANK_SIZE);
+  if (size==Double)
+  {
+	outfile.write(reinterpret_cast<char *>(bank2.data()), FLASH_BANK_SIZE);
+  }
+
+  outfile.close();
+}
+
 U8 Flash::Read(U32 address) {
   address &= FLASH_BANK_MASK;
 

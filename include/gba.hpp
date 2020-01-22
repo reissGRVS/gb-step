@@ -47,6 +47,8 @@ public:
     cpu->Reset();
   };
 
+  ~GBA(){memory->Save();}
+  
   void run() {
     while (!cfg.joypad.esc) {
 #ifndef NDEBUG

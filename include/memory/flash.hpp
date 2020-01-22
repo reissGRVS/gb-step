@@ -4,19 +4,35 @@
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
 #include <array>
+#include <fstream> 
 #include <iostream>
 
 enum FlashSize { Single = 0, Double = 1 };
 class Flash : public CartBackup {
 public:
   Flash(FlashSize size, std::string saveFilePath)
-      : manufacturerID((size == Single) ? 0xBF : 0xC2),
+      : size(size),
+	    saveFilePath(saveFilePath),
+	    manufacturerID((size == Single) ? 0xBF : 0xC2),
         deviceID((size == Single) ? 0xD4 : 0x09) {
-    // if saveFile exists, load into bank1 and bank2
     std::cout << saveFilePath << std::endl;
+	std::ifstream infile(saveFilePath);
+    if (!infile.is_open()) {
+      std::cout << "No existing savefile found at supplied path" << std::endl;
+      return;
+    }
+    infile.seekg(0, infile.beg);
+    infile.read(reinterpret_cast<char *>(bank1.data()), FLASH_BANK_SIZE);
+	if (size == Double)
+	{
+		std::cout << "Position in file pre bank 2 " << infile.tellg() << std::endl;
+		infile.read(reinterpret_cast<char *>(bank2.data()), FLASH_BANK_SIZE);
+	}
+	std::cout << "Position in file" << infile.tellg() << std::endl;
   }
 
-  virtual ~Flash() { std::cout << "Destroying flash" << std::endl; }
+  void Save() override;
+  virtual ~Flash() = default;
 
   U8 Read(U32 address) override;
   void Write(U32 address, U8 value) override;
@@ -39,6 +55,8 @@ private:
     BANK_SWITCH = 0xB0
   };
 
+  FlashSize size;
+  std::string saveFilePath;
   uint8_t manufacturerID;
   uint8_t deviceID;
 

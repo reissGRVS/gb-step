@@ -26,6 +26,7 @@ public:
 		Joypad& joypad);
 
 	std::string Name() override { return "MEMORY"; };
+	void Save() {mem.ext.backup->Save();}
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
