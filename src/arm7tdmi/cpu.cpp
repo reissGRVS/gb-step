@@ -95,13 +95,13 @@ void CPU::PipelineFlush() {
   }
 }
 
-ParamList CPU::ParseParams(OpCode opcode, ParamSegments paramSegs) {
-  ParamList params;
+void CPU::ParseParams(OpCode opcode, const ParamSegments& paramSegs) {
+  U16 index = 0;
   for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
     auto param = BIT_RANGE(opcode, it->second, it->first);
-    params.push_back(param);
+    params[index] = param;
+	index++;
   }
-  return params;
 }
 
 } // namespace ARM7TDMI

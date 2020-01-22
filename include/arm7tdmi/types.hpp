@@ -11,7 +11,7 @@ using BitSegment = std::pair<U8, U8>;
 using ParamSegments = std::vector<BitSegment>;
 
 // Params should be stored from LSB to MSB
-using ParamList = std::vector<U32>;
+using ParamList = std::array<U32, 10>;
 
 using RegisterView = std::array<std::uint64_t, 16>;
 

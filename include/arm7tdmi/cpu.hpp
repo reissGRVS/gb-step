@@ -51,7 +51,7 @@ private:
 	void PipelineFlush();
 	bool HandleInterruptRequests();
 
-	ParamList ParseParams(OpCode opcode, ParamSegments paramSegs);
+	void ParseParams(OpCode opcode, const ParamSegments& paramSegs);
 
 	void Shift(U32& value,
 		const U32 amount,
@@ -62,25 +62,29 @@ private:
 	// Thumb Operations
 	std::function<void()> ThumbOperation(OpCode opcode);
 
-	void ThumbMoveShiftedReg_P(ParamList params);
-	void ThumbAddSubtract_P(ParamList params);
-	void ThumbMoveCompAddSubImm_P(ParamList params);
-	void ThumbALUOps_P(ParamList params);
-	void ThumbHiRegOps_P(ParamList params);
-	void ThumbPCRelativeLoad_P(ParamList params);
-	void ThumbLSRegOff_P(ParamList params);
-	void ThumbLSSignExt_P(ParamList params);
-	void ThumbLSImmOff_P(ParamList params);
-	void ThumbLSHalf_P(ParamList params);
-	void ThumbSPRelativeLS_P(ParamList params);
-	void ThumbLoadAddress_P(ParamList params);
-	void ThumbOffsetSP_P(ParamList params);
-	void ThumbPushPopReg_P(ParamList params);
-	void ThumbMultipleLS_P(ParamList params);
-	void ThumbCondBranch_P(ParamList params);
-	void ThumbSWI_P(ParamList params);
-	void ThumbUncondBranch_P(ParamList params);
-	void ThumbLongBranchLink_P(ParamList params);
+	ParamList params;
+	std::function<void()> ThumbMoveShiftedReg_P();
+	std::function<void()> ThumbAddSubtract_P();
+	std::function<void()> ThumbMoveCompAddSubImm_P();
+	std::function<void()> ThumbALUOps_P();
+	std::function<void()> ThumbHiRegOps_P();
+	std::function<void()> ThumbPCRelativeLoad_P();
+	std::function<void()> ThumbLSRegOff_P();
+	std::function<void()> ThumbLSSignExt_P();
+	std::function<void()> ThumbLSImmOff_P();
+	std::function<void()> ThumbLSHalf_P();
+	std::function<void()> ThumbSPRelativeLS_P();
+	std::function<void()> ThumbLoadAddress_P();
+	std::function<void()> ThumbOffsetSP_P();
+	std::function<void()> ThumbPushPopReg_P();
+	std::function<void()> ThumbMultipleLS_P();
+	std::function<void()> ThumbCondBranch_P();
+	void ThumbCondBranch(U16 SOffset8, U16 Cond);
+	void ThumbSWI();
+	std::function<void()> ThumbUncondBranch_P();
+	void ThumbUncondBranch(U16 Offset11);
+	std::function<void()> ThumbLongBranchLink_P();
+	void ThumbLongBranchLink(U16 Offset,  U16 H);
 
 	std::function<void()> ArmOperation(OpCode opcode);
 	// ARM Operations
@@ -103,7 +107,7 @@ private:
 		BIC,
 		MVN
 	};
-	void ArmDataProcessing_P(ParamList params);
+	std::function<void()> ArmDataProcessing_P();
 	void ArmDataProcessing(
 		U32 I,
 		U32 OpCode,
@@ -115,7 +119,7 @@ private:
 	void ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source);
 
 	void ICyclesMultiply(const U32& mulop);
-	void ArmMultiply_P(ParamList params);
+	std::function<void()> ArmMultiply_P();
 	void ArmMultiply(
 		U32 A,
 		U32 S,
@@ -124,7 +128,7 @@ private:
 		U32 Rs,
 		U32 Rm);
 
-	void ArmMultiplyLong_P(ParamList params);
+	std::function<void()> ArmMultiplyLong_P();
 	void ArmMultiplyLong(
 		U32 U,
 		U32 A,
@@ -134,14 +138,14 @@ private:
 		U32 Rs,
 		U32 Rm);
 
-	void ArmSingleDataSwap_P(ParamList params);
+	std::function<void()> ArmSingleDataSwap_P();
 	void ArmSingleDataSwap(
 		U32 B,
 		U32 Rn,
 		U32 Rd,
 		U32 Rm);
 
-	void ArmBranchAndExchange_P(ParamList params);
+	std::function<void()> ArmBranchAndExchange_P();
 	void ArmBranchAndExchange(U32 Rn);
 
 	void ArmHalfwordDT(
@@ -154,7 +158,7 @@ private:
 		U32 S,
 		U32 H,
 		U32 Offset);
-	void ArmHalfwordDTRegOffset_P(ParamList params);
+	std::function<void()> ArmHalfwordDTRegOffset_P();
 	void ArmHalfwordDTRegOffset(
 		U32 P,
 		U32 U,
@@ -166,7 +170,7 @@ private:
 		U32 H,
 		U32 Rm);
 
-	void ArmHalfwordDTImmOffset_P(ParamList params);
+	std::function<void()> ArmHalfwordDTImmOffset_P();
 	void ArmHalfwordDTImmOffset(
 		U32 P,
 		U32 U,
@@ -179,7 +183,7 @@ private:
 		U32 H,
 		U32 OffsetLo);
 
-	void ArmSingleDataTransfer_P(ParamList params);
+	std::function<void()> ArmSingleDataTransfer_P();
 	void ArmSingleDataTransfer(
 		U32 I,
 		U32 P,
@@ -191,10 +195,10 @@ private:
 		U32 Rd,
 		U32 Offset);
 	// No Params
-	void ArmUndefined_P(ParamList params);
+	std::function<void()> ArmUndefined_P();
 	void ArmUndefined();
 
-	void ArmBlockDataTransfer_P(ParamList params);
+	std::function<void()> ArmBlockDataTransfer_P();
 	void ArmBlockDataTransfer(
 		U32 P,
 		U32 U,
@@ -204,10 +208,10 @@ private:
 		U32 Rn,
 		U32 RegList);
 
-	void ArmBranch_P(ParamList params);
+	std::function<void()> ArmBranch_P();
 	void ArmBranch(U32 L, U32 Offset);
 	// No Params
-	void ArmSWI_P(ParamList params);
+	std::function<void()> ArmSWI_P();
 	void ArmSWI();
 };
 } // namespace ARM7TDMI

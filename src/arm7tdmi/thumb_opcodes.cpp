@@ -84,102 +84,102 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
   switch (BIT_RANGE(opcode, 13, 15)) {
   case 0b000: {
     if ((opcode & 0x1800) == 0x1800) {
-      return std::bind(&CPU::ThumbAddSubtract_P, this,
-                       ParseParams(opcode, AddSubtractSegments));
+	  ParseParams(opcode, AddSubtractSegments);
+      return ThumbAddSubtract_P();
     } else {
-      return std::bind(&CPU::ThumbMoveShiftedReg_P, this,
-                       ParseParams(opcode, MoveShiftedRegSegments));
+	  ParseParams(opcode, MoveShiftedRegSegments);
+      return ThumbMoveShiftedReg_P();
     }
-    break;
   }
   case 0b001: {
-    return std::bind(&CPU::ThumbMoveCompAddSubImm_P, this,
-                     ParseParams(opcode, MoveCompAddSubImmSegments));
-    break;
+	ParseParams(opcode, MoveCompAddSubImmSegments);
+    return ThumbMoveCompAddSubImm_P();
   }
   case 0b010: {
     switch (BIT_RANGE(opcode, 10, 12)) {
     case 0b000: {
-      return std::bind(&CPU::ThumbALUOps_P, this,
-                       ParseParams(opcode, ALUOpsSegments));
-      break;
+
+      ParseParams(opcode, ALUOpsSegments);
+      return ThumbALUOps_P();
     }
     case 0b001: {
-      return std::bind(&CPU::ThumbHiRegOps_P, this,
-                       ParseParams(opcode, HiRegOpsSegments));
-      break;
+
+      ParseParams(opcode, HiRegOpsSegments);
+      return ThumbHiRegOps_P();
     }
     case 0b010:
     case 0b011: {
-      return std::bind(&CPU::ThumbPCRelativeLoad_P, this,
-                       ParseParams(opcode, PCRelativeLoadSegments));
-      break;
+
+      ParseParams(opcode, PCRelativeLoadSegments);
+      return ThumbPCRelativeLoad_P();
     }
     default: {
       if (BIT_RANGE(opcode, 9, 9)) {
-        return std::bind(&CPU::ThumbLSSignExt_P, this,
-                         ParseParams(opcode, LSSignExtSegments));
+
+        ParseParams(opcode, LSSignExtSegments);
+        return ThumbLSSignExt_P();
       } else {
-        return std::bind(&CPU::ThumbLSRegOff_P, this,
-                         ParseParams(opcode, LSRegOffSegments));
+		ParseParams(opcode, LSRegOffSegments);
+        return ThumbLSRegOff_P();
       }
     }
     }
   }
   case 0b011: {
-    return std::bind(&CPU::ThumbLSImmOff_P, this,
-                     ParseParams(opcode, LSImmOffSegments));
-    break;
+
+    ParseParams(opcode, LSImmOffSegments);
+    return ThumbLSImmOff_P();
   }
   case 0b100: {
     if (BIT_RANGE(opcode, 12, 12)) {
-      return std::bind(&CPU::ThumbSPRelativeLS_P, this,
-                       ParseParams(opcode, SPRelativeLSSegments));
+
+       ParseParams(opcode, SPRelativeLSSegments);
+      return ThumbSPRelativeLS_P();
     } else {
-      return std::bind(&CPU::ThumbLSHalf_P, this,
-                       ParseParams(opcode, LSHalfSegments));
+
+      ParseParams(opcode, LSHalfSegments);
+      return ThumbLSHalf_P();
     }
-    break;
   }
   case 0b101: {
     if (BIT_RANGE(opcode, 12, 12)) {
       if (BIT_RANGE(opcode, 8, 11)) {
-        return std::bind(&CPU::ThumbPushPopReg_P, this,
-                         ParseParams(opcode, PushPopRegSegments));
+
+                         ParseParams(opcode, PushPopRegSegments);
+        return ThumbPushPopReg_P();
       } else {
-        return std::bind(&CPU::ThumbOffsetSP_P, this,
-                         ParseParams(opcode, OffsetSPSegments));
+
+                         ParseParams(opcode, OffsetSPSegments);
+        return ThumbOffsetSP_P();
       }
     } else {
-      return std::bind(&CPU::ThumbLoadAddress_P, this,
-                       ParseParams(opcode, LoadAddressSegments));
+
+      ParseParams(opcode, LoadAddressSegments);
+      return ThumbLoadAddress_P();
     }
-    break;
   }
   case 0b110: {
     if (BIT_RANGE(opcode, 12, 12)) {
       if (BIT_RANGE(opcode, 8, 11) == NBIT_MASK(4)) {
-        return std::bind(&CPU::ThumbSWI_P, this,
-                         ParseParams(opcode, SWISegments));
+        ParseParams(opcode, SWISegments);
+        return std::bind(&CPU::ThumbSWI, this);
       } else {
-        return std::bind(&CPU::ThumbCondBranch_P, this,
-                         ParseParams(opcode, CondBranchSegments));
+		ParseParams(opcode, CondBranchSegments);
+        return ThumbCondBranch_P();
       }
     } else {
-      return std::bind(&CPU::ThumbMultipleLS_P, this,
-                       ParseParams(opcode, MultipleLSSegments));
+      ParseParams(opcode, MultipleLSSegments);
+      return ThumbMultipleLS_P();
     }
-    break;
   }
   case 0b111: {
     if (BIT_RANGE(opcode, 12, 12)) {
-      return std::bind(&CPU::ThumbLongBranchLink_P, this,
-                       ParseParams(opcode, LongBranchLinkSegments));
+      ParseParams(opcode, LongBranchLinkSegments);
+      return ThumbLongBranchLink_P();
     } else {
-      return std::bind(&CPU::ThumbUncondBranch_P, this,
-                       ParseParams(opcode, UncondBranchSegments));
+	  ParseParams(opcode, UncondBranchSegments);
+      return ThumbUncondBranch_P();
     }
-    break;
   }
 
   default:
@@ -190,7 +190,7 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
   }
 }
 
-void CPU::ThumbMoveShiftedReg_P(ParamList params) {
+std::function<void()> CPU::ThumbMoveShiftedReg_P() {
   U16 Rd = params[0], Rs = params[1], Offset5 = params[2], Op = params[3];
 
   if (Op == 0b11) {
@@ -199,18 +199,18 @@ void CPU::ThumbMoveShiftedReg_P(ParamList params) {
   }
 
   auto Op2 = Rs + (Offset5 << 7) + (Op << 5);
-  ArmDataProcessing(0, DPOps::MOV, 1, 0, Rd, Op2);
+  return std::bind(&CPU::ArmDataProcessing, this, 0, DPOps::MOV, 1, 0, Rd, Op2);
 }
 
-void CPU::ThumbAddSubtract_P(ParamList params) {
+std::function<void()> CPU::ThumbAddSubtract_P() {
   U16 Rd = params[0], Rs = params[1], Rn = params[2], Op = params[3],
       I = params[4];
 
   auto dpOp = static_cast<U32>(Op ? DPOps::SUB : DPOps::ADD);
-  ArmDataProcessing(I, dpOp, 1, Rs, Rd, Rn);
+  return std::bind(&CPU::ArmDataProcessing, this, I, dpOp, 1, Rs, Rd, Rn);
 }
 
-void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
+std::function<void()> CPU::ThumbMoveCompAddSubImm_P() {
   U16 Offset8 = params[0], Rd = params[1], Op = params[2];
 
   U32 dpOp;
@@ -233,56 +233,56 @@ void CPU::ThumbMoveCompAddSubImm_P(ParamList params) {
     exit(-1);
   }
 
-  ArmDataProcessing(1, dpOp, S, Rd, Rd, Offset8);
+  return std::bind(&CPU::ArmDataProcessing, this, 1, dpOp, S, Rd, Rd, Offset8);
 }
 
-void CPU::ThumbALUOps_P(ParamList params) {
+std::function<void()> CPU::ThumbALUOps_P() {
   U16 Rd = params[0], Rs = params[1], Op = params[2];
 
   switch (Op) {
   case 0b0010: {
     // LSL
     U16 Op2 = (Rs << 8) + (0b001 << 4) + Rd;
-    ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, DPOps::MOV, 1, Rd, Rd, Op2);
     break;
   }
   case 0b0011: {
     // LSR
     U16 Op2 = (Rs << 8) + (0b011 << 4) + Rd;
-    ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, DPOps::MOV, 1, Rd, Rd, Op2);
     break;
   }
   case 0b0100: {
     // ASR
     U16 Op2 = (Rs << 8) + (0b101 << 4) + Rd;
-    ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, DPOps::MOV, 1, Rd, Rd, Op2);
     break;
   }
   case 0b0111: {
     // ROR
     U16 Op2 = (Rs << 8) + (0b111 << 4) + Rd;
-    ArmDataProcessing(0, DPOps::MOV, 1, Rd, Rd, Op2);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, DPOps::MOV, 1, Rd, Rd, Op2);
     break;
   }
   case 0b1001: {
     // NEG
-    ArmDataProcessing(1, DPOps::RSB, 1, Rs, Rd, 0);
+    return std::bind(&CPU::ArmDataProcessing, this, 1, DPOps::RSB, 1, Rs, Rd, 0);
     break;
   }
   case 0b1101: {
     // MUL
-    ArmMultiply(0, 1, Rd, 0, Rd, Rs);
+    return std::bind(&CPU::ArmMultiply, this, 0, 1, Rd, 0, Rd, Rs);
     break;
   }
   default: {
     // Directly mapped ops
-    ArmDataProcessing(0, Op, 1, Rd, Rd, Rs);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, Op, 1, Rd, Rd, Rs);
     break;
   }
   }
 }
 
-void CPU::ThumbHiRegOps_P(ParamList params) {
+std::function<void()> CPU::ThumbHiRegOps_P() {
   U16 Rd = params[0], Rs = params[1], H2 = params[2], H1 = params[3],
       Op = params[4];
   // TODO: Detect unhandled cases for this Op and complain
@@ -291,7 +291,7 @@ void CPU::ThumbHiRegOps_P(ParamList params) {
   auto Hs = Rs + (H2 << 3);
 
   if (Op == 0b11) {
-    ArmBranchAndExchange(Hs);
+    return std::bind(&CPU::ArmBranchAndExchange, this, Hs);
   } else {
     U32 dpOp;
     auto S = 0;
@@ -310,39 +310,39 @@ void CPU::ThumbHiRegOps_P(ParamList params) {
 
       exit(-1);
     }
-    ArmDataProcessing(0, dpOp, S, Hd, Hd, Hs);
+    return std::bind(&CPU::ArmDataProcessing, this, 0, dpOp, S, Hd, Hd, Hs);
   }
 }
 
-void CPU::ThumbPCRelativeLoad_P(ParamList params) {
+std::function<void()> CPU::ThumbPCRelativeLoad_P() {
 
   U16 Word8 = params[0], Rd = params[1];
   auto offsetFix = (registers.get(R15)) % 4;
-  ArmSingleDataTransfer(0, 1, 1, 0, 0, 1, Register::R15, Rd,
+  return std::bind(&CPU::ArmSingleDataTransfer, this, 0, 1, 1, 0, 0, 1, Register::R15, Rd,
                         (Word8 << 2) - offsetFix);
 }
 // Load/Store
-void CPU::ThumbLSRegOff_P(ParamList params) {
+std::function<void()> CPU::ThumbLSRegOff_P() {
   U16 Rd = params[0], Rb = params[1], Ro = params[2], B = params[3],
       L = params[4];
 
-  ArmSingleDataTransfer(1, 1, 1, B, 0, L, Rb, Rd, Ro);
+  return std::bind(&CPU::ArmSingleDataTransfer, this, 1, 1, 1, B, 0, L, Rb, Rd, Ro);
 }
 
-void CPU::ThumbLSSignExt_P(ParamList params) {
+std::function<void()> CPU::ThumbLSSignExt_P() {
   U16 Rd = params[0], Rb = params[1], Ro = params[2], S = params[3],
       H = params[4];
 
   if (S | H) {
     // Loads
-    ArmHalfwordDTRegOffset(1, 1, 0, 1, Rb, Rd, S, H, Ro);
+    return std::bind(&CPU::ArmHalfwordDTRegOffset, this, 1, 1, 0, 1, Rb, Rd, S, H, Ro);
   } else {
     // Store
-    ArmHalfwordDTRegOffset(1, 1, 0, 0, Rb, Rd, 0, 1, Ro);
+    return std::bind(&CPU::ArmHalfwordDTRegOffset, this, 1, 1, 0, 0, Rb, Rd, 0, 1, Ro);
   }
 }
 
-void CPU::ThumbLSImmOff_P(ParamList params) {
+std::function<void()> CPU::ThumbLSImmOff_P() {
 
   U16 Rd = params[0], Rb = params[1], Offset5 = params[2], L = params[3],
       B = params[4];
@@ -351,40 +351,40 @@ void CPU::ThumbLSImmOff_P(ParamList params) {
   if (!B) {
     Offset = Offset5 << 2;
   }
-  ArmSingleDataTransfer(0, 1, 1, B, 0, L, Rb, Rd, Offset);
+  return std::bind(&CPU::ArmSingleDataTransfer, this, 0, 1, 1, B, 0, L, Rb, Rd, Offset);
 }
 
-void CPU::ThumbLSHalf_P(ParamList params) {
+std::function<void()> CPU::ThumbLSHalf_P() {
   U16 Rd = params[0], Rb = params[1], Offset5 = params[2], L = params[3];
 
   auto OffsetHi = Offset5 >> 3;
   auto OffsetLo = (Offset5 << 1) & NBIT_MASK(4);
-  ArmHalfwordDTImmOffset(1, 1, 0, L, Rb, Rd, OffsetHi, 0, 1, OffsetLo);
+  return std::bind(&CPU::ArmHalfwordDTImmOffset, this, 1, 1, 0, L, Rb, Rd, OffsetHi, 0, 1, OffsetLo);
 }
 
-void CPU::ThumbSPRelativeLS_P(ParamList params) {
+std::function<void()> CPU::ThumbSPRelativeLS_P() {
   U16 Word8 = params[0], Rd = params[1], L = params[2];
 
-  ArmSingleDataTransfer(0, 1, 1, 0, 0, L, Register::R13, Rd, Word8 << 2);
+  return std::bind(&CPU::ArmSingleDataTransfer, this, 0, 1, 1, 0, 0, L, Register::R13, Rd, Word8 << 2);
 }
 
-void CPU::ThumbLoadAddress_P(ParamList params) {
+std::function<void()> CPU::ThumbLoadAddress_P() {
   U16 Word8 = params[0], Rd = params[1], SP = params[2];
 
   U32 Rn = SP ? Register::R13 : Register::R15;
   const auto ROR30 = (0xF << 8);
-  ArmDataProcessing(1, DPOps::ADD, 0, Rn, Rd, ROR30 + Word8);
+  return std::bind(&CPU::ArmDataProcessing, this, 1, DPOps::ADD, 0, Rn, Rd, ROR30 + Word8);
 }
 
-void CPU::ThumbOffsetSP_P(ParamList params) {
+std::function<void()> CPU::ThumbOffsetSP_P() {
   U16 SWord7 = params[0], S = params[1];
 
   auto dpOp = static_cast<U32>(S ? DPOps::SUB : DPOps::ADD);
   const auto ROR30 = (0xF << 8);
-  ArmDataProcessing(1, dpOp, 1, Register::R13, Register::R13, ROR30 + SWord7);
+  return std::bind(&CPU::ArmDataProcessing, this, 1, dpOp, 1, Register::R13, Register::R13, ROR30 + SWord7);
 }
 
-void CPU::ThumbPushPopReg_P(ParamList params) {
+std::function<void()> CPU::ThumbPushPopReg_P() {
   U16 RList = params[0], R = params[1], L = params[2];
   // TODO: Check if direction correct, stack should be full descending
 
@@ -398,18 +398,21 @@ void CPU::ThumbPushPopReg_P(ParamList params) {
     }
   }
   // STMDB or LDMIA
-  ArmBlockDataTransfer(1 ^ L, 0 ^ L, 0, 1, L, Register::R13, RList);
+  return std::bind(&CPU::ArmBlockDataTransfer, this, 1 ^ L, 0 ^ L, 0, 1, L, Register::R13, RList);
 }
 
-void CPU::ThumbMultipleLS_P(ParamList params) {
+std::function<void()> CPU::ThumbMultipleLS_P() {
 
   U16 RList = params[0], Rb = params[1], L = params[2];
-  ArmBlockDataTransfer(0, 1, 0, 1, L, Rb, RList);
+  return std::bind(&CPU::ArmBlockDataTransfer, this, 0, 1, 0, 1, L, Rb, RList);
 }
 
-void CPU::ThumbCondBranch_P(ParamList params) {
+std::function<void()> CPU::ThumbCondBranch_P() {
   U16 SOffset8 = params[0], Cond = params[1];
+  return std::bind(&CPU::ThumbCondBranch, this, SOffset8, Cond);
+}
 
+void CPU::ThumbCondBranch(U16 SOffset8, U16 Cond) {
   if (!registers.conditionCheck((Condition)(Cond))) {
 
     return;
@@ -425,7 +428,7 @@ void CPU::ThumbCondBranch_P(ParamList params) {
   PipelineFlush();
 }
 
-void CPU::ThumbSWI_P(ParamList) {
+void CPU::ThumbSWI() {
 
   registers.switchMode(SRFlag::ModeBits::SVC);
 
@@ -437,9 +440,12 @@ void CPU::ThumbSWI_P(ParamList) {
   PipelineFlush();
 }
 
-void CPU::ThumbUncondBranch_P(ParamList params) {
+std::function<void()> CPU::ThumbUncondBranch_P() {
   U16 Offset11 = params[0];
+  return std::bind(&CPU::ThumbUncondBranch, this, Offset11);
+}
 
+void CPU::ThumbUncondBranch(U16 Offset11) {
   S16 offset = (Offset11 & NBIT_MASK(10)) << 1;
   if (Offset11 >> 10) {
     offset -= 1 << 11;
@@ -448,10 +454,12 @@ void CPU::ThumbUncondBranch_P(ParamList params) {
   PipelineFlush();
 }
 
-#include <unistd.h>
-void CPU::ThumbLongBranchLink_P(ParamList params) {
+std::function<void()> CPU::ThumbLongBranchLink_P() {
   U16 Offset = params[0], H = params[1];
+  return std::bind(&CPU::ThumbLongBranchLink, this, Offset, H);
+}
 
+void CPU::ThumbLongBranchLink(U16 Offset,  U16 H) {
   auto &lr = registers.get(Register::R14);
   auto &pc = registers.get(Register::R15);
   if (H) {
