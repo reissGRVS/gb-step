@@ -25,7 +25,7 @@ void CPU::Execute() {
   auto opcode = pipeline[0];
   auto &pc = registers.get(R15);
 
-  if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
+  if (registers.CPSR.thumb) {
     backtrace.addOpPCPair(pc - 2, opcode);
 
     pc &= ~1;
@@ -50,7 +50,7 @@ void CPU::Execute() {
 StateView CPU::ViewState() {
   RegisterView regView;
   for (int i = 0; i < 16; i++) {
-    regView[i] = registers.view((Register)i);
+    regView[i] = registers.get((Register)i);
   }
 
   StateView stateView{regView, backtrace};
@@ -58,17 +58,16 @@ StateView CPU::ViewState() {
 }
 
 bool CPU::HandleInterruptRequests() {
-  auto &cpsr = registers.get(CPSR);
-  if (interruptReady && !SRFlag::get(cpsr, SRFlag::irqDisable)) {
+  if (interruptReady && !registers.CPSR.irqDisable) {
 
-    registers.switchMode(SRFlag::ModeBits::IRQ);
+    registers.SwitchMode(ModeBits::IRQ);
     registers.get(R14) = registers.get(R15);
-    if (SRFlag::get(cpsr, SRFlag::thumb)) {
+    if (registers.CPSR.thumb) {
       registers.get(R14) += 2;
-      SRFlag::set(cpsr, SRFlag::thumb, 0);
+      registers.CPSR.thumb = 0;
     }
 
-    SRFlag::set(cpsr, SRFlag::irqDisable, 1);
+    registers.CPSR.irqDisable = 1;
     registers.get(R15) = 0x18;
     PipelineFlush();
     return true;
@@ -78,7 +77,7 @@ bool CPU::HandleInterruptRequests() {
 }
 
 void CPU::PipelineFlush() {
-  if (SRFlag::get(registers.get(CPSR), SRFlag::thumb)) {
+  if (registers.CPSR.thumb) {
     auto &pc = registers.get(R15);
     pc &= ~1;
 

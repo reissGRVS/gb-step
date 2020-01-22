@@ -38,7 +38,7 @@ const ParamSegments BlockDataTransferSegments
 
 const ParamSegments BranchSegments{{24, 24}, {23, 0}};
 
-void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, U8 &carryOut,
+void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, bool &carryOut,
                 bool regProvidedAmount) {
   switch (shiftType) {
   case 0b00: // LSL
@@ -119,7 +119,7 @@ void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, U8 &carryOut,
 }
 
 std::function<void()> CPU::ArmOperation(OpCode opcode) {
-  if (!registers.conditionCheck((Condition)(opcode >> 28))) {
+  if (!registers.ConditionCheck((Condition)(opcode >> 28))) {
     return []() { return; };
   }
 
@@ -195,10 +195,9 @@ std::function<void()> CPU::ArmOperation(OpCode opcode) {
 void CPU::ArmMRS(bool Ps, U8 Rd) {
   auto &dest = registers.get((Register)Rd);
   if (Ps) {
-    dest = registers.get(Register::SPSR);
-
+    dest = registers.GetSPSR().ToU32();
   } else {
-    dest = registers.get(Register::CPSR);
+    dest = registers.CPSR.ToU32();
   }
 }
 
@@ -206,12 +205,11 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
   auto value = registers.get((Register)(source & NBIT_MASK(4)));
   if (!flagsOnly) {
     if (Pd) {
-      registers.get(Register::SPSR) = value;
+      registers.GetSPSR().FromU32(value);
 
     } else {
-      registers.get(Register::CPSR) = value;
-
-      registers.switchMode((SRFlag::ModeBits)(value & NBIT_MASK(5)));
+      registers.CPSR.FromU32(value);
+      registers.SwitchMode(registers.CPSR.modeBits);
     }
   } else {
     if (I) {
@@ -219,7 +217,7 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
       auto rotate = (source >> 8) * 2;
       const U32 ROR = 0b11;
       // Maybe this should do RRX as well?
-      uint8_t carry = 0;
+      bool carry = 0;
       if (rotate) {
         Shift(value, rotate, ROR, carry, false);
       }
@@ -227,10 +225,9 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
     value >>= 28;
 
     if (Pd) {
-      SRFlag::set(registers.get(Register::SPSR), SRFlag::flags, value);
-
+	  registers.GetSPSR().FlagsFromU4(value);
     } else {
-      SRFlag::set(registers.get(Register::CPSR), SRFlag::flags, value);
+	  registers.CPSR.FlagsFromU4(value);
     }
   }
 }
@@ -263,7 +260,7 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
   }
 
   auto &dest = registers.get((Register)Rd);
-  auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+  auto carry = registers.CPSR.c;
   U32 Op2Val = 0;
 
   if (!I) {
@@ -302,25 +299,18 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
 
   auto SetFlags = [this](const U32 &S, const U32 &result, const U8 &carry) {
     if (S) {
-      auto &cpsr = registers.get(CPSR);
-
-      U8 zVal = result == 0;
-      U8 nVal = BIT_RANGE(result, 31, 31);
-      SRFlag::set(cpsr, SRFlag::n, nVal);
-      SRFlag::set(cpsr, SRFlag::z, zVal);
-      SRFlag::set(cpsr, SRFlag::c, carry);
+      registers.CPSR.n = BIT_RANGE(result, 31, 31);
+      registers.CPSR.z = (result == 0);
+      registers.CPSR.c = carry;
     }
   };
 
   if (Rd == 15 && S) {
-    auto previousSPSR = registers.get(SPSR);
-    registers.switchMode(
-        (SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
-    registers.get(CPSR) = previousSPSR;
+    auto previousSPSR = registers.GetSPSR();
+    registers.SwitchMode(previousSPSR.modeBits);
+    registers.CPSR = previousSPSR;
     S = 0;
   }
-
-  auto &cpsr = registers.get(CPSR);
 
   switch ((DPOps)OpCode) {
   case DPOps::AND: {
@@ -338,7 +328,7 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     dest = (uint32_t)result;
     carry = Op1Val >= Op2Val;
     auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ dest)) >> 31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+	registers.CPSR.v = overflow;
     break;
   }
   case DPOps::RSB: {
@@ -346,7 +336,7 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     dest = (uint32_t)result;
     carry = Op2Val >= Op1Val;
     auto overflow = ((Op1Val ^ Op2Val) & ~(Op1Val ^ dest)) >> 31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     break;
   }
 
@@ -355,43 +345,43 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     dest = (uint32_t)result;
     carry = result >> 32;
     auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ dest)) >> 31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     break;
   }
 
   case DPOps::ADC: {
-    carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+    carry = registers.CPSR.c;
     auto result = (std::uint64_t)Op1Val + Op2Val + carry;
     dest = (uint32_t)result;
     auto overflow = ((~(Op1Val ^ Op2Val) & ((Op1Val + Op2Val) ^ Op2Val)) ^
                      (~((Op1Val + Op2Val) ^ carry) & (dest ^ carry))) >>
                     31;
     carry = result >> 32;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     break;
   }
 
   case DPOps::SBC: {
-    carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+    carry = registers.CPSR.c;
     U32 Op3Val = carry ^ 1;
     dest = Op1Val - Op2Val - Op3Val;
     carry = (Op1Val >= Op2Val) && ((Op1Val - Op2Val) >= (Op3Val));
     auto overflow = (((Op1Val ^ Op2Val) & ~((Op1Val - Op2Val) ^ Op2Val)) ^
                      ((Op1Val - Op2Val) & ~dest)) >>
                     31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     break;
   }
 
   case DPOps::RSC: {
-    carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+    carry = registers.CPSR.c;
     U32 Op3Val = carry ^ 1;
     dest = Op2Val - Op1Val - Op3Val;
     carry = (Op2Val >= Op1Val) && ((Op2Val - Op1Val) >= (Op3Val));
     auto overflow = (((Op2Val ^ Op1Val) & ~((Op2Val - Op1Val) ^ Op1Val)) ^
                      ((Op2Val - Op1Val) & ~dest)) >>
                     31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     break;
   }
 
@@ -414,7 +404,7 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     carry = Op1Val >= Op2Val;
     SetFlags(1, result, carry);
     auto overflow = ((Op1Val ^ Op2Val) & ~(Op2Val ^ ((U32)result))) >> 31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     S = 0;
     break;
   }
@@ -425,7 +415,7 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     carry = resultBig >> 32;
     SetFlags(1, result, carry);
     auto overflow = (~(Op1Val ^ Op2Val) & (Op1Val ^ result)) >> 31;
-    SRFlag::set(cpsr, SRFlag::v, overflow);
+    registers.CPSR.v = overflow;
     S = 0;
     break;
   }
@@ -511,11 +501,8 @@ void CPU::ArmMultiply(U32 A, U32 S, U32 Rd, U32 Rn, U32 Rs, U32 Rm) {
   }
 
   if (S) {
-    auto &cpsr = registers.get(CPSR);
-    U8 zVal = dest == 0;
-    U8 nVal = dest >> 31;
-    SRFlag::set(cpsr, SRFlag::n, nVal);
-    SRFlag::set(cpsr, SRFlag::z, zVal);
+    registers.CPSR.n = (dest >> 31);
+    registers.CPSR.z = (dest == 0);
   }
 }
 
@@ -567,12 +554,8 @@ void CPU::ArmMultiplyLong(U32 U, U32 A, U32 S, U32 RdHi, U32 RdLo, U32 Rs,
   registers.get((Register)RdHi) = result >> 32;
 
   if (S) {
-    auto &cpsr = registers.get(CPSR);
-    U8 zVal = result == (int64_t)0;
-    U8 nVal = result < 0;
-
-    SRFlag::set(cpsr, SRFlag::n, nVal);
-    SRFlag::set(cpsr, SRFlag::z, zVal);
+	registers.CPSR.n = (result < 0);
+	registers.CPSR.z = (result == (int64_t)0);
   }
 }
 
@@ -613,7 +596,7 @@ std::function<void()> CPU::ArmBranchAndExchange_P() {
 void CPU::ArmBranchAndExchange(U32 Rn) {
   auto val = registers.get((Register)Rn);
 
-  SRFlag::set(registers.get(CPSR), SRFlag::thumb, val & NBIT_MASK(1));
+  registers.CPSR.thumb = val & NBIT_MASK(1);
   registers.get(Register::R15) = val;
   PipelineFlush();
 }
@@ -712,7 +695,7 @@ std::function<void()> CPU::ArmSingleDataTransfer_P() {
 void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
                                 U32 Rn, U32 Rd, U32 Offset) {
   if (I) {
-    auto carry = SRFlag::get(registers.get(CPSR), SRFlag::c);
+    auto carry = registers.CPSR.c;
     auto Rm = registers.get((Register)(BIT_RANGE(Offset, 0, 3)));
     auto shiftType = BIT_RANGE(Offset, 5, 6);
     auto shiftAmount = BIT_RANGE(Offset, 7, 11);
@@ -749,7 +732,7 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
       auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
                                 Sequentiality::NSEQ);
       if (wordBoundaryOffset) {
-        U8 emptyCarry = 0;
+        bool emptyCarry = 0;
         const U32 ROR = 0b11;
         Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
       }
@@ -773,10 +756,10 @@ std::function<void()> CPU::ArmUndefined_P() { return std::bind(&CPU::ArmUndefine
 
 void CPU::ArmUndefined() {
 
-  registers.switchMode(SRFlag::ModeBits::UND);
+  registers.SwitchMode(ModeBits::UND);
 
   registers.get(R14) = registers.get(R15) - 4;
-  SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
+  registers.CPSR.irqDisable = 1;
   registers.get(R15) = 0x04;
 
   PipelineFlush();
@@ -800,11 +783,11 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
   }
   bool transferPC = BIT_RANGE(RegList, 15, 15);
 
-  SRFlag::ModeBits mode = SRFlag::ModeBits::USR;
+  auto mode = ModeBits::USR;
   // R15 not in list and S bit set (User bank transfer)
   if (S && (!transferPC || !L)) {
-    mode = (SRFlag::ModeBits)SRFlag::get(registers.get(CPSR), SRFlag::modeBits);
-    registers.switchMode(SRFlag::ModeBits::USR);
+    mode = registers.CPSR.modeBits;
+    registers.SwitchMode(ModeBits::USR);
   }
 
   auto addr = base;
@@ -856,10 +839,9 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
   }
 
   if (S && L && transferPC) {
-    auto previousSPSR = registers.get(SPSR);
-    registers.switchMode(
-        (SRFlag::ModeBits)SRFlag::get(registers.get(SPSR), SRFlag::modeBits));
-    registers.get(CPSR) = previousSPSR;
+    auto previousSPSR = registers.GetSPSR();
+    registers.SwitchMode(previousSPSR.modeBits);
+    registers.CPSR = previousSPSR;
   }
 
   if (W && !stopWriteback) {
@@ -868,7 +850,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
 
   // Change back to previous mode
   if (S && (!transferPC || !L)) {
-    registers.switchMode(mode);
+    registers.SwitchMode(mode);
   }
 
   if (transferPC && L) {
@@ -903,10 +885,10 @@ std::function<void()> CPU::ArmSWI_P() { return std::bind(&CPU::ArmSWI, this); }
 
 void CPU::ArmSWI() {
 
-  registers.switchMode(SRFlag::ModeBits::SVC);
+  registers.SwitchMode(ModeBits::SVC);
   registers.get(R14) = registers.get(R15) - 4;
 
-  SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
+  registers.CPSR.irqDisable = 1;
   registers.get(R15) = 0x8;
 
   PipelineFlush();

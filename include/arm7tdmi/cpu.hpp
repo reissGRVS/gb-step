@@ -56,7 +56,7 @@ private:
 	void Shift(U32& value,
 		const U32 amount,
 		const U32& shiftType,
-		U8& carryOut,
+		bool& carryOut,
 		bool regProvidedAmount);
 
 	// Thumb Operations

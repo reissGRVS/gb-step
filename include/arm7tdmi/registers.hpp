@@ -44,76 +44,99 @@ enum Register {
 	R12 = 12,
 	R13 = 13,
 	R14 = 14,
-	R15 = 15,
-	CPSR = 16,
-	SPSR = 17
+	R15 = 15
 };
 
-namespace SRFlag {
-	struct BitLocation {
-		const U8 bit;
-		const U8 size;
-	};
-
-	enum ModeBits {
-		USR = 0x10,
-		FIQ = 0x11,
-		IRQ = 0x12,
-		SVC = 0x13,
-		ABT = 0x17,
-		UND = 0x1B,
-		SYS = 0x1F
-	};
-
-	const BitLocation modeBits = { 0, 5 };
-	const BitLocation thumb = { 5, 1 };
-	const BitLocation fiqDisable = { 6, 1 };
-	const BitLocation irqDisable = { 7, 1 };
-	const BitLocation q = { 27, 1 };
-	const BitLocation flags = { 28, 4 };
-	const BitLocation v = { 28, 1 };
-	const BitLocation c = { 29, 1 };
-	const BitLocation z = { 30, 1 };
-	const BitLocation n = { 31, 1 };
-
-	uint8_t get(const U32& sr, const BitLocation& flag);
-	void set(U32& sr, const BitLocation& flag, U8 val);
-} // namespace SRFlag
-
-enum ModeBank {
-	SYS = 0,
-	FIQ = 1,
-	SVC = 2,
-	ABT = 3,
-	IRQ = 4,
-	UND = 5,
+enum ModeBits {
+	USR = 0x10,
+	FIQ = 0x11,
+	IRQ = 0x12,
+	SVC = 0x13,
+	ABT = 0x17,
+	UND = 0x1B,
+	SYS = 0x1F
 };
 
-ModeBank getModeBank(SRFlag::ModeBits modeBits);
+struct StatusRegister {
+	U32 ToU32(){
+		U32 registerValue = modeBits
+		+ (thumb << 5)
+		+ (fiqDisable << 6)
+		+ (irqDisable << 7)
+		+ (v << 28)
+		+ (c << 29)
+		+ (z << 30)
+		+ (n << 31);
+
+		return registerValue;
+	}
+
+	void FromU32(U32 value)
+	{
+		modeBits = (ModeBits)BIT_RANGE(value, 0, 4);
+		thumb = BIT_RANGE(value, 5, 5);
+		fiqDisable = BIT_RANGE(value, 6, 6);
+		irqDisable = BIT_RANGE(value, 7, 7);
+		v = BIT_RANGE(value, 28, 28);
+		c = BIT_RANGE(value, 29, 29);
+		z = BIT_RANGE(value, 30, 30);
+		n = BIT_RANGE(value, 31, 31);
+	}
+
+	void FlagsFromU4(U8 value)
+	{
+		v = BIT_RANGE(value, 0, 0);
+		c = BIT_RANGE(value, 1, 1);
+		z = BIT_RANGE(value, 2, 2);
+		n = BIT_RANGE(value, 3, 3);
+	}
+
+	ModeBits modeBits;
+	bool thumb;
+	bool fiqDisable;
+	bool irqDisable;
+	bool v;
+	bool c;
+	bool z;
+	bool n;
+};
+
+
 
 class RegisterSet {
 public:
-	U32 view(Register reg);
+	enum ModeBank {
+		SYS = 0,
+		FIQ = 1,
+		SVC = 2,
+		ABT = 3,
+		IRQ = 4,
+		UND = 5
+	};
+
+	ModeBank getModeBank(ModeBits modeBits);
+
 	U32& get(Register reg);
 
-	U32& get(ModeBank mode, Register reg);
-
 	// https://problemkaputt.de/gbatek.htm#armcpuflagsconditionfieldcond
-	bool conditionCheck(Condition cond);
+	bool ConditionCheck(Condition cond);
 
-	void switchMode(SRFlag::ModeBits mode);
+	void SwitchMode(ModeBits mode);
+
+
+	StatusRegister CPSR;
+	StatusRegister& GetSPSR();
 
 private:
 	ModeBank currentBank = ModeBank::SYS;
 
+	std::array<StatusRegister, 5> SPSR{};
 	struct Registers {
-		std::array<U32, 13> GPR{}; // R0-12
+		std::array<U32, 16> ACTIVE{};
+		std::array<U32, 5> GPR{}; // R8-12 Other modes
 		std::array<U32, 5> GPR_FIQ{}; // R8-12 FIQ
 		std::array<U32, 6> SP{}; // R13 All modes
-		std::array<U32, 6> LR{}; // R14 All modes
-		U32 PC{}; // R15
-		U32 CPSR{ 0x1F };
-		std::array<U32, 5> SPSR{}; // System/Usr mode has no SPSR
+		std::array<U32, 6> LR{}; // R14 All modes// System/Usr mode has no SPSR
 	} registers;
 };
 

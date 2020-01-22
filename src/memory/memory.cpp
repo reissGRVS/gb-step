@@ -138,7 +138,6 @@ uint32_t Memory::Read(AccessSize size, U32 address, Sequentiality seq) {
 
   spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
   return 0;
-  exit(-1);
 }
 
 void Memory::Write(AccessSize size, U32 address, U32 value, Sequentiality seq) {

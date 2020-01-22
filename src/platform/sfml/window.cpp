@@ -6,7 +6,7 @@
 WindowSFML::WindowSFML()
     : window(sf::VideoMode(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE),
              "gb-step", sf::Style::Titlebar) {
-  window.setFramerateLimit(60);
+  window.setFramerateLimit(200);
   background.create(SCREEN_WIDTH, SCREEN_HEIGHT);
   b.setTexture(background);
   b.scale(SCALE, SCALE);

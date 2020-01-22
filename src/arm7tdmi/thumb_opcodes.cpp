@@ -413,7 +413,7 @@ std::function<void()> CPU::ThumbCondBranch_P() {
 }
 
 void CPU::ThumbCondBranch(U16 SOffset8, U16 Cond) {
-  if (!registers.conditionCheck((Condition)(Cond))) {
+  if (!registers.ConditionCheck((Condition)(Cond))) {
 
     return;
   }
@@ -430,11 +430,11 @@ void CPU::ThumbCondBranch(U16 SOffset8, U16 Cond) {
 
 void CPU::ThumbSWI() {
 
-  registers.switchMode(SRFlag::ModeBits::SVC);
+  registers.SwitchMode(ModeBits::SVC);
 
   registers.get(R14) = registers.get(R15) - 2;
-  SRFlag::set(registers.get(CPSR), SRFlag::irqDisable, 1);
-  SRFlag::set(registers.get(CPSR), SRFlag::thumb, 0);
+  registers.CPSR.irqDisable = true;
+  registers.CPSR.thumb = false;
   registers.get(R15) = 0x8;
 
   PipelineFlush();

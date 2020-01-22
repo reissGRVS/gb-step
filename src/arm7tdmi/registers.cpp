@@ -3,121 +3,65 @@
 
 namespace ARM7TDMI {
 
-namespace SRFlag {
-	uint8_t get(const U32& sr, const BitLocation& flag)
-	{
-		U32 mask = (1 << flag.size) - 1;
-		return (sr >> flag.bit) & mask;
-	}
-
-	void set(U32& sr, const BitLocation& flag, U8 val)
-	{
-		U32 mask = (1 << flag.size) - 1;
-		if ((mask & val) != val) {
-			spdlog::get("std")->warn(
-				"Tried to set invalid size of value for bitlocation");
-			return;
-		}
-		mask = ~(mask << flag.bit);
-		sr &= mask;
-		sr |= (val << flag.bit);
-	}
-} // end  namespace SRFlag
-
-ModeBank getModeBank(SRFlag::ModeBits modeBits)
+RegisterSet::ModeBank RegisterSet::getModeBank(ModeBits modeBits)
 {
 	switch (modeBits) {
-	case SRFlag::ModeBits::USR:
-		return ModeBank::SYS;
-	case SRFlag::ModeBits::FIQ:
-		return ModeBank::FIQ;
-	case SRFlag::ModeBits::IRQ:
-		return ModeBank::IRQ;
-	case SRFlag::ModeBits::SVC:
-		return ModeBank::SVC;
-	case SRFlag::ModeBits::ABT:
-		return ModeBank::ABT;
-	case SRFlag::ModeBits::UND:
-		return ModeBank::UND;
-	case SRFlag::ModeBits::SYS:
-		return ModeBank::SYS;
+	case ModeBits::USR:
+		return RegisterSet::ModeBank::SYS;
+	case ModeBits::FIQ:
+		return RegisterSet::ModeBank::FIQ;
+	case ModeBits::IRQ:
+		return RegisterSet::ModeBank::IRQ;
+	case ModeBits::SVC:
+		return RegisterSet::ModeBank::SVC;
+	case ModeBits::ABT:
+		return RegisterSet::ModeBank::ABT;
+	case ModeBits::UND:
+		return RegisterSet::ModeBank::UND;
+	case ModeBits::SYS:
+		return RegisterSet::ModeBank::SYS;
 	default:
 		spdlog::get("std")->error("Invalid modeBits passed");
 		exit(-1);
 	}
 }
 
-U32 RegisterSet::view(Register reg)
-{
-	return get(currentBank, reg);
-}
 U32& RegisterSet::get(Register reg)
 {
-	return get(currentBank, reg);
+	return registers.ACTIVE[reg];
 }
 
-U32& RegisterSet::get(ModeBank mode, Register reg)
-{
-
-	if (reg == Register::R15) {
-		return registers.PC;
-	}
-
-	if (reg <= Register::R12) {
-		if (mode == ModeBank::FIQ && reg >= Register::R8) {
-			return registers.GPR_FIQ[reg - Register::R8];
-		} else {
-			return registers.GPR[(uint8_t)reg];
-		}
-	} else if (reg == Register::R13) {
-		return registers.SP[(uint8_t)mode];
-	} else if (reg == Register::R14) {
-		return registers.LR[(uint8_t)mode];
-	} else if (reg == Register::CPSR) {
-		return registers.CPSR;
-	} else if (reg == Register::SPSR) {
-		if (mode == ModeBank::SYS) {
-			spdlog::get("std")->error("Tried to get SPSR in SYS mode");
-			exit(-1);
-		}
-		return registers.SPSR[(uint8_t)mode - 1];
-	} else {
-		spdlog::get("std")->error("Invalid call to register get");
-		exit(-1);
-	}
-}
-
-bool RegisterSet::conditionCheck(Condition cond)
+bool RegisterSet::ConditionCheck(Condition cond)
 {
 	switch (cond) {
 	case EQ:
-		return SRFlag::get(registers.CPSR, SRFlag::z);
+		return CPSR.z;
 	case NE:
-		return !SRFlag::get(registers.CPSR, SRFlag::z);
+		return !CPSR.z;
 	case CS:
-		return SRFlag::get(registers.CPSR, SRFlag::c);
+		return CPSR.c;
 	case CC:
-		return !SRFlag::get(registers.CPSR, SRFlag::c);
+		return !CPSR.c;
 	case MI:
-		return SRFlag::get(registers.CPSR, SRFlag::n);
+		return CPSR.n;
 	case PL:
-		return !SRFlag::get(registers.CPSR, SRFlag::n);
+		return !CPSR.n;
 	case VS:
-		return SRFlag::get(registers.CPSR, SRFlag::v);
+		return CPSR.v;
 	case VC:
-		return !SRFlag::get(registers.CPSR, SRFlag::v);
+		return !CPSR.v;
 	case HI:
-		return SRFlag::get(registers.CPSR, SRFlag::c) && !SRFlag::get(registers.CPSR, SRFlag::z);
+		return CPSR.c && !CPSR.z;
 	case LS:
-		return !SRFlag::get(registers.CPSR, SRFlag::c) || SRFlag::get(registers.CPSR, SRFlag::z);
+		return !CPSR.c || CPSR.z;
 	case GE:
-		return SRFlag::get(registers.CPSR, SRFlag::n) == SRFlag::get(registers.CPSR, SRFlag::v);
+		return CPSR.n == CPSR.v;
 	case LT:
-		return SRFlag::get(registers.CPSR, SRFlag::n) != SRFlag::get(registers.CPSR, SRFlag::v);
+		return CPSR.n != CPSR.v;
 	case GT:
-		return (SRFlag::get(registers.CPSR, SRFlag::n) == SRFlag::get(registers.CPSR, SRFlag::v)) && !SRFlag::get(registers.CPSR, SRFlag::z);
+		return (CPSR.n == CPSR.v) && !CPSR.z;
 	case LE:
-		return SRFlag::get(registers.CPSR, SRFlag::n) != SRFlag::get(registers.CPSR, SRFlag::v) || SRFlag::get(registers.CPSR, SRFlag::z);
+		return CPSR.n != CPSR.v || CPSR.z;
 	case AL:
 		return true;
 	case NV:
@@ -128,7 +72,7 @@ bool RegisterSet::conditionCheck(Condition cond)
 	}
 }
 
-void RegisterSet::switchMode(SRFlag::ModeBits mode)
+void RegisterSet::SwitchMode(ModeBits mode)
 {
 	auto newBank = getModeBank(mode);
 
@@ -136,10 +80,46 @@ void RegisterSet::switchMode(SRFlag::ModeBits mode)
 		return;
 
 	if (newBank != ModeBank::SYS) {
-		get(newBank, SPSR) = get(currentBank, CPSR);
+		SPSR[(uint8_t)newBank - 1] = CPSR;
 	}
+	//Update R13 and R14
+	registers.SP[(uint8_t)currentBank] = registers.ACTIVE[13];
+	registers.ACTIVE[13] = registers.SP[(uint8_t)newBank];
+
+	registers.LR[(uint8_t)currentBank] = registers.ACTIVE[14];
+	registers.ACTIVE[14] = registers.LR[(uint8_t)newBank];
+
+	if (newBank == ModeBank::FIQ)
+	{
+		for (U16 i = 0; i < registers.GPR.size(); i++)
+		{
+			registers.GPR[i] = registers.ACTIVE[i+8];
+			registers.ACTIVE[i+8] = registers.GPR_FIQ[i];
+		}
+	}
+	else if (currentBank == ModeBank::FIQ)
+	{
+		for (U16 i = 0; i < registers.GPR.size(); i++)
+		{
+			registers.GPR_FIQ[i] = registers.ACTIVE[i+8];
+			registers.ACTIVE[i+8] = registers.GPR[i];
+		}
+	}
+
 	currentBank = newBank;
-	SRFlag::set(registers.CPSR, SRFlag::modeBits, mode);
+	CPSR.modeBits = mode;
+}
+
+StatusRegister& RegisterSet::GetSPSR()
+{
+	if (currentBank != ModeBank::SYS) {
+		return SPSR[(uint8_t)currentBank - 1];
+	}
+	else
+	{
+		spdlog::get("std")->error("Tried to access Sys SPSR");
+		exit(-1);
+	}
 }
 
 } // namespace ARM7TDMI
