@@ -2,48 +2,47 @@
 #include "utils.hpp"
 #include <SFML/Window/Keyboard.hpp>
 
-void Joypad::keyUpdate()
-{
-	right = sf::Keyboard::isKeyPressed(sf::Keyboard::D);
-	left = sf::Keyboard::isKeyPressed(sf::Keyboard::A);
-	up = sf::Keyboard::isKeyPressed(sf::Keyboard::W);
-	down = sf::Keyboard::isKeyPressed(sf::Keyboard::S);
-	a = sf::Keyboard::isKeyPressed(sf::Keyboard::K);
-	b = sf::Keyboard::isKeyPressed(sf::Keyboard::L);
-	rightBump = sf::Keyboard::isKeyPressed(sf::Keyboard::I);
-	leftBump = sf::Keyboard::isKeyPressed(sf::Keyboard::O);
-	select = sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
-	start = sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
+void Joypad::keyUpdate() {
+  right = sf::Keyboard::isKeyPressed(sf::Keyboard::D);
+  left = sf::Keyboard::isKeyPressed(sf::Keyboard::A);
+  up = sf::Keyboard::isKeyPressed(sf::Keyboard::W);
+  down = sf::Keyboard::isKeyPressed(sf::Keyboard::S);
+  a = sf::Keyboard::isKeyPressed(sf::Keyboard::K);
+  b = sf::Keyboard::isKeyPressed(sf::Keyboard::L);
+  rightBump = sf::Keyboard::isKeyPressed(sf::Keyboard::I);
+  leftBump = sf::Keyboard::isKeyPressed(sf::Keyboard::O);
+  select = sf::Keyboard::isKeyPressed(sf::Keyboard::Num2);
+  start = sf::Keyboard::isKeyPressed(sf::Keyboard::Num1);
 
-	bp = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+  bp = sf::Keyboard::isKeyPressed(sf::Keyboard::Space);
+  esc = sf::Keyboard::isKeyPressed(sf::Keyboard::Escape);
 }
 
-U16 Joypad::getKeyStatus()
-{
-	U16 keyStatus = NBIT_MASK(16);
+U16 Joypad::getKeyStatus() {
+  U16 keyStatus = NBIT_MASK(16);
 
-	if (a)
-		BIT_CLEAR(keyStatus, 0);
-	if (b)
-		BIT_CLEAR(keyStatus, 1);
-	if (select)
-		BIT_CLEAR(keyStatus, 2);
-	if (start)
-		BIT_CLEAR(keyStatus, 3);
-	if (right)
-		BIT_CLEAR(keyStatus, 4);
-	if (left)
-		BIT_CLEAR(keyStatus, 5);
-	if (up)
-		BIT_CLEAR(keyStatus, 6);
-	if (down)
-		BIT_CLEAR(keyStatus, 7);
-	if (leftBump)
-		BIT_CLEAR(keyStatus, 8);
-	if (rightBump)
-		BIT_CLEAR(keyStatus, 9);
+  if (a)
+    BIT_CLEAR(keyStatus, 0);
+  if (b)
+    BIT_CLEAR(keyStatus, 1);
+  if (select)
+    BIT_CLEAR(keyStatus, 2);
+  if (start)
+    BIT_CLEAR(keyStatus, 3);
+  if (right)
+    BIT_CLEAR(keyStatus, 4);
+  if (left)
+    BIT_CLEAR(keyStatus, 5);
+  if (up)
+    BIT_CLEAR(keyStatus, 6);
+  if (down)
+    BIT_CLEAR(keyStatus, 7);
+  if (leftBump)
+    BIT_CLEAR(keyStatus, 8);
+  if (rightBump)
+    BIT_CLEAR(keyStatus, 9);
 
-	return keyStatus;
+  return keyStatus;
 }
 
 bool Joypad::a;
@@ -57,3 +56,4 @@ bool Joypad::down;
 bool Joypad::rightBump;
 bool Joypad::leftBump;
 bool Joypad::bp;
+bool Joypad::esc;

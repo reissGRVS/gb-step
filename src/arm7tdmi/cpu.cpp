@@ -45,8 +45,6 @@ void CPU::Execute() {
     pipeline[1] = memory->Read(Word, pc, SEQ);
     ArmOperation(opcode)();
   }
-
-  //
 }
 
 StateView CPU::ViewState() {

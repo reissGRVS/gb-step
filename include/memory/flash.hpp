@@ -4,53 +4,50 @@
 #include "memory/cart_backup.hpp"
 #include "memory/regions.hpp"
 #include <array>
+#include <iostream>
 
-enum FlashSize { Single = 0,
-	Double = 1 };
+enum FlashSize { Single = 0, Double = 1 };
 class Flash : public CartBackup {
 public:
-	Flash(FlashSize size)
-		: manufacturerID((size == Single) ? 0xBF : 0xC2)
-		, deviceID((size == Single) ? 0xD4 : 0x09)
-	{
-	}
+  Flash(FlashSize size, std::string saveFilePath)
+      : manufacturerID((size == Single) ? 0xBF : 0xC2),
+        deviceID((size == Single) ? 0xD4 : 0x09) {
+    // if saveFile exists, load into bank1 and bank2
+    std::cout << saveFilePath << std::endl;
+  }
 
-	U8 Read(U32 address) override;
-	void Write(U32 address, U8 value) override;
+  virtual ~Flash() { std::cout << "Destroying flash" << std::endl; }
 
-	virtual ~Flash() = default;
+  U8 Read(U32 address) override;
+  void Write(U32 address, U8 value) override;
 
 private:
-	void HandleOperation(U8 value);
-	void EraseSector(U32 sector);
+  void HandleOperation(U8 value);
+  void EraseSector(U32 sector);
 
-	// TODO: Support Atmel devices?
-	// TODO: Terminate command for Macronix devices
+  // TODO: Support Atmel devices?
+  // TODO: Terminate command for Macronix devices
 
-	enum State { INIT0,
-		INIT1,
-		OPERATION,
-		ACCEPT_WRITE,
-		ACCEPT_BANK_SWITCH };
-	enum Operation {
-		CHIP_ID_ENABLE = 0x90,
-		CHIP_ID_DISABLE = 0xF0,
-		ERASE = 0x80,
-		ERASE_CHIP = 0x10,
-		ERASE_SECTOR = 0x30,
-		WRITE_SINGLE = 0xA0,
-		BANK_SWITCH = 0xB0
-	};
+  enum State { INIT0, INIT1, OPERATION, ACCEPT_WRITE, ACCEPT_BANK_SWITCH };
+  enum Operation {
+    CHIP_ID_ENABLE = 0x90,
+    CHIP_ID_DISABLE = 0xF0,
+    ERASE = 0x80,
+    ERASE_CHIP = 0x10,
+    ERASE_SECTOR = 0x30,
+    WRITE_SINGLE = 0xA0,
+    BANK_SWITCH = 0xB0
+  };
 
-	uint8_t manufacturerID;
-	uint8_t deviceID;
+  uint8_t manufacturerID;
+  uint8_t deviceID;
 
-	State state = INIT0;
-	uint8_t currentBank = 0;
-	bool idMode = false;
-	bool eraseEnable = false;
+  State state = INIT0;
+  uint8_t currentBank = 0;
+  bool idMode = false;
+  bool eraseEnable = false;
 
-	std::array<U8, FLASH_BANK_SIZE> bank1{ 0xFF };
-	// Only used for FLASH1M
-	std::array<U8, FLASH_BANK_SIZE> bank2{ 0xFF };
+  std::array<U8, FLASH_BANK_SIZE> bank1{0xFF};
+  // Only used for FLASH1M
+  std::array<U8, FLASH_BANK_SIZE> bank2{0xFF};
 };

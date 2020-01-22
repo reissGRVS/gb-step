@@ -46,10 +46,17 @@ Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
 
     auto backupID = FindBackupID(length);
 
+    auto extensionIndex = romPath.find_last_of(".");
+    auto saveFilePath = romPath;
+    if (extensionIndex != std::string::npos) {
+      saveFilePath = saveFilePath.substr(0, extensionIndex);
+    }
+    saveFilePath = saveFilePath + ".gbasav";
+
     if (backupID == FLASH1M_V) {
-      mem.ext.backup = std::make_unique<Flash>(FlashSize::Double);
+      mem.ext.backup = std::make_unique<Flash>(FlashSize::Double, saveFilePath);
     } else if (backupID == FLASH512_V || backupID == FLASH_V) {
-      mem.ext.backup = std::make_unique<Flash>(FlashSize::Single);
+      mem.ext.backup = std::make_unique<Flash>(FlashSize::Single, saveFilePath);
     } else if (backupID == SRAM_V) {
       mem.ext.backup = std::make_unique<SRAM>();
     } else {
