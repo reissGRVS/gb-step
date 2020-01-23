@@ -79,7 +79,6 @@ bool CPU::HandleInterruptRequests() {
 void CPU::PipelineFlush() {
   if (registers.CPSR.thumb) {
     auto &pc = registers.get(R15);
-	std::cout << "Flush @ " << std::hex << pc << std::endl;
     pc &= ~1;
 
     pipeline[0] = memory->Read(Half, pc, NSEQ);

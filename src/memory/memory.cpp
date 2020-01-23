@@ -58,11 +58,11 @@ Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
     } else if (backupID == FLASH512_V || backupID == FLASH_V) {
       mem.ext.backup = std::make_unique<Flash>(FlashSize::Single, saveFilePath);
     } else if (backupID == SRAM_V) {
-      mem.ext.backup = std::make_unique<SRAM>();
+      mem.ext.backup = std::make_unique<SRAM>(saveFilePath);
     } else {
       // TODO: Implement EEPROM and no backup
       spdlog::get("std")->error("Unsupported Backup type {}", backupID);
-      mem.ext.backup = std::make_unique<SRAM>();
+      mem.ext.backup = std::make_unique<SRAM>(saveFilePath);
       //   exit(-1);
     }
   }
