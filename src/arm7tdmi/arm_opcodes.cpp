@@ -41,15 +41,25 @@ const ParamSegments BranchSegments{{24, 24}, {23, 0}};
 void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, bool &carryOut,
                 bool regProvidedAmount) {
   switch (shiftType) {
-  case 0b00: // LSL
-  {
-    if (amount) {
-      value <<= (amount - 1);
-      carryOut = value >> 31;
-      value <<= 1;
-    }
-    break;
-  }
+	case 0b00: // LSL
+	{
+		if (amount > 0 && amount < 32) {
+			value <<= (amount - 1);
+			carryOut = value >> 31;
+			value <<= 1;
+		}
+		else if (amount == 32)
+		{
+			carryOut = value & 1;
+			value = 0;
+		}
+		else if (regProvidedAmount && amount > 32u)
+		{
+			carryOut = 0;
+			value = 0;
+		}
+		break;
+	}
   case 0b01: // LSR
   case 0b10: // ASR
   {
@@ -203,16 +213,7 @@ void CPU::ArmMRS(bool Ps, U8 Rd) {
 
 void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
   auto value = registers.get((Register)(source & NBIT_MASK(4)));
-  if (!flagsOnly) {
-    if (Pd) {
-      registers.GetSPSR().FromU32(value);
-
-    } else {
-      registers.CPSR.FromU32(value);
-      registers.SwitchMode(registers.CPSR.modeBits);
-    }
-  } else {
-    if (I) {
+  if (I) {
       value = (source & NBIT_MASK(8));
       auto rotate = (source >> 8) * 2;
       const U32 ROR = 0b11;
@@ -222,6 +223,16 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
         Shift(value, rotate, ROR, carry, false);
       }
     }
+
+  if (!flagsOnly) {
+    if (Pd) {
+      registers.GetSPSR().FromU32(value);
+    } else {
+      registers.CPSR.FromU32(value);
+      registers.SwitchMode(registers.CPSR.modeBits);
+    }
+  } else {
+    
     value >>= 28;
 
     if (Pd) {
@@ -275,6 +286,9 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
       // If also using R15 to specify shift + 4 to Rm
       if ((Op2 & NBIT_MASK(4)) == 15) {
         Rm += 4;
+      }
+	  if (Rn == 15) {
+        Op1Val += 4;
       }
 
       clock->Tick(1);
@@ -580,9 +594,16 @@ void CPU::ArmSingleDataSwap(U32 B, U32 Rn, U32 Rd, U32 Rm) {
     registers.get((Register)Rd) = memVal;
   } else {
     auto addr = registers.get((Register)Rn);
-    auto memVal = memory->Read(AccessSize::Word, addr, Sequentiality::NSEQ);
-    // TODO: Maybe these writes need to be word aligned?
-    memory->Write(AccessSize::Word, addr, registers.get((Register)Rm),
+	auto wordBoundaryOffset = addr % 4;  
+
+    auto memVal = memory->Read(AccessSize::Word, addr - wordBoundaryOffset, Sequentiality::NSEQ);
+    if (wordBoundaryOffset) {
+        bool emptyCarry = 0;
+        const U32 ROR = 0b11;
+        Shift(memVal, wordBoundaryOffset * 8, ROR, emptyCarry, false);
+    }
+
+    memory->Write(AccessSize::Word, addr - wordBoundaryOffset, registers.get((Register)Rm),
                   Sequentiality::SEQ);
     registers.get((Register)Rd) = memVal;
   }
@@ -631,6 +652,8 @@ void CPU::ArmHalfwordDTImmOffset(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd,
 
 void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
                         U32 H, U32 Offset) {
+
+  auto value = registers.get((Register)Rd);
   auto base = registers.get((Register)Rn);
   auto baseOffset = base;
 
@@ -657,12 +680,35 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
     if (H) // HalfWord
     {
       // TODO: Addr needs to be on half boundary
-      destReg = memory->Read(AccessSize::Half, memAddr, Sequentiality::NSEQ);
+
+	  auto wordBoundaryOffset = memAddr & 1;
+      
+      if (wordBoundaryOffset) {
+		spdlog::get("std")->warn("half word boundary offset logic potentially wrong");
+		auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
+                            Sequentiality::NSEQ);
+        bool emptyCarry = 0;
+        const U32 ROR = 0b11;
+        Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
+		destReg = value;
+      }
+	  else{
+      	destReg = memory->Read(AccessSize::Half, memAddr, Sequentiality::NSEQ);
+	  }
+
       if (S) // Signed
       {
+		
+
         if (destReg >> 15) {
           destReg |= NBIT_MASK(16) << 16;
         }
+		else if (wordBoundaryOffset && BIT_RANGE(destReg, 7, 7))
+		{
+			spdlog::get("std")->warn("signed half word offset logic potentially wrong", destReg);
+			destReg |= NBIT_MASK(24) << 8;
+		}
+		
       }
     } else // Byte
     {
@@ -680,7 +726,10 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
   {
     if (H) // HalfWord
     {
-      memory->Write(AccessSize::Half, memAddr, destReg, Sequentiality::NSEQ);
+	  
+	  if (Rd==15) value += 4;
+	  auto memOffset = memAddr & 1;
+      memory->Write(AccessSize::Half, memAddr - memOffset, value, Sequentiality::NSEQ);
     }
   }
 }
@@ -703,6 +752,8 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
     Offset = Rm;
   }
 
+
+  auto value = registers.get((Register)Rd);
   auto base = registers.get((Register)Rn);
   auto baseOffset = base;
 
@@ -721,9 +772,10 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
     registers.get((Register)Rn) = baseOffset;
   }
 
-  auto &destReg = registers.get((Register)Rd);
+  
 
   if (L) {
+	auto &destReg = registers.get((Register)Rd);
     clock->Tick(1);
     if (B) {
       destReg = memory->Read(AccessSize::Byte, memAddr, Sequentiality::NSEQ);
@@ -743,11 +795,12 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
       }
     }
   } else {
+	if (Rd==15) value += 4;
     if (B) {
-      memory->Write(AccessSize::Byte, memAddr, destReg, Sequentiality::NSEQ);
+      memory->Write(AccessSize::Byte, memAddr, value, Sequentiality::NSEQ);
     } else {
-      // TODO: Check word boundary addr
-      memory->Write(AccessSize::Word, memAddr, destReg, Sequentiality::NSEQ);
+	  auto wordBoundaryOffset = memAddr % 4;  
+      memory->Write(AccessSize::Word, memAddr - wordBoundaryOffset, value, Sequentiality::NSEQ);
     }
   }
 }
@@ -807,9 +860,24 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
   }
   bool stopWriteback = false;
 
-  auto writebackVal = base - 4 * toSave.size();
+  auto wordCount = toSave.size();
+  if (wordCount == 0) 
+  {
+  	wordCount = 16;
+	if (L)
+	{
+		registers.get(R15) = memory->Read(AccessSize::Word, addr, NSEQ);
+	}
+	else
+	{
+		memory->Write(AccessSize::Word, addr, registers.get(R15)+4, NSEQ);
+	}
+	
+  }
+
+  auto writebackVal = base - 4 * wordCount;
   if (U) {
-    writebackVal = base + 4 * toSave.size();
+    writebackVal = base + 4 * wordCount;
   }
 
   auto saved = 0;
@@ -818,6 +886,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
     if (saved == 0) {
       accessType = Sequentiality::NSEQ;
     }
+
     if (L) {
       if (reg == (Register)Rn) {
         stopWriteback = true;
@@ -831,7 +900,9 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
           memory->Write(AccessSize::Word, addr, writebackVal, accessType);
         }
       } else {
-        memory->Write(AccessSize::Word, addr, registers.get(reg), accessType);
+		auto value = registers.get(reg);
+		if (reg == 15) value += 4;
+        memory->Write(AccessSize::Word, addr, value, accessType);
       }
     }
     addr += 4;
@@ -853,7 +924,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
     registers.SwitchMode(mode);
   }
 
-  if (transferPC && L) {
+  if (L && (transferPC || !saved )) {
     PipelineFlush();
   }
 }

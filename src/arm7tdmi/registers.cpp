@@ -117,8 +117,8 @@ StatusRegister& RegisterSet::GetSPSR()
 	}
 	else
 	{
-		spdlog::get("std")->error("Tried to access Sys SPSR");
-		exit(-1);
+		spdlog::get("std")->error("Tried to access Sys SPSR @ PC {:X}", registers.ACTIVE[15]);
+		return CPSR;
 	}
 }
 
