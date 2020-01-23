@@ -5,6 +5,9 @@
 
 namespace ARM7TDMI {
 
+
+#define EXTRA_PC_INC (registers.CPSR.thumb ? 2 : 4)
+
 const ParamSegments DataProcessingSegments
     //  I         Opcode    S         Rn        Rd        Op2
     = {{25, 25}, {24, 21}, {20, 20}, {19, 16}, {15, 12}, {11, 0}};
@@ -251,6 +254,10 @@ std::function<void()> CPU::ArmDataProcessing_P() {
 }
 
 void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
+	DataProcessing(I, OpCode, S, Rn, Rd, Op2, false);
+}
+
+void CPU::DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool Adr) {
   // PSR Transfers
   if (!S && OpCode >= DPOps::TST && OpCode <= DPOps::CMN) {
     bool P = BIT_RANGE(OpCode, 1, 1);
@@ -265,8 +272,8 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
 
   U32 Op1Val = registers.get((Register)Rn);
 
-  // If using PC, bit 1 is cleared
-  if (Rn == 15) {
+  // If using PC, bit 1 is cleared, only for ADR instructions if in thumb
+  if (Rn == 15 && (Adr || !registers.CPSR.thumb)) {
     BIT_CLEAR(Op1Val, 1);
   }
 
@@ -283,12 +290,12 @@ void CPU::ArmDataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2) {
     {
       if (BIT_RANGE(Op2, 7, 7)) {
       }
-      // If also using R15 to specify shift + 4 to Rm
+      // If also using R15 to specify extra shift to Rm
       if ((Op2 & NBIT_MASK(4)) == 15) {
-        Rm += 4;
+        Rm += EXTRA_PC_INC;
       }
 	  if (Rn == 15) {
-        Op1Val += 4;
+        Op1Val += EXTRA_PC_INC;
       }
 
       clock->Tick(1);
@@ -726,8 +733,7 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
   {
     if (H) // HalfWord
     {
-	  
-	  if (Rd==15) value += 4;
+	  if (Rd==15) value += EXTRA_PC_INC;
 	  auto memOffset = memAddr & 1;
       memory->Write(AccessSize::Half, memAddr - memOffset, value, Sequentiality::NSEQ);
     }
@@ -795,7 +801,7 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
       }
     }
   } else {
-	if (Rd==15) value += 4;
+	if (Rd==15) value += EXTRA_PC_INC;
     if (B) {
       memory->Write(AccessSize::Byte, memAddr, value, Sequentiality::NSEQ);
     } else {
@@ -870,7 +876,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
 	}
 	else
 	{
-		memory->Write(AccessSize::Word, addr, registers.get(R15)+4, NSEQ);
+		memory->Write(AccessSize::Word, addr, registers.get(R15)+EXTRA_PC_INC, NSEQ);
 	}
 	
   }
@@ -901,7 +907,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
         }
       } else {
 		auto value = registers.get(reg);
-		if (reg == 15) value += 4;
+		if (reg == 15) value += EXTRA_PC_INC;
         memory->Write(AccessSize::Word, addr, value, accessType);
       }
     }

@@ -372,8 +372,9 @@ std::function<void()> CPU::ThumbLoadAddress_P() {
   U16 Word8 = params[0], Rd = params[1], SP = params[2];
 
   U32 Rn = SP ? Register::R13 : Register::R15;
+
   const auto ROR30 = (0xF << 8);
-  return std::bind(&CPU::ArmDataProcessing, this, 1, DPOps::ADD, 0, Rn, Rd, ROR30 + Word8);
+  return std::bind(&CPU::DataProcessing, this, 1, DPOps::ADD, 0, Rn, Rd, ROR30 + Word8, true);
 }
 
 std::function<void()> CPU::ThumbOffsetSP_P() {

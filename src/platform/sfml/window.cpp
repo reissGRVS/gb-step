@@ -15,10 +15,10 @@ WindowSFML::WindowSFML()
 void WindowSFML::render(const Framebuffer &fb) {
 
   auto temp = std::chrono::high_resolution_clock::now();
-    // std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(temp -
-    //                                                                    begin)
-    //                  .count()
-    //           << "ms" << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(temp -
+                                                                       begin)
+                     .count()
+              << "ms" << std::endl;
   begin = temp;
 
   translateFramebuffer(fb);

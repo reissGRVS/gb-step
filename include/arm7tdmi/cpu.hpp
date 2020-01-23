@@ -115,6 +115,8 @@ private:
 		U32 Rn,
 		U32 Rd,
 		U32 Op2);
+	void DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool Adr);
+	
 	void ArmMRS(bool Ps, U8 Rd);
 	void ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source);
 
