@@ -18,25 +18,25 @@
 #include "system_clock.hpp"
 #include "utils.hpp"
 
-class Memory : public ReadWriteInterface {
+class Memory {
 public:
 	Memory(std::shared_ptr<SystemClock> clock,
 		std::string biosPath,
 		std::string romPath,
 		Joypad& joypad);
 
-	std::string Name() override { return "MEMORY"; };
+	std::string Name() { return "MEMORY"; };
 	void Save() {mem.ext.backup->Save();}
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
 	U32 Read(AccessSize size,
 		U32 address,
-		Sequentiality type) override;
+		Sequentiality type);
 	void Write(AccessSize size,
 		U32 address,
 		U32 value,
-		Sequentiality type) override;
+		Sequentiality type);
 
 	U8 GetByte(const U32& address);
 	U16 GetHalf(const U32& address);

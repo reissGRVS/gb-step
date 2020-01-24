@@ -3,7 +3,6 @@
 #include <array>
 
 #include "memory/memory.hpp"
-#include "spdlog/spdlog.h"
 #include "timers/timer.hpp"
 #include "timers/timers_io_registers.hpp"
 #include "utils.hpp"

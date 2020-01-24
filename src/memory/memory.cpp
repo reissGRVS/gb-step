@@ -6,7 +6,6 @@
 
 #include "memory/flash.hpp"
 #include "memory/sram.hpp"
-#include "spdlog/spdlog.h"
 #include "utils.hpp"
 
 Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
@@ -16,14 +15,14 @@ Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
   {
     std::ifstream infile(biosPath);
     if (!infile.is_open()) {
-      spdlog::get("std")->error("BIOS not found at supplied path");
+      // spdlog::get("std")->error("BIOS not found at supplied path");
       exit(-1);
     }
     infile.seekg(0, infile.end);
     size_t length = infile.tellg();
     infile.seekg(0, infile.beg);
     if (length > mem.gen.bios.size()) {
-      spdlog::get("std")->error("BIOS too big");
+      // spdlog::get("std")->error("BIOS too big");
       exit(-1);
     }
     infile.read(reinterpret_cast<char *>(mem.gen.bios.data()), length);
@@ -32,14 +31,14 @@ Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
   {
     std::ifstream infile(romPath);
     if (!infile.is_open()) {
-      spdlog::get("std")->error("ROM not found at supplied path");
+      // spdlog::get("std")->error("ROM not found at supplied path");
       exit(-1);
     }
     infile.seekg(0, infile.end);
     size_t length = infile.tellg();
     infile.seekg(0, infile.beg);
     if (length > mem.ext.rom.size()) {
-      spdlog::get("std")->error("ROM too big");
+      // spdlog::get("std")->error("ROM too big");
       exit(-1);
     }
     infile.read(reinterpret_cast<char *>(mem.ext.rom.data()), length);
@@ -61,7 +60,7 @@ Memory::Memory(std::shared_ptr<SystemClock> clock, std::string biosPath,
       mem.ext.backup = std::make_unique<SRAM>(saveFilePath);
     } else {
       // TODO: Implement EEPROM and no backup
-      spdlog::get("std")->error("Unsupported Backup type {}", backupID);
+      // spdlog::get("std")->error("Unsupported Backup type {}", backupID);
       mem.ext.backup = std::make_unique<SRAM>(saveFilePath);
       //   exit(-1);
     }
@@ -81,7 +80,7 @@ std::string Memory::FindBackupID(size_t length) {
     for (const auto &idString : BACKUP_ID_STRINGS) {
       if (std::memcmp(idString.c_str(), mem.ext.rom.data() + romAddr,
                       idString.size()) == 0) {
-        spdlog::get("std")->error("Backup type {} @ {:X}", idString, romAddr);
+        // spdlog::get("std")->error("Backup type {} @ {:X}", idString, romAddr);
         return idString;
       }
     }
@@ -102,13 +101,13 @@ uint32_t Memory::Read(AccessSize size, U32 address, Sequentiality seq) {
     if ((address & PAGE_MASK) < BIOS_SIZE) {
       return ReadToSize(mem.gen.bios, address & BIOS_MASK, size);
     } else {
-      spdlog::get("std")->error("Reading from Invalid BIOS memory");
+      // spdlog::get("std")->error("Reading from Invalid BIOS memory");
       // exit(-1);
       return 0;
     }
   case 0x01: {
-    spdlog::get("std")->error("Reading from Unused memory");
-    break;
+    // spdlog::get("std")->error("Reading from Unused memory");
+	return 0;
   }
   case 0x02:
     return ReadToSize(mem.gen.wramb, address & WRAMB_MASK, size);
@@ -133,12 +132,10 @@ uint32_t Memory::Read(AccessSize size, U32 address, Sequentiality seq) {
   case 0x0E:
     return mem.ext.backup->Read(address);
   default:
-    break;
+	// spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
+	PublishWriteCallback(1);
+	return 0;
   }
-
-  spdlog::get("std")->error("WTF IS THIS MEMORY READ??? Addr {:X}", address);
-  PublishWriteCallback(1);
-  return 0;
 }
 
 void Memory::Write(AccessSize size, U32 address, U32 value, Sequentiality seq) {

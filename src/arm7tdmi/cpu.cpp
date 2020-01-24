@@ -94,7 +94,7 @@ void CPU::PipelineFlush() {
   }
 }
 
-void CPU::ParseParams(OpCode opcode, const ParamSegments& paramSegs) {
+void CPU::ParseParams(const OpCode& opcode, const ParamSegments& paramSegs) {
   U16 index = 0;
   for (auto it = paramSegs.rbegin(); it != paramSegs.rend(); ++it) {
     auto param = BIT_RANGE(opcode, it->second, it->first);
