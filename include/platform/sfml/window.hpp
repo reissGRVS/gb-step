@@ -15,7 +15,7 @@ public:
 private:
   void translateFramebuffer(const Framebuffer &fb);
 
-  std::chrono::_V2::system_clock::time_point begin =
+  std::chrono::high_resolution_clock::time_point begin =
       std::chrono::high_resolution_clock::now();
   std::array<sf::Uint8, 4 * SCREEN_TOTAL> sfFramebuffer;
   sf::Sprite b;
