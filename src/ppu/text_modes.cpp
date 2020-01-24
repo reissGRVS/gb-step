@@ -25,6 +25,11 @@ void PPU::TextBGLine(const U32& BG_ID)
 	auto mapY = absoluteY / TILE_PIXEL_HEIGHT;
 	auto mapIndexY = ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
 	
+	if (state != State::HBlank)
+	{
+		std::cerr << "-1 WTF is this PPU state" << state << std::endl;
+		exit(-1);
+	}
 	auto x = 0u;
 	while (x < Screen::SCREEN_WIDTH) {
 		//TilePixelAtAbsoluteBGPosition
@@ -60,6 +65,8 @@ void PPU::TextBGLine(const U32& BG_ID)
 
 		for (auto px_ = pixelX; px_ < 8; px_++)
 		{
+			if (x >= Screen::SCREEN_WIDTH)
+				break;
 			auto framebufferIndex = framebufferY + x;
 
 			if (depth[framebufferIndex] <= bgCnt.priority) {
@@ -71,11 +78,7 @@ void PPU::TextBGLine(const U32& BG_ID)
 				px = TILE_PIXEL_WIDTH - (px + 1);
 			}
 
-			if (px >= 8 || pixelY >= 8)
-			{
-				std::cerr << "fbindex oob" << std::endl;
-				exit(01);
-			}
+
 			auto positionInTile = (px / pixelsPerByte) + (pixelY * bgCnt.colorDepth);
 			auto pixelPalette = memory->GetByte(startOfTileAddress + positionInTile);
 
@@ -96,13 +99,17 @@ void PPU::TextBGLine(const U32& BG_ID)
 			}
 
 			if (pixel) {
+				if (framebufferIndex >= fb.size())
+				{
+
+					std::cerr << "Illegal fbIndex" << framebufferIndex << " y" << y << " x" << x << std::endl;
+					exit(-1);
+				}
 				fb[framebufferIndex] = pixel.value();
 				depth[framebufferIndex] = bgCnt.priority;
 			}
 
 			x++;
-			if (x >= Screen::SCREEN_WIDTH)
-				break;
 		}
 	}
 }
@@ -127,5 +134,12 @@ U32 PPU::GetScreenAreaOffset(U32 mapX,
 		screenAreaId = screenX + screenY * 2;
 		break;
 	}
+
+	if (screenAreaId > 3)
+	{
+		std::cerr << "screenAreaID oob" << std::endl;
+		exit(01);
+	}
+
 	return TILE_AREA_ADDRESS_INC * screenAreaId;
 }
