@@ -26,7 +26,7 @@ void Controller::CntHUpdateCallback(U8 id, U16 value)
 {
 	channels[id]->UpdateDetails(value);
 
-	if (channels[id]->enable && channels[id]->startTiming == (uint)IMMEDIATE) {
+	if (channels[id]->enable && channels[id]->startTiming == (U16)IMMEDIATE) {
 		channels[id]->active = true;
 	}
 }
