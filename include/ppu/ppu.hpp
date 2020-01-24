@@ -62,10 +62,6 @@ private:
 
 	// Text Mode
 	void TextBGLine(const uint32_t& BG_ID);
-	std::optional<U16> TilePixelAtAbsoluteBGPosition(
-		const BGControlInfo& bgCnt,
-		const U16& x,
-		const U16& y);
 	U32 GetScreenAreaOffset(U32 mapX,
 		U32 mapY,
 		U8 screenSize);

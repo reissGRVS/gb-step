@@ -2,6 +2,8 @@
 #include "ppu/ppu.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
+#include <iostream>
+
 
 const U32 BGHOFS[4] = { BG0HOFS, BG1HOFS, BG2HOFS, BG3HOFS };
 const U32 BGVOFS[4] = { BG0VOFS, BG1VOFS, BG2VOFS, BG3VOFS };
@@ -17,46 +19,92 @@ void PPU::TextBGLine(const U32& BG_ID)
 	auto bgYOffset = GET_HALF(BGVOFS[BG_ID]) & NBIT_MASK(9);
 
 	auto y = GET_HALF(VCOUNT);
-	for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
-		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
-		auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
-		auto framebufferIndex = Screen::SCREEN_WIDTH * y + x;
+	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
+	auto framebufferY = Screen::SCREEN_WIDTH * y;
+	
+	auto mapY = absoluteY / TILE_PIXEL_HEIGHT;
+	auto mapIndexY = ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
+	
+	auto x = 0u;
+	while (x < Screen::SCREEN_WIDTH) {
+		//TilePixelAtAbsoluteBGPosition
+		// Get tile coords
 
-		if (depth[framebufferIndex] <= bgCnt.priority) {
-			continue;
+		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
+		auto mapX = absoluteX / TILE_PIXEL_WIDTH;
+		auto mapIndex = (mapX % TILE_AREA_WIDTH) + mapIndexY;
+		auto pixelX = absoluteX % TILE_PIXEL_WIDTH;
+		
+
+		auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt.screenSize);
+		// Parse tile data
+		auto bgMapEntry = memory->GetHalf(bgCnt.mapDataBase + screenAreaAddressInc + (mapIndex * BYTES_PER_ENTRY));
+		auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
+		bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
+		bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
+		auto paletteNumber = BIT_RANGE(bgMapEntry, 12, 15);
+
+		//Draw tile line
+		// Deal with flips 
+		auto pixelY = absoluteY % TILE_PIXEL_HEIGHT;
+
+		if (verticalFlip) {
+			pixelY = TILE_PIXEL_HEIGHT - (pixelY + 1);
 		}
 
-		auto pixel = TilePixelAtAbsoluteBGPosition(bgCnt, absoluteX, absoluteY);
-		if (pixel) {
-			fb[framebufferIndex] = pixel.value();
-			depth[framebufferIndex] = bgCnt.priority;
+		// Calculate position of tile pixel
+		auto bytesPerTile = bgCnt.colorDepth * TILE_PIXEL_HEIGHT;
+		auto startOfTileAddress = bgCnt.tileDataBase + (tileNumber * bytesPerTile);
+		auto pixelsPerByte = 8 / bgCnt.colorDepth;
+
+
+		for (auto px_ = pixelX; px_ < 8; px_++)
+		{
+			auto framebufferIndex = framebufferY + x;
+
+			if (depth[framebufferIndex] <= bgCnt.priority) {
+				x++;
+				continue;
+			}
+			auto px = px_;
+			if (horizontalFlip) {
+				px = TILE_PIXEL_WIDTH - (px + 1);
+			}
+
+			if (px >= 8 || pixelY >= 8)
+			{
+				std::cerr << "fbindex oob" << std::endl;
+				exit(01);
+			}
+			auto positionInTile = (px / pixelsPerByte) + (pixelY * bgCnt.colorDepth);
+			auto pixelPalette = memory->GetByte(startOfTileAddress + positionInTile);
+
+			std::optional<U16> pixel = {};
+			if (bgCnt.colorDepth == 4) {
+				if ((px % 2 == 0)) {
+					pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
+				} else {
+					pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
+				}
+
+				if (pixelPalette != 0)
+					pixel = GetBgColorFromSubPalette(paletteNumber, pixelPalette, false);
+			} else // equal to 8
+			{
+				if (pixelPalette != 0)
+					pixel = GetBgColorFromPalette(pixelPalette, false);
+			}
+
+			if (pixel) {
+				fb[framebufferIndex] = pixel.value();
+				depth[framebufferIndex] = bgCnt.priority;
+			}
+
+			x++;
+			if (x >= Screen::SCREEN_WIDTH)
+				break;
 		}
 	}
-}
-
-std::optional<U16> PPU::TilePixelAtAbsoluteBGPosition(
-	const BGControlInfo& bgCnt,
-	const U16& x,
-	const U16& y)
-{
-	// Get tile coords
-	auto mapX = x / TILE_PIXEL_WIDTH;
-	auto mapY = y / TILE_PIXEL_HEIGHT;
-	auto mapIndex = (mapX % TILE_AREA_WIDTH) + ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
-	auto pixelX = x % TILE_PIXEL_WIDTH;
-	auto pixelY = y % TILE_PIXEL_HEIGHT;
-
-	auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt.screenSize);
-	// Parse tile data
-	auto bgMapEntry = memory->GetHalf(bgCnt.mapDataBase + screenAreaAddressInc + (mapIndex * BYTES_PER_ENTRY));
-	auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
-	bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
-	bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
-	auto paletteNumber = BIT_RANGE(bgMapEntry, 12, 15);
-
-	return GetTilePixel(tileNumber, pixelX, pixelY, bgCnt.colorDepth,
-		bgCnt.tileDataBase, verticalFlip, horizontalFlip,
-		paletteNumber, false);
 }
 
 U32 PPU::GetScreenAreaOffset(U32 mapX,
