@@ -21,7 +21,7 @@ void PPU::DrawLine()
 		break;
 	}
 	case 1: {
-		auto bgOrder = GetBGDrawOrder({ 0, 1, 2 }, screenDisplay);
+		auto bgOrder = GetBGDrawOrder({ 0, 1}, screenDisplay);
 		for (auto bg : bgOrder) {
 			TextBGLine(bg);
 		}

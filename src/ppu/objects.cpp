@@ -3,11 +3,12 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
-const uint16_t OBJ_DIMENSIONS[4][3][2] = { { { 1, 1 }, { 2, 1 }, { 1, 2 } },
+const U16 OBJ_DIMENSIONS[4][3][2] = { { { 1, 1 }, { 2, 1 }, { 1, 2 } },
 	{ { 2, 2 }, { 4, 1 }, { 1, 4 } },
 	{ { 4, 4 }, { 4, 2 }, { 2, 4 } },
 	{ { 8, 8 }, { 8, 4 }, { 4, 8 } } };
 const U32 OAM_ENTRIES = 128;
+const U16 MAX_SPRITE_X = 512, MAX_SPRITE_Y = 256;
 
 void PPU::DrawObjects()
 {
@@ -48,8 +49,8 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 			if (objAttrs.attr1.b.verticalFlip)
 				actualTileY = spriteHeight - tileY - 1;
 
-			U16 x = objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX;
-			U16 y = objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY;
+			U16 x = (objAttrs.attr1.b.xCoord + TILE_PIXEL_WIDTH * actualTileX);
+			U16 y = (objAttrs.attr0.b.yCoord + TILE_PIXEL_HEIGHT * actualTileY);
 			auto tileInfo = TileInfo{ x,
 				y,
 				tileNumber,
@@ -68,10 +69,10 @@ void PPU::DrawTile(const TileInfo& info)
 {
 	const auto& [startX, startY, tileNumber, colorDepth, tileDataBase, verticalFlip, horizontalFlip, paletteNumber, priority] = info;
 
-	for (auto x = 0u; x < TILE_PIXEL_WIDTH; x++) {
-		for (auto y = 0u; y < TILE_PIXEL_HEIGHT; y++) {
-			auto totalX = (x + startX);
-			auto totalY = (y + startY);
+	for (auto y = 0u; y < TILE_PIXEL_HEIGHT; y++) {
+		for (auto x = 0u; x < TILE_PIXEL_WIDTH; x++) {
+			auto totalX = (x + startX) % MAX_SPRITE_X;
+			auto totalY = (y + startY) % MAX_SPRITE_Y;
 
 			if (totalX < Screen::SCREEN_WIDTH && totalY < Screen::SCREEN_HEIGHT) {
 				auto fbPos = totalX + (Screen::SCREEN_WIDTH * totalY);
