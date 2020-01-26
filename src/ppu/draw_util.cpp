@@ -19,7 +19,7 @@ U16 PPU::GetBgColorFromPalette(const U32& colorID,
 	return memory->GetHalf(colorID * 2 + paletteStart);
 }
 
-std::optional<U16> PPU::GetTilePixel(U16 tileNumber,
+PPU::OptPixel PPU::GetTilePixel(U16 tileNumber,
 	U16 x,
 	U16 y,
 	U16 colorDepth,

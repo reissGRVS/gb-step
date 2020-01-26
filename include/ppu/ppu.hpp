@@ -12,7 +12,7 @@
 #include <optional>
 #include <vector>
 
-#define GET_HALF(A) Read(Half, A, FREE)
+#define GET_HALF(A) (U16)Read(Half, A, FREE)
 class PPU : public LCDIORegisters {
 	enum State { Visible,
 		HBlank,
@@ -50,6 +50,7 @@ private:
 	U16 IncrementVCount();
 
 	// Draw Control
+	void MergeRows(std::vector<uint8_t>& bgOrder);
 	void DrawLine();
 	uint8_t GetLayerPriority(uint8_t layer);
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
@@ -66,8 +67,9 @@ private:
 		U32 mapY,
 		U8 screenSize);
 
+	using OptPixel = std::optional<U16>;
 	// Draw Utils
-	std::optional<U16> GetTilePixel(U16 tileNumber,
+	OptPixel GetTilePixel(U16 tileNumber,
 		U16 x,
 		U16 y,
 		U16 colorDepth,
@@ -88,6 +90,7 @@ private:
 	std::function<void(bool)> VBlankCallback;
 
 	Screen::Framebuffer depth{ 4 };
+	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
 	Screen::Framebuffer fb{};
 	State state = Visible;
 	U32 tickCount = 0;

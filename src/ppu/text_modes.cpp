@@ -20,16 +20,10 @@ void PPU::TextBGLine(const U32& BG_ID)
 
 	auto y = GET_HALF(VCOUNT);
 	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
-	auto framebufferY = Screen::SCREEN_WIDTH * y;
 	
 	auto mapY = absoluteY / TILE_PIXEL_HEIGHT;
 	auto mapIndexY = ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
-	
-	if (state != State::HBlank)
-	{
-		std::cerr << "-1 WTF is this PPU state" << state << std::endl;
-		exit(-1);
-	}
+
 	auto x = 0u;
 	while (x < Screen::SCREEN_WIDTH) {
 		//TilePixelAtAbsoluteBGPosition
@@ -67,22 +61,15 @@ void PPU::TextBGLine(const U32& BG_ID)
 		{
 			if (x >= Screen::SCREEN_WIDTH)
 				break;
-			auto framebufferIndex = framebufferY + x;
-
-			if (depth[framebufferIndex] <= bgCnt.priority) {
-				x++;
-				continue;
-			}
 			auto px = px_;
 			if (horizontalFlip) {
 				px = TILE_PIXEL_WIDTH - (px + 1);
 			}
 
-
 			auto positionInTile = (px / pixelsPerByte) + (pixelY * bgCnt.colorDepth);
 			auto pixelPalette = memory->GetByte(startOfTileAddress + positionInTile);
 
-			std::optional<U16> pixel = {};
+			OptPixel pixel = {};
 			if (bgCnt.colorDepth == 4) {
 				if ((px % 2 == 0)) {
 					pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
@@ -98,16 +85,7 @@ void PPU::TextBGLine(const U32& BG_ID)
 					pixel = GetBgColorFromPalette(pixelPalette, false);
 			}
 
-			if (pixel) {
-				if (framebufferIndex >= fb.size())
-				{
-
-					std::cerr << "Illegal fbIndex" << framebufferIndex << " y" << y << " x" << x << std::endl;
-					exit(-1);
-				}
-				fb[framebufferIndex] = pixel.value();
-				depth[framebufferIndex] = bgCnt.priority;
-			}
+			rows[BG_ID][x] = pixel;
 
 			x++;
 		}

@@ -1,5 +1,6 @@
 #include "memory/regions.hpp"
 #include "ppu/ppu.hpp"
+#include "ppu/pixel.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 
@@ -59,7 +60,8 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 				objAttrs.attr1.b.verticalFlip,
 				objAttrs.attr1.b.horizontalFlip,
 				objAttrs.attr2.b.paletteNumber,
-				objAttrs.attr2.b.priority };
+				objAttrs.attr2.b.priority,
+				(objAttrs.attr0.b.objMode == 1)};
 			DrawTile(tileInfo);
 		}
 	}
@@ -67,7 +69,12 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 
 void PPU::DrawTile(const TileInfo& info)
 {
-	const auto& [startX, startY, tileNumber, colorDepth, tileDataBase, verticalFlip, horizontalFlip, paletteNumber, priority] = info;
+	const auto& [startX, startY, tileNumber, colorDepth, tileDataBase, verticalFlip, horizontalFlip, paletteNumber, priority, transparency] = info;
+	U16 bldAlpha = GET_HALF(BLDALPHA);
+	U8 eva = BIT_RANGE(bldAlpha, 0, 4);
+	if (eva > 16) {eva = 16;}
+	U8 evb = BIT_RANGE(bldAlpha, 8, 12);
+	if (evb > 16) {evb = 16;}
 
 	for (auto y = 0u; y < TILE_PIXEL_HEIGHT; y++) {
 		for (auto x = 0u; x < TILE_PIXEL_WIDTH; x++) {
@@ -83,7 +90,15 @@ void PPU::DrawTile(const TileInfo& info)
 				auto pixel = GetTilePixel(tileNumber, x, y, colorDepth, tileDataBase,
 					verticalFlip, horizontalFlip, paletteNumber, true);
 				if (pixel) {
-					fb[fbPos] = pixel.value();
+					auto pixelVal = pixel.value();
+					if (transparency)
+					{
+						Pixel first{pixelVal};
+						Pixel second{fb[fbPos]};
+						first.Blend(second, eva, evb);
+						pixelVal = first.Value();
+					}
+					fb[fbPos] = pixelVal;
 					depth[fbPos] = priority;
 				}
 			}

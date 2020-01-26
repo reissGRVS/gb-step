@@ -12,4 +12,5 @@ struct TileInfo {
 	const U8 horizontalFlip;
 	const U8 paletteNumber;
 	const U8 priority;
+	const bool transparency;
 };
