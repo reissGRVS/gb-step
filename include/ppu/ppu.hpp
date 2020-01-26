@@ -67,6 +67,10 @@ private:
 		U32 mapY,
 		U8 screenSize);
 
+	// Rot Scale Mode
+	void RotScaleBGLine(const U32& BG_ID);
+	std::array<S32, 2> bgXRef = {}, bgYRef = {};
+
 	using OptPixel = std::optional<U16>;
 	// Draw Utils
 	OptPixel GetTilePixel(U16 tileNumber,
@@ -98,8 +102,7 @@ private:
 	const U16 TILE_PIXEL_HEIGHT = 8, TILE_PIXEL_WIDTH = 8,
 			  TILE_AREA_HEIGHT = 32, TILE_AREA_WIDTH = 32;
 
-	const U32 TILE_AREA_ADDRESS_INC = 0x800, BYTES_PER_ENTRY = 2,
-			  OBJ_START_ADDRESS = 0x06010000;
+	const U32 TILE_AREA_ADDRESS_INC = 0x800, OBJ_START_ADDRESS = 0x06010000;
 
 	const U32 BGCNT[4] = { BG0CNT, BG1CNT, BG2CNT, BG3CNT };
 

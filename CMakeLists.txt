@@ -31,6 +31,7 @@ set(SOURCE_FILES
 	src/ppu/draw_util.cpp
 	src/ppu/lcd_io_registers.cpp
 	src/ppu/objects.cpp
+	src/ppu/rotscale_modes.cpp
 	src/ppu/text_modes.cpp
 	src/timers/timer.cpp
 	src/timers/timers.cpp

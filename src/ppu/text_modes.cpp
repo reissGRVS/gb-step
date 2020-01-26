@@ -11,6 +11,7 @@ const U16 TEXT_BGMAP_SIZES[4][2] = { { 256, 256 },
 	{ 512, 256 },
 	{ 256, 512 },
 	{ 512, 512 } };
+const U32 BYTES_PER_ENTRY = 2;
 
 void PPU::TextBGLine(const U32& BG_ID)
 {

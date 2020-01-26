@@ -9,6 +9,9 @@ const U32 CYCLES_PER_VISIBLE = 960, CYCLES_PER_HBLANK = 272,
 		  VISIBLE_LINES = 160, VBLANK_LINES = 68,
 		  TOTAL_LINES = VISIBLE_LINES + VBLANK_LINES;
 
+const U32 BGX[2] = { BG2X, BG3X };
+const U32 BGY[2] = { BG2Y, BG3Y };
+
 enum DispStatInfo {
 	VBlankFlag = 0,
 	HBlankFlag = 1,
@@ -105,7 +108,17 @@ void PPU::OnVBlankLineFinish()
 		UpdateDispStat(VBlankFlag, false);
 	}
 	if (vCount >= TOTAL_LINES) {
-		
+		//Reload RotScale registers
+		for (auto bgId = 2; bgId <= 3; bgId++)
+		{
+			auto bgX = memory->GetWord(BGX[bgId]);
+			bgXRef[bgId-2] = bgX;
+			if (BIT_RANGE(bgX, 27, 27)) bgXRef[bgId-2] |= 0xF0000000;
+			auto bgY = memory->GetWord(BGY[bgId]);
+			bgYRef[bgId-2] = bgY;
+			if (BIT_RANGE(bgY, 27, 27)) bgYRef[bgId-2] |= 0xF0000000;
+		}
+
 		memory->SetHalf(VCOUNT, 0);
 		VBlankCallback(false);
 		state = Visible;
