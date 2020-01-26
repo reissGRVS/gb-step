@@ -160,8 +160,7 @@ void PPU::DrawLine()
 			TextBGLine(bg);
 		}
 		MergeRows(bgOrder);
-		break;
-	}
+	} break;
 	case 1: {
 		auto bgOrder = GetBGDrawOrder({ 0, 1, 2}, screenDisplay);
 		for (const auto& bg : bgOrder) {
@@ -175,10 +174,15 @@ void PPU::DrawLine()
 			}
 		}
 		MergeRows(bgOrder);
-		break;
-	}
+	} break;
 	case 2:
-		break;
+	{
+		auto bgOrder = GetBGDrawOrder({ 2, 3 }, screenDisplay);
+		for (const auto& bg : bgOrder) {
+			RotScaleBGLine(bg);
+		}
+		MergeRows(bgOrder);
+	} break;
 	case 3: {
 		for (U16 pixel = (vCount * Screen::SCREEN_WIDTH);
 			 pixel < ((vCount + 1) * Screen::SCREEN_WIDTH); pixel++) {

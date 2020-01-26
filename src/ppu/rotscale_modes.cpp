@@ -50,8 +50,10 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 
 		auto mapX = x / TILE_PIXEL_WIDTH;
 		auto tileX = x % TILE_PIXEL_WIDTH;
+		
 		auto mapY = y / TILE_PIXEL_HEIGHT;
-		auto tileY = y % TILE_PIXEL_WIDTH;
+		auto tileY = y % TILE_PIXEL_HEIGHT;
+
 		auto mapWidth = maxX / TILE_PIXEL_WIDTH;
 		auto mapIndex = (mapY * mapWidth) + mapX; 
 		auto tileNumber = memory->GetByte(bgCnt.mapDataBase + mapIndex);
