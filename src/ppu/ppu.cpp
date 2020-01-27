@@ -110,15 +110,27 @@ void PPU::OnVBlankLineFinish()
 	}
 	if (vCount >= TOTAL_LINES) {
 		//Reload RotScale registers
-		for (auto bgId = 2; bgId <= 3; bgId++)
 		{
-			auto bgX = memory->GetWord(BGX[bgId-2]);
-			bgXRef[bgId-2] = bgX;
-			if (BIT_RANGE(bgX, 27, 27)) bgXRef[bgId-2] |= 0xF0000000;
-			auto bgY = memory->GetWord(BGY[bgId-2]);
-			bgYRef[bgId-2] = bgY;
-			if (BIT_RANGE(bgY, 27, 27)) bgYRef[bgId-2] |= 0xF0000000;
+			for (auto bgId = 2; bgId <= 3; bgId++)
+			{
+				auto bgX = memory->GetWord(BGX[bgId-2]);
+				bgXRef[bgId-2] = bgX;
+				if (BIT_RANGE(bgX, 27, 27)) bgXRef[bgId-2] |= 0xF0000000;
+				auto bgY = memory->GetWord(BGY[bgId-2]);
+				bgYRef[bgId-2] = bgY;
+				if (BIT_RANGE(bgY, 27, 27)) bgYRef[bgId-2] |= 0xF0000000;
+			}
+			bldCnt = BldCnt{GET_HALF(BLDCNT)};
+			U16 bldAlpha = GET_HALF(BLDALPHA);
+			eva = BIT_RANGE(bldAlpha, 0, 4);
+			if (eva > 16) {eva = 16;}
+			evb = BIT_RANGE(bldAlpha, 8, 12);
+			if (evb > 16) {evb = 16;}
+			U16 bldY = GET_HALF(BLDY);
+			evy = BIT_RANGE(bldY, 0, 4);
+			if (evy > 16) {evy = 16;}
 		}
+
 
 		memory->SetHalf(VCOUNT, 0);
 		VBlankCallback(false);

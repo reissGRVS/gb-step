@@ -2,6 +2,7 @@
 
 #include "memory/memory.hpp"
 #include "ppu/bg_control_info.hpp"
+#include "ppu/blend_control.hpp"
 #include "ppu/lcd_io_registers.hpp"
 #include "ppu/obj_attributes.hpp"
 #include "ppu/tile_info.hpp"
@@ -60,6 +61,7 @@ private:
 	void DrawObjects();
 	void DrawObject(ObjAttributes objAttrs);
 	void DrawTile(const TileInfo& info);
+	void DrawTilePixel(U16 x, U16 y, U16 tileX, U16 tileY, const TileInfo& info);
 
 	// Text Mode
 	void TextBGLine(const uint32_t& BG_ID);
@@ -70,6 +72,8 @@ private:
 	// Rot Scale Mode
 	void RotScaleBGLine(const U32& BG_ID);
 	std::array<S32, 2> bgXRef = {}, bgYRef = {};
+	U8 eva, evb, evy;
+	BldCnt bldCnt;
 
 	using OptPixel = std::optional<U16>;
 	// Draw Utils

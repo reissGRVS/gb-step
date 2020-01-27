@@ -5,47 +5,10 @@
 #include "utils.hpp"
 #include <map>
 
-
-struct BldCnt {
-	BldCnt(U16 value)
-	{
-		for (U8 i = 0; i < firstTarget.size(); i++)
-		{
-			firstTarget[i] = BIT_RANGE(value, i, i);
-			secondTarget[i] = BIT_RANGE(value, (i+8), (i+8));
-		}
-		colorSpecialEffect = (ColorSpecialEffect) BIT_RANGE(value, 6, 7);
-	}
-
-	std::array<bool, 6> firstTarget = {};
-	
-	enum ColorSpecialEffect {
-		None = 0,
-		AlphaBlending = 1,
-		BrightnessIncrease = 2,
-		BrightnessDecrease = 3
-	};
-	ColorSpecialEffect colorSpecialEffect;
-
-	std::array<bool, 6> secondTarget = {};
-};
-
-
 void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 {
 	const auto vCount = GET_HALF(VCOUNT);
 	const U16 fbIndex = vCount * Screen::SCREEN_WIDTH;
-	BldCnt bldCnt{GET_HALF(BLDCNT)};
-
-	U16 bldAlpha = GET_HALF(BLDALPHA);
-	U8 eva = BIT_RANGE(bldAlpha, 0, 4);
-	if (eva > 16) {eva = 16;}
-	U8 evb = BIT_RANGE(bldAlpha, 8, 12);
-	if (evb > 16) {evb = 16;}
-	U16 bldY = GET_HALF(BLDY);
-	U8 evy = BIT_RANGE(bldY, 0, 4);
-	if (evy > 16) {evy = 16;}
-
 	auto backdrop = memory->GetHalf(PRAM_START);
 
 	for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
