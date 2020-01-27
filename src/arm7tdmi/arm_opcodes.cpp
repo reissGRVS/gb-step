@@ -131,7 +131,7 @@ void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, bool &carryOut,
   }
 }
 
-std::function<void()> CPU::ArmOperation(OpCode opcode) {
+Op CPU::ArmOperation(OpCode opcode) {
   if (!registers.ConditionCheck((Condition)(opcode >> 28))) {
     return []() { return; };
   }
@@ -246,7 +246,7 @@ void CPU::ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source) {
   }
 }
 
-std::function<void()> CPU::ArmDataProcessing_P() {
+Op CPU::ArmDataProcessing_P() {
   const U32 Op2 = params[0], Rd = params[1], Rn = params[2], S = params[3],
             OpCode = params[4], I = params[5];
   
@@ -489,7 +489,7 @@ void CPU::ICyclesMultiply(const U32 &mulop) {
   clock->Tick(ticks);
 }
 
-std::function<void()> CPU::ArmMultiply_P() {
+Op CPU::ArmMultiply_P() {
 
   const U32 Rm = params[0], Rs = params[1], Rn = params[2], Rd = params[3],
             S = params[4], A = params[5];
@@ -527,7 +527,7 @@ void CPU::ArmMultiply(U32 A, U32 S, U32 Rd, U32 Rn, U32 Rs, U32 Rm) {
   }
 }
 
-std::function<void()> CPU::ArmMultiplyLong_P() {
+Op CPU::ArmMultiplyLong_P() {
 
   const U32 Rm = params[0], Rs = params[1], RdLo = params[2], RdHi = params[3],
             S = params[4], A = params[5], U = params[6];
@@ -580,7 +580,7 @@ void CPU::ArmMultiplyLong(U32 U, U32 A, U32 S, U32 RdHi, U32 RdLo, U32 Rs,
   }
 }
 
-std::function<void()> CPU::ArmSingleDataSwap_P() {
+Op CPU::ArmSingleDataSwap_P() {
 
   const U32 Rm = params[0], Rd = params[1], Rn = params[2], B = params[3];
   return std::bind(&CPU::ArmSingleDataSwap, this, B, Rn, Rd, Rm);
@@ -616,7 +616,7 @@ void CPU::ArmSingleDataSwap(U32 B, U32 Rn, U32 Rd, U32 Rm) {
   }
 }
 
-std::function<void()> CPU::ArmBranchAndExchange_P() {
+Op CPU::ArmBranchAndExchange_P() {
   const U32 Rn = params[0];
   return std::bind(&CPU::ArmBranchAndExchange, this, Rn);
 }
@@ -629,7 +629,7 @@ void CPU::ArmBranchAndExchange(U32 Rn) {
   PipelineFlush();
 }
 
-std::function<void()> CPU::ArmHalfwordDTRegOffset_P() {
+Op CPU::ArmHalfwordDTRegOffset_P() {
 
   U32 Rm = params[0], H = params[1], S = params[2], Rd = params[3],
       Rn = params[4], L = params[5], W = params[6], U = params[7],
@@ -644,7 +644,7 @@ void CPU::ArmHalfwordDTRegOffset(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd,
   ArmHalfwordDT(P, U, W, L, Rn, Rd, S, H, Offset);
 }
 
-std::function<void()> CPU::ArmHalfwordDTImmOffset_P() {
+Op CPU::ArmHalfwordDTImmOffset_P() {
   const U32 OffsetLo = params[0], H = params[1], S = params[2],
             OffsetHi = params[3], Rd = params[4], Rn = params[5], L = params[6],
             W = params[7], U = params[8], P = params[9];
@@ -740,7 +740,7 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
   }
 }
 
-std::function<void()> CPU::ArmSingleDataTransfer_P() {
+Op CPU::ArmSingleDataTransfer_P() {
 
   U32 Offset = params[0], Rd = params[1], Rn = params[2], L = params[3],
       W = params[4], B = params[5], U = params[6], P = params[7], I = params[8];
@@ -811,7 +811,7 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
   }
 }
 
-std::function<void()> CPU::ArmUndefined_P() { return std::bind(&CPU::ArmUndefined, this); }
+Op CPU::ArmUndefined_P() { return std::bind(&CPU::ArmUndefined, this); }
 
 void CPU::ArmUndefined() {
 
@@ -824,7 +824,7 @@ void CPU::ArmUndefined() {
   PipelineFlush();
 }
 
-std::function<void()> CPU::ArmBlockDataTransfer_P() {
+Op CPU::ArmBlockDataTransfer_P() {
 
   U32 RegList = params[0], Rn = params[1], L = params[2], W = params[3],
       S = params[4], U = params[5], P = params[6];
@@ -935,7 +935,7 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
   }
 }
 
-std::function<void()> CPU::ArmBranch_P() {
+Op CPU::ArmBranch_P() {
 
   U32 Offset = params[0], L = params[1];
   return std::bind(&CPU::ArmBranch, this, L, Offset);
@@ -958,7 +958,7 @@ void CPU::ArmBranch(U32 L, U32 Offset) {
   PipelineFlush();
 }
 
-std::function<void()> CPU::ArmSWI_P() { return std::bind(&CPU::ArmSWI, this); }
+Op CPU::ArmSWI_P() { return std::bind(&CPU::ArmSWI, this); }
 
 void CPU::ArmSWI() {
 

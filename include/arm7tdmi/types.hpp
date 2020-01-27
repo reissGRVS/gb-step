@@ -3,10 +3,12 @@
 #include "int.hpp"
 #include <array>
 #include <utility>
+#include <functional>
 #include <vector>
 namespace ARM7TDMI {
 
 using OpCode = U32;
+using Op = std::function<void()>;
 using BitSegment = std::pair<U8, U8>;
 using ParamSegments = std::vector<BitSegment>;
 

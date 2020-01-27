@@ -145,11 +145,11 @@ std::function<void()> CPU::ThumbOperation(OpCode opcode) {
     if (BIT_RANGE(opcode, 12, 12)) {
       if (BIT_RANGE(opcode, 8, 11)) {
 
-                         ParseParams(opcode, PushPopRegSegments);
+        ParseParams(opcode, PushPopRegSegments);
         return ThumbPushPopReg_P();
       } else {
 
-                         ParseParams(opcode, OffsetSPSegments);
+        ParseParams(opcode, OffsetSPSegments);
         return ThumbOffsetSP_P();
       }
     } else {
@@ -194,7 +194,6 @@ std::function<void()> CPU::ThumbMoveShiftedReg_P() {
   U16 Rd = params[0], Rs = params[1], Offset5 = params[2], Op = params[3];
 
   if (Op == 0b11) {
-
     exit(-1);
   }
 
@@ -315,12 +314,16 @@ std::function<void()> CPU::ThumbHiRegOps_P() {
 }
 
 std::function<void()> CPU::ThumbPCRelativeLoad_P() {
-
-  U16 Word8 = params[0], Rd = params[1];
-  auto offsetFix = (registers.get(R15)) % 4;
-  return std::bind(&CPU::ArmSingleDataTransfer, this, 0, 1, 1, 0, 0, 1, Register::R15, Rd,
-                        (Word8 << 2) - offsetFix);
+  	U16 Word8 = params[0], Rd = params[1];
+	return std::bind(&CPU::ThumbPCRelativeLoad, this, Word8, Rd);
 }
+
+void CPU::ThumbPCRelativeLoad(U16 Word8 , U16 Rd)
+{
+  auto offsetFix = (registers.get(R15)) % 4;
+  return ArmSingleDataTransfer( 0, 1, 1, 0, 0, 1, Register::R15, Rd, (Word8 << 2) - offsetFix);
+}
+
 // Load/Store
 std::function<void()> CPU::ThumbLSRegOff_P() {
   U16 Rd = params[0], Rb = params[1], Ro = params[2], B = params[3],
