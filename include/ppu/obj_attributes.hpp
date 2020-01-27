@@ -14,6 +14,11 @@ struct ObjAttributes {
 		attr2.full = objAttr2;
 	}
 
+	U8 GetRotScaleParams()
+	{
+		return BIT_RANGE(attr1.full, 9, 13);
+	}
+	
 	union {
 		uint16_t full;
 		struct {

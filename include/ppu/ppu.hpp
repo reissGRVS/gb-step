@@ -41,6 +41,9 @@ public:
 		Sequentiality) override;
 
 private:
+
+	using OptPixel = std::optional<U16>;
+
 	// State Management
 	void ToHBlank();
 	void OnHBlankFinish();
@@ -61,7 +64,8 @@ private:
 	void DrawObjects();
 	void DrawObject(ObjAttributes objAttrs);
 	void DrawTile(const TileInfo& info);
-	void DrawTilePixel(U16 x, U16 y, U16 tileX, U16 tileY, const TileInfo& info);
+
+	std::array<OptPixel, 64*64> tempSprite = {};
 
 	// Text Mode
 	void TextBGLine(const uint32_t& BG_ID);
@@ -75,17 +79,8 @@ private:
 	U8 eva, evb, evy;
 	BldCnt bldCnt;
 
-	using OptPixel = std::optional<U16>;
 	// Draw Utils
-	OptPixel GetTilePixel(U16 tileNumber,
-		U16 x,
-		U16 y,
-		U16 colorDepth,
-		U32 tileDataBase,
-		bool verticalFlip,
-		bool horizontalFlip,
-		U16 paletteNumber,
-		bool obj);
+
 	U16 GetBgColorFromSubPalette(const U32& paletteNumber,
 		const U32& colorID,
 		bool obj = false);
