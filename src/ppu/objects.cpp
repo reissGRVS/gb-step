@@ -101,7 +101,9 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	auto dmx = 0;
 	auto dy = 0;
 	auto dmy = 256;
-
+	auto rotY = SPRITE_PIXEL_HEIGHT / 2;
+	auto rotX = SPRITE_PIXEL_WIDTH / 2;
+	
 	if (objAttrs.attr0.b.rotationScalingFlag)
 	{
 		U32 ParamLocationBase = OAM_START + (0x20 * objAttrs.GetRotScaleParams());
@@ -115,6 +117,7 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 		if (objAttrs.attr1.b.horizontalFlip)
 		{
 			dx = -256;
+			rotX -= 1;
 		}
 		if (objAttrs.attr1.b.verticalFlip)
 		{
@@ -127,8 +130,7 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	const auto DBL_SPRITE_WIDTH = SPRITE_PIXEL_WIDTH * (objAttrs.attr0.b.objDisable ? 2 : 1);
 	const auto HALF_SPRITE_HEIGHT = DBL_SPRITE_HEIGHT / 2;
 	const auto HALF_SPRITE_WIDTH = DBL_SPRITE_WIDTH / 2;
-	auto rotY = SPRITE_PIXEL_HEIGHT / 2;
-	auto rotX = SPRITE_PIXEL_WIDTH / 2;
+	
 
 	//Transfer tempSprite to framebuffer
 	for (U16 y = 0; y < DBL_SPRITE_HEIGHT; y++) {
