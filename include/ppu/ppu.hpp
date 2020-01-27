@@ -95,6 +95,7 @@ private:
 	Screen::Framebuffer depth{ 4 };
 	std::array<bool, Screen::SCREEN_TOTAL> secondtarget{ false };
 	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
+	std::array<U8, Screen::SCREEN_WIDTH> rowsFilled{};
 	Screen::Framebuffer fb{};
 	State state = Visible;
 	U32 tickCount = 0;

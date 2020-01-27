@@ -117,6 +117,7 @@ void PPU::DrawLine()
 	auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
 	auto bgMode = BIT_RANGE(dispCnt, 0, 2);
 	auto frame = BIT_RANGE(dispCnt, 4, 4);
+	rowsFilled.fill(0);
 
 	switch (bgMode) {
 	case 0: {

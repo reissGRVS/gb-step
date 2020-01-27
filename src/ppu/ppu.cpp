@@ -86,10 +86,7 @@ void PPU::ToVBlank()
 	fb.fill(memory->GetHalf(PRAM_START));
 	depth.fill(MAX_DEPTH);
 	secondtarget.fill(false);
-	for (auto& row : rows)
-	{
-		row.fill({});
-	}
+	
 
 	// Set VBlank flag and Request Interrupt
 	UpdateDispStat(VBlankFlag, true);
