@@ -25,6 +25,10 @@ public:
 
 private:
 	std::shared_ptr<Memory> memory;
+	
+	U32 heldTicks;
+	U32 minTicks;
+	bool ticksToOverflowKnown = false;
 
 	const std::array<Interrupt, 4> timerInterrupts{
 		Interrupt::Timer0, Interrupt::Timer1, Interrupt::Timer2,

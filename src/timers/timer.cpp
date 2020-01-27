@@ -20,9 +20,6 @@ void Timer::UpdateCntH(U16 value)
 U32 Timer::CounterUpdate(U32 ticks)
 {
 	U32 overflow = 0;
-
-	auto ticksLeft = 0x10000u - counter;
-
 	if (ticksLeft <= ticks) {
 		ticks -= ticksLeft;
 		auto tickRange = 0x10000 - reloadValue;
@@ -32,10 +29,12 @@ U32 Timer::CounterUpdate(U32 ticks)
 		counter += ticks;
 	}
 
+	ticksLeft = 0x10000u - counter;
+
 	return overflow;
 }
 
-U32 Timer::PrescalerTimingUpdate(U32 ticks)
+U32 Timer::PrescalerTimingUpdate(const U32& ticks)
 {
 	prescalerCount += ticks;
 	auto realTicks = prescalerCount / PRESCALER_SELECTION[prescaler];
@@ -43,7 +42,7 @@ U32 Timer::PrescalerTimingUpdate(U32 ticks)
 	return CounterUpdate(realTicks);
 }
 
-U32 Timer::Update(U32 ticks, U32 prevOverflow)
+U32 Timer::Update(const U32& ticks, const U32& prevOverflow)
 {
 	U32 overflow = 0;
 

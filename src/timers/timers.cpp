@@ -7,14 +7,35 @@ Timers::Timers(std::shared_ptr<Memory> memory)
 
 void Timers::Update(const U32 ticks)
 {
-	U32 overflow = 0;
-	for (auto timerIndex = 0u; timerIndex < 4u; timerIndex++) {
-		overflow = timers[timerIndex].Update(ticks, overflow);
-
-		if (overflow && timers[timerIndex].irqEnable) {
-			
-			memory->RequestInterrupt(timerInterrupts[timerIndex]);
+	heldTicks += ticks;
+	
+	if (!ticksToOverflowKnown)
+	{
+		U32 curMinTicks = 0xFFFFFFFF;
+		for (auto& timer : timers)
+		{
+			if (timer.ticksLeft < curMinTicks)
+			{
+				curMinTicks = timer.ticksLeft;
+			}
 		}
+		minTicks = curMinTicks;
+		ticksToOverflowKnown = true;
+	}
+
+	if (heldTicks >= minTicks)
+	{
+		U32 overflow = 0;
+		for (auto timerIndex = 0u; timerIndex < 4u; timerIndex++) {
+			overflow = timers[timerIndex].Update(heldTicks, overflow);
+
+			if (overflow && timers[timerIndex].irqEnable) {
+				
+				memory->RequestInterrupt(timerInterrupts[timerIndex]);
+			}
+		}
+		ticksToOverflowKnown = false;
+		heldTicks = 0;
 	}
 }
 
@@ -31,4 +52,5 @@ void Timers::TimerCntHUpdate(U8 id, U16 value)
 	if (oldStart == 0 && timers[id].timerStart == 1) {
 		timers[id].prescalerCount = 0;
 	}
+	ticksToOverflowKnown = false;
 }
