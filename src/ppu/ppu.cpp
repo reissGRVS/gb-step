@@ -111,10 +111,10 @@ void PPU::OnVBlankLineFinish()
 		//Reload RotScale registers
 		for (auto bgId = 2; bgId <= 3; bgId++)
 		{
-			auto bgX = memory->GetWord(BGX[bgId]);
+			auto bgX = memory->GetWord(BGX[bgId-2]);
 			bgXRef[bgId-2] = bgX;
 			if (BIT_RANGE(bgX, 27, 27)) bgXRef[bgId-2] |= 0xF0000000;
-			auto bgY = memory->GetWord(BGY[bgId]);
+			auto bgY = memory->GetWord(BGY[bgId-2]);
 			bgYRef[bgId-2] = bgY;
 			if (BIT_RANGE(bgY, 27, 27)) bgYRef[bgId-2] |= 0xF0000000;
 		}

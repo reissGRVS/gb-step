@@ -24,16 +24,17 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 
 	auto [maxX, maxY] = ROTSCALE_BGMAP_SIZES[bgCnt.screenSize];
 
-	auto refx = bgXRef[BG_ID-2];
-	auto refy = bgYRef[BG_ID-2];
-
+	auto y = GET_HALF(VCOUNT);
+	auto refx = bgXRef[BG_ID-2] + (y * (S32)dmx);
+	auto refy = bgYRef[BG_ID-2] + (y * (S32)dmy);
 	for (auto rowX = 0u; rowX < Screen::SCREEN_WIDTH; rowX++) {
-		auto x = refx >> 8;
-		auto y = refy >> 8;
+		auto x = refx / 256;
+		auto y = refy / 256;
+		bool negativeCoords = (refx < 0) || (refy < 0);
 		refx += dx;
 		refy += dy;
 
-		if (x > maxX || y > maxY || x < 0 || y < 0)
+		if (x >= maxX || y >= maxY || negativeCoords)
 		{
 			if (bgCnt.wrapAround)
 			{
@@ -44,6 +45,7 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 			}
 			else
 			{
+				rows[BG_ID][rowX] = {};
 				continue;
 			}
 		}
@@ -65,8 +67,10 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 		{
 			rows[BG_ID][rowX] = GetBgColorFromPalette(pixelPalette, false);
 		}
+		else
+		{
+			rows[BG_ID][rowX] = {};
+		}
+		
 	}
-
-	bgXRef[BG_ID-2]+=dmx;
-	bgYRef[BG_ID-2]+=dmy;
 }
