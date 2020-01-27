@@ -94,6 +94,7 @@ private:
 	std::function<void(bool)> VBlankCallback;
 
 	Screen::Framebuffer depth{ 4 };
+	std::array<bool, Screen::SCREEN_TOTAL> secondtarget{ false };
 	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
 	Screen::Framebuffer fb{};
 	State state = Visible;

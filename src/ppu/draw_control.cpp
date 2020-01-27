@@ -34,7 +34,7 @@ struct BldCnt {
 void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 {
 	const auto vCount = GET_HALF(VCOUNT);
-	U16 fbIndex = vCount * Screen::SCREEN_WIDTH;
+	const U16 fbIndex = vCount * Screen::SCREEN_WIDTH;
 	BldCnt bldCnt{GET_HALF(BLDCNT)};
 
 	U16 bldAlpha = GET_HALF(BLDALPHA);
@@ -62,6 +62,9 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 				{
 					firstPrioPixel = rows[bg][x];
 					firstPrio = GetLayerPriority(bg);
+
+					depth[fbIndex+x] = firstPrio;
+					secondtarget[fbIndex+x] = bldCnt.secondTarget[bg];
 					firstPrioPixelFound = true;
 					if (!bldCnt.firstTarget[bg] || bldCnt.colorSpecialEffect != BldCnt::AlphaBlending)
 					{
@@ -90,7 +93,6 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 
 		if (firstPrioPixel.has_value())
 		{
-			depth[fbIndex+x] = firstPrio;
 			switch (bldCnt.colorSpecialEffect)
 			{
 			case BldCnt::None:

@@ -94,8 +94,11 @@ void PPU::DrawTile(const TileInfo& info)
 					if (transparency)
 					{
 						Pixel first{pixelVal};
-						Pixel second{fb[fbPos]};
-						first.Blend(second, eva, evb);
+						if (secondtarget[fbPos])
+						{
+							Pixel second{fb[fbPos]};
+							first.Blend(second, eva, evb);
+						}
 						pixelVal = first.Value();
 					}
 					fb[fbPos] = pixelVal;
