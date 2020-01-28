@@ -132,14 +132,21 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	const auto HALF_SPRITE_WIDTH = DBL_SPRITE_WIDTH / 2;
 	
 
+
+	S32 yAdj = -HALF_SPRITE_WIDTH * dy + -HALF_SPRITE_HEIGHT * dmy;
+	S32 xAdj = -HALF_SPRITE_WIDTH * dx + -HALF_SPRITE_HEIGHT * dmx;
 	//Transfer tempSprite to framebuffer
 	for (U16 y = 0; y < DBL_SPRITE_HEIGHT; y++) {
 		U16 fbY = (startY + y) % MAX_SPRITE_Y;
+		
+		auto xAdjLineBegin = xAdj;
+		auto yAdjLineBegin = yAdj;
+
 		for (U16 x = 0; x < DBL_SPRITE_WIDTH; x++) {
-			S16 xAdj = x - HALF_SPRITE_WIDTH;
-			S16 yAdj = y - HALF_SPRITE_HEIGHT;
-			S16 newX = (dx*xAdj + dmx*yAdj)/256 + rotX;
-			S16 newY = (dy*xAdj + dmy*yAdj)/256 + rotY;
+			S16 newX = xAdj/256 + rotX;
+			S16 newY = yAdj/256 + rotY;
+			xAdj+=dx;
+			yAdj+=dy;
 
 			if (newX >= SPRITE_PIXEL_WIDTH || newY >= SPRITE_PIXEL_HEIGHT || newX < 0 || newY < 0) continue;
 			auto tempSpriteIndex = newY * SPRITE_PIXEL_WIDTH + newX;
@@ -170,5 +177,8 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 				}
 			}
 		}
+
+		xAdj = xAdjLineBegin + dmx;
+		yAdj =	yAdjLineBegin + dmy;
 	}
 }
