@@ -132,10 +132,7 @@ void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, bool &carryOut,
 }
 
 Op CPU::ArmOperation(OpCode opcode) {
-  if (!registers.ConditionCheck((Condition)(opcode >> 28))) {
-    return []() { return; };
-  }
-
+	
   switch (BIT_RANGE(opcode, 26, 27)) {
   case 0b00: {
     if (opcode & (1 << 25)) {
