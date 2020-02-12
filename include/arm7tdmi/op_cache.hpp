@@ -37,7 +37,6 @@ class OpCache {
 	private:
 		static const U16 STORE_SIZE = 10;
 		std::unordered_map<OpCode, Op> store{};
-		U16 storePos = 0;
 };
 
 }

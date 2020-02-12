@@ -30,7 +30,6 @@ void CPU::Execute() {
     backtrace.addOpPCPair(pc - 2, opcode);
 	#endif
 
-    pc &= ~1;
     pipeline[0] = pipeline[1];
     pc += 2;
     pipeline[1] = memory->Read(Half, pc, SEQ);
@@ -45,13 +44,10 @@ void CPU::Execute() {
     backtrace.addOpPCPair(pc - 4, opcode);
 	#endif
 
-    pc &= ~3;
-
     pipeline[0] = pipeline[1];
     pc += 4;
     pipeline[1] = memory->Read(Word, pc, SEQ);
 
-	// ArmOperation(opcode)();
 	if (registers.ConditionCheck((Condition)(opcode >> 28))) {
 		if (!armOps.LookupOp(opcode))
 		{

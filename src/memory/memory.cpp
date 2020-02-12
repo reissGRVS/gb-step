@@ -88,7 +88,7 @@ std::string Memory::FindBackupID(size_t length) {
   return "NONE";
 }
 
-uint32_t Memory::Read(AccessSize size, U32 address, Sequentiality seq) {
+uint32_t Memory::Read(const AccessSize& size, const U32& address, const Sequentiality& seq) {
   auto page = address >> 24;
 
   if (address == KEYINPUT) {
@@ -138,7 +138,7 @@ uint32_t Memory::Read(AccessSize size, U32 address, Sequentiality seq) {
   }
 }
 
-void Memory::Write(AccessSize size, U32 address, U32 value, Sequentiality seq) {
+void Memory::Write(const AccessSize& size, const U32& address, const U32& value, const Sequentiality& seq) {
   auto page = address >> 24;
 #ifndef NDEBUG
   PublishWriteCallback(address);
@@ -171,7 +171,7 @@ void Memory::Write(AccessSize size, U32 address, U32 value, Sequentiality seq) {
   }
 }
 
-void Memory::TickBySize(AccessSize size, U32 ticks8, U32 ticks16, U32 ticks32) {
+void Memory::TickBySize(const AccessSize& size, const U32& ticks8, const U32& ticks16, const U32& ticks32) {
   switch (size) {
   case Byte:
     clock->Tick(ticks8);
@@ -185,7 +185,7 @@ void Memory::TickBySize(AccessSize size, U32 ticks8, U32 ticks16, U32 ticks32) {
   }
 }
 
-void Memory::Tick(AccessSize size, U32 page, Sequentiality seq) {
+void Memory::Tick(const AccessSize& size, const U32& page, const Sequentiality& seq) {
   if (seq != NSEQ && seq != SEQ) {
     return;
   }

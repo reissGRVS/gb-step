@@ -77,8 +77,7 @@ void CPU::Shift(U32 &value, U32 amount, const U32 &shiftType, bool &carryOut,
         carryOut = 0;
       }
     }
-
-    if (amount == 0) {
+    else if (amount == 0) {
       if (regProvidedAmount) {
 
         return;
@@ -274,21 +273,17 @@ void CPU::DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool
     BIT_CLEAR(Op1Val, 1);
   }
 
-  auto &dest = registers.get((Register)Rd);
+  
   auto carry = registers.CPSR.c;
   U32 Op2Val = 0;
-
+  const DataProcOperand2& op2Params = operand2Parameters[Op2];
   if (!I) {
-    auto Rm = registers.get((Register)(Op2 & NBIT_MASK(4)));
-    auto shiftType = BIT_RANGE(Op2, 5, 6);
-    auto shiftAmount = BIT_RANGE(Op2, 7, 11);
+    auto Rm = registers.get(op2Params.rm);
 
-    if (BIT_RANGE(Op2, 4, 4)) // Shift amount from register
+    if (op2Params.fromReg) // Shift amount from register
     {
-      if (BIT_RANGE(Op2, 7, 7)) {
-      }
-      // If also using R15 to specify extra shift to Rm
-      if ((Op2 & NBIT_MASK(4)) == 15) {
+      // If also using R15 to specify extra shifts
+      if (op2Params.rm == R15) {
         Rm += EXTRA_PC_INC;
       }
 	  if (Rn == 15) {
@@ -296,32 +291,21 @@ void CPU::DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool
       }
 
       clock->Tick(1);
-      shiftAmount = registers.get((Register)(shiftAmount >> 1)) & NBIT_MASK(8);
-      Shift(Rm, shiftAmount, shiftType, carry, true);
+      auto shiftAmount = registers.get(op2Params.shiftRegister) & NBIT_MASK(8);
+      Shift(Rm, shiftAmount, op2Params.shiftType, carry, true);
     } else {
-      Shift(Rm, shiftAmount, shiftType, carry, false);
+      Shift(Rm, op2Params.shiftAmount, op2Params.shiftType, carry, false);
     }
-
     Op2Val = Rm;
   } else {
-    auto Imm = Op2 & NBIT_MASK(8);
-    auto rotate = (Op2 >> 8) * 2;
-    const U32 ROR = 0b11;
-    // Maybe this should do RRX as well?
-    if (rotate) {
-      Shift(Imm, rotate, ROR, carry, false);
+    auto Imm = op2Params.imm;
+    if (op2Params.rotate) {
+      const U32 ROR = 0b11;
+      Shift(Imm, op2Params.rotate, ROR, carry, false);
     }
 
     Op2Val = Imm;
   }
-
-  auto SetFlags = [this](const U32 &S, const U32 &result, const U8 &carry) {
-    if (S) {
-      registers.CPSR.n = BIT_RANGE(result, 31, 31);
-      registers.CPSR.z = (result == 0);
-      registers.CPSR.c = carry;
-    }
-  };
 
   if (Rd == 15 && S) {
     auto previousSPSR = registers.GetSPSR();
@@ -330,7 +314,18 @@ void CPU::DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool
     S = 0;
   }
 
-  switch ((DPOps)OpCode) {
+  auto &dest = registers.get((Register)Rd);
+
+  
+
+  auto SetFlags = [this](const U32 &S, const U32 &result, const U8 &carry) {
+    if (S) {
+      registers.CPSR.n = BIT_RANGE(result, 31, 31);
+      registers.CPSR.z = (result == 0);
+      registers.CPSR.c = carry;
+    }
+  };
+  switch (static_cast<DPOps>(OpCode)) {
   case DPOps::AND: {
     dest = Op1Val & Op2Val;
     break;

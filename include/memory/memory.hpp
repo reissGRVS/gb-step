@@ -30,13 +30,13 @@ public:
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
-	U32 Read(AccessSize size,
-		U32 address,
-		Sequentiality type);
-	void Write(AccessSize size,
-		U32 address,
-		U32 value,
-		Sequentiality type);
+	U32 Read(const AccessSize& size,
+		const U32& address,
+		const Sequentiality& type);
+	void Write(const AccessSize& size,
+		const U32& address,
+		const U32& value,
+		const Sequentiality& type);
 
 	U8 GetByte(const U32& address);
 	U16 GetHalf(const U32& address);
@@ -63,11 +63,11 @@ private:
 
 	std::string FindBackupID(size_t length);
 
-	void Tick(AccessSize size, U32 page, Sequentiality seq);
-	void TickBySize(AccessSize size,
-		U32 ticks8,
-		U32 ticks16,
-		U32 ticks32);
+	void Tick(const AccessSize& size, const U32& page, const Sequentiality& seq);
+	void TickBySize(const AccessSize& size,
+		const U32& ticks8,
+		const U32& ticks16,
+		const U32& ticks32);
 	// https://problemkaputt.de/gbatek.htm#gbamemorymap
 	std::function<void(U32)> PublishWriteCallback;
 	Joypad& joypad;

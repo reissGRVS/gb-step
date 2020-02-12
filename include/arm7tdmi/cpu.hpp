@@ -25,6 +25,10 @@ public:
 		: clock(clock)
 		, memory(memory)
 	{
+		for (auto op2 = 0u; op2 < operand2Parameters.size(); op2++)
+		{
+			operand2Parameters[op2] = DataProcOperand2(op2);
+		}
 	}
 
 	void Reset();
@@ -45,6 +49,31 @@ public:
 	OpBacktrace backtrace;
 
 private:
+
+	struct DataProcOperand2 {
+		DataProcOperand2() {}
+		DataProcOperand2(U16 value) :
+		imm(BIT_RANGE(value, 0, 7)),
+		rotate(BIT_RANGE(value, 8, 11) * 2),
+		rm((Register)BIT_RANGE(value, 0, 3)),
+		shiftType(BIT_RANGE(value, 5, 6)),
+		fromReg(BIT_RANGE(value, 4, 4)),
+		shiftRegister((Register)BIT_RANGE(value, 8, 11)),
+		shiftAmount(BIT_RANGE(value, 7, 11)) {};
+
+		//Immediate
+		U32 imm;
+		U8 rotate;
+		
+		//Non immediate
+		Register rm;
+		U8 shiftType;
+		bool fromReg;
+		Register shiftRegister;
+		U8 shiftAmount;
+	};
+
+	std::array<DataProcOperand2, 4096> operand2Parameters;
 
 	OpCache armOps;
 	OpCache thumbOps;

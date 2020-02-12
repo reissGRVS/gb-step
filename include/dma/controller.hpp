@@ -31,7 +31,7 @@ public:
 
 private:
 	std::shared_ptr<Memory> memory;
-
+	bool controllerActive = false;
 	std::unique_ptr<Channel> channels[4] = { std::make_unique<Channel>(0, memory),
 		std::make_unique<Channel>(1, memory),
 		std::make_unique<Channel>(2, memory),
