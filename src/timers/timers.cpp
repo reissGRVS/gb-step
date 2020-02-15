@@ -1,7 +1,7 @@
 #include "timers/timers.hpp"
 
-Timers::Timers(std::shared_ptr<Memory> memory, std::shared_ptr<IRQChannel> irqChannel)
-	: memory(memory), irqChannel(irqChannel)
+Timers::Timers(std::shared_ptr<IRQChannel> irqChannel)
+	: irqChannel(irqChannel)
 {
 }
 

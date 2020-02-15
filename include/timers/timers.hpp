@@ -1,15 +1,17 @@
 #pragma once
 
 #include <array>
+#include <memory>
 
 #include "arm7tdmi/irq_channel.hpp"
+#include "memory/regions.hpp"
 #include "timers/timer.hpp"
 #include "timers/timers_io_registers.hpp"
 #include "utils.hpp"
 
 class Timers : public TimersIORegisters {
 public:
-	Timers(std::shared_ptr<Memory> memory, std::shared_ptr<IRQChannel> irqChannel);
+	Timers(std::shared_ptr<IRQChannel> irqChannel);
 	virtual ~Timers() = default;
 	void Update(const U32 ticks);
 	void SetReloadValue(U8 id, U16 value);
@@ -24,7 +26,6 @@ public:
 		const Sequentiality&) override;
 
 private:
-	std::shared_ptr<Memory> memory;
 	std::shared_ptr<IRQChannel> irqChannel;
 	
 	U32 heldTicks;
@@ -37,7 +38,7 @@ private:
 	};
 
 	std::array<Timer, 4> timers{
-		Timer(0, TM0CNT_L, memory), Timer(1, TM1CNT_L, memory),
-		Timer(2, TM2CNT_L, memory), Timer(3, TM3CNT_L, memory)
+		Timer(0, TM0CNT_L), Timer(1, TM1CNT_L),
+		Timer(2, TM2CNT_L), Timer(3, TM3CNT_L)
 	};
 };

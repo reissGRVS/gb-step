@@ -1,12 +1,12 @@
 #pragma once
 
+#include <array>
+
 #include "int.hpp"
-#include "memory/memory.hpp"
-#include "utils.hpp"
 
 struct Timer {
 
-	Timer(U8 ID, U32 CNT_L, std::shared_ptr<Memory> memory);
+	Timer(U8 ID, U32 CNT_L);
 
 	void UpdateCntH(U16 value);
 	U32 CounterUpdate(U32 ticks);
@@ -29,6 +29,4 @@ struct Timer {
 	U32 ticksLeft = 0x1000;
 
 	const std::array<U16, 4> PRESCALER_SELECTION{ 1, 64, 256, 1024 };
-
-	std::shared_ptr<Memory> memory;
 };
