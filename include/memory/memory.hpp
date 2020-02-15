@@ -14,7 +14,6 @@
 #include "memory/io_registers.hpp"
 #include "memory/read_write_interface.hpp"
 #include "memory/regions.hpp"
-#include "memory/types.hpp"
 #include "system_clock.hpp"
 #include "utils.hpp"
 
@@ -45,12 +44,6 @@ public:
 	void SetHalf(const U32& address, const U16& value);
 	void SetWord(const U32& address, const U32& value);
 
-	void RequestInterrupt(Interrupt i)
-	{
-		auto intReq = GetHalf(IF);
-		BIT_SET(intReq, i);
-		SetHalf(IF, intReq);
-	}
 
 	void SetIOWriteCallback(U32 address,
 		std::function<void(U32)> callback);

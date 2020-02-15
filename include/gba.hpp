@@ -28,12 +28,14 @@ public:
         cpu(std::make_shared<ARM7TDMI::CPU>(sysClock, memory)),
         dma(std::make_shared<DMA::Controller>(memory)),
         ppu(std::make_shared<PPU>(
-            memory, cfg.screen,
+            memory, cfg.screen, std::static_pointer_cast<IRQChannel>(cpu),
             std::bind(&DMA::Controller::EventCallback, dma,
                       DMA::Controller::Event::HBLANK, std::placeholders::_1),
             std::bind(&DMA::Controller::EventCallback, dma,
                       DMA::Controller::Event::VBLANK, std::placeholders::_1))),
-        debugger(memory), timers(std::make_shared<Timers>(memory)) {
+        debugger(memory), 
+		timers(std::make_shared<Timers>(memory, std::static_pointer_cast<IRQChannel>(cpu))) 
+		{
     memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
                                             &debugger, std::placeholders::_1));
 

@@ -16,3 +16,8 @@ enum Interrupt {
 	Keypad = 12,
 	GamePak = 13
 };
+
+class IRQChannel {
+	public:
+		virtual void RequestInterrupt(Interrupt i) = 0;		
+};

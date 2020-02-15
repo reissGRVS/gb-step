@@ -1,6 +1,7 @@
 #pragma once
 
 #include "memory/memory.hpp"
+#include "arm7tdmi/irq_channel.hpp"
 #include "ppu/bg_control_info.hpp"
 #include "ppu/blend_control.hpp"
 #include "ppu/lcd_io_registers.hpp"
@@ -20,11 +21,13 @@ class PPU : public LCDIORegisters {
 		VBlank };
 
 public:
-	PPU(std::shared_ptr<Memory> memory_, Screen& screen_,
+	PPU(std::shared_ptr<Memory> memory_, Screen& screen_, 
+		std::shared_ptr<IRQChannel> irqChannel_,
 		std::function<void(bool)> HBlankCallback_,
 		std::function<void(bool)> VBlankCallback_)
 		: memory(memory_)
 		, screen(screen_)
+		, irqChannel(irqChannel_)
 		, HBlankCallback(HBlankCallback_)
 		, VBlankCallback(VBlankCallback_)
 	{
@@ -89,6 +92,7 @@ private:
 
 	std::shared_ptr<Memory> memory;
 	Screen& screen;
+	std::shared_ptr<IRQChannel> irqChannel;
 	std::function<void(bool)> HBlankCallback;
 	std::function<void(bool)> VBlankCallback;
 

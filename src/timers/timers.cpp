@@ -1,7 +1,7 @@
 #include "timers/timers.hpp"
 
-Timers::Timers(std::shared_ptr<Memory> memory)
-	: memory(memory)
+Timers::Timers(std::shared_ptr<Memory> memory, std::shared_ptr<IRQChannel> irqChannel)
+	: memory(memory), irqChannel(irqChannel)
 {
 }
 
@@ -31,7 +31,7 @@ void Timers::Update(const U32 ticks)
 
 			if (overflow && timers[timerIndex].irqEnable) {
 				
-				memory->RequestInterrupt(timerInterrupts[timerIndex]);
+				irqChannel->RequestInterrupt(timerInterrupts[timerIndex]);
 			}
 		}
 		ticksToOverflowKnown = false;

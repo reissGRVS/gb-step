@@ -10,6 +10,7 @@
 #include "arm7tdmi/ir_io_registers.hpp"
 #include "arm7tdmi/op_cache.hpp"
 #include "arm7tdmi/types.hpp"
+#include "arm7tdmi/irq_channel.hpp"
 #include "memory/read_write_interface.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
@@ -18,7 +19,7 @@
 
 namespace ARM7TDMI {
 
-class CPU : public IRIORegisters {
+class CPU : public IRIORegisters, public IRQChannel {
 public:
 	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<ReadWriteInterface> memory)
 		: clock(clock)
@@ -42,6 +43,13 @@ public:
 		U32 address,
 		U32 value,
 		const Sequentiality&) override;
+	
+	void RequestInterrupt(Interrupt i) override
+	{
+		auto intReq = Read(Half, IF, FREE);
+		BIT_SET(intReq, i);
+		Write(Half, IF, intReq, FREE);
+	}
 
 	StateView ViewState();
 	RegisterSet registers;

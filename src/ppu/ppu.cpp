@@ -60,8 +60,7 @@ void PPU::ToHBlank()
 	UpdateDispStat(HBlankFlag, true);
 
 	if (GetDispStat(HBlankIRQEnable)) {
-		
-		memory->RequestInterrupt(Interrupt::HBlank);
+		irqChannel->RequestInterrupt(Interrupt::HBlank);
 	}
 }
 
@@ -92,8 +91,7 @@ void PPU::ToVBlank()
 	UpdateDispStat(VBlankFlag, true);
 
 	if (GetDispStat(VBlankIRQEnable)) {
-		
-		memory->RequestInterrupt(Interrupt::VBlank);
+		irqChannel->RequestInterrupt(Interrupt::VBlank);
 	}
 	VBlankCallback(true);
 }
@@ -165,7 +163,7 @@ U16 PPU::IncrementVCount()
 		UpdateDispStat(VCounterFlag, true);
 		if (GetDispStat(VCounterIRQEnable)) {
 			
-			memory->RequestInterrupt(Interrupt::VCounter);
+			irqChannel->RequestInterrupt(Interrupt::VCounter);
 		}
 	} else {
 		UpdateDispStat(VCounterFlag, false);

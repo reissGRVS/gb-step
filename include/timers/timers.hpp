@@ -2,14 +2,14 @@
 
 #include <array>
 
-#include "memory/memory.hpp"
+#include "arm7tdmi/irq_channel.hpp"
 #include "timers/timer.hpp"
 #include "timers/timers_io_registers.hpp"
 #include "utils.hpp"
 
 class Timers : public TimersIORegisters {
 public:
-	Timers(std::shared_ptr<Memory> memory);
+	Timers(std::shared_ptr<Memory> memory, std::shared_ptr<IRQChannel> irqChannel);
 	virtual ~Timers() = default;
 	void Update(const U32 ticks);
 	void SetReloadValue(U8 id, U16 value);
@@ -25,6 +25,7 @@ public:
 
 private:
 	std::shared_ptr<Memory> memory;
+	std::shared_ptr<IRQChannel> irqChannel;
 	
 	U32 heldTicks;
 	U32 minTicks;
