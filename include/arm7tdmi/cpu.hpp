@@ -11,7 +11,6 @@
 #include "arm7tdmi/op_cache.hpp"
 #include "arm7tdmi/types.hpp"
 #include "memory/read_write_interface.hpp"
-#include "memory/memory.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
 #include "stateview.hpp"
@@ -21,7 +20,7 @@ namespace ARM7TDMI {
 
 class CPU : public IRIORegisters {
 public:
-	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<Memory> memory)
+	CPU(std::shared_ptr<SystemClock> clock, std::shared_ptr<ReadWriteInterface> memory)
 		: clock(clock)
 		, memory(memory)
 	{
@@ -36,13 +35,13 @@ public:
 	void Execute();
 
 	//For Interrupt IO Registers
-	U32 Read(AccessSize size,
+	U32 Read(const AccessSize& size,
 		U32 address,
-		Sequentiality) override;
-	void Write(AccessSize size,
+		const Sequentiality&) override;
+	void Write(const AccessSize& size,
 		U32 address,
 		U32 value,
-		Sequentiality) override;
+		const Sequentiality&) override;
 
 	StateView ViewState();
 	RegisterSet registers;
@@ -80,7 +79,7 @@ private:
 
 	bool slow = false;
 	std::shared_ptr<SystemClock> clock;
-	std::shared_ptr<Memory> memory;
+	std::shared_ptr<ReadWriteInterface> memory;
 	std::array<OpCode, 2> pipeline;
 
 	void PipelineFlush();

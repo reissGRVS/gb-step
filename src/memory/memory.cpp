@@ -88,7 +88,7 @@ std::string Memory::FindBackupID(size_t length) {
   return "NONE";
 }
 
-uint32_t Memory::Read(const AccessSize& size, const U32& address, const Sequentiality& seq) {
+uint32_t Memory::Read(const AccessSize& size, U32 address, const Sequentiality& seq) {
   auto page = address >> 24;
 
   if (address == KEYINPUT) {
@@ -138,7 +138,7 @@ uint32_t Memory::Read(const AccessSize& size, const U32& address, const Sequenti
   }
 }
 
-void Memory::Write(const AccessSize& size, const U32& address, const U32& value, const Sequentiality& seq) {
+void Memory::Write(const AccessSize& size, U32 address, U32 value, const Sequentiality& seq) {
   auto page = address >> 24;
 #ifndef NDEBUG
   PublishWriteCallback(address);
@@ -272,25 +272,25 @@ void Memory::SetIOWriteCallback(U32 address,
 }
 
 U8 Memory::GetByte(const U32 &address) {
-  return Read(AccessSize::Byte, address, Sequentiality::FREE);
+  return Read(AccessSize::Byte, address, FREE);
 }
 
 U16 Memory::GetHalf(const U32 &address) {
-  return Read(AccessSize::Half, address, Sequentiality::FREE);
+  return Read(AccessSize::Half, address, FREE);
 }
 
 U32 Memory::GetWord(const U32 &address) {
-  return Read(AccessSize::Word, address, Sequentiality::FREE);
+  return Read(AccessSize::Word, address, FREE);
 }
 
 void Memory::SetByte(const U32 &address, const U8 &value) {
-  Write(AccessSize::Byte, address, value, Sequentiality::FREE);
+  Write(AccessSize::Byte, address, value, FREE);
 }
 
 void Memory::SetHalf(const U32 &address, const U16 &value) {
-  Write(AccessSize::Half, address, value, Sequentiality::FREE);
+  Write(AccessSize::Half, address, value, FREE);
 }
 
 void Memory::SetWord(const U32 &address, const U32 &value) {
-  Write(AccessSize::Word, address, value, Sequentiality::FREE);
+  Write(AccessSize::Word, address, value, FREE);
 }

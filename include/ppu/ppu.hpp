@@ -32,13 +32,13 @@ public:
 
 	void Execute(U32 ticks);
 
-	U32 Read(AccessSize size,
+	U32 Read(const AccessSize& size,
 		U32 address,
-		Sequentiality) override;
-	void Write(AccessSize size,
+		const Sequentiality&) override;
+	void Write(const AccessSize& size,
 		U32 address,
 		U32 value,
-		Sequentiality) override;
+		const Sequentiality&) override;
 
 private:
 

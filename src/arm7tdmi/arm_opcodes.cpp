@@ -587,23 +587,21 @@ void CPU::ArmSingleDataSwap(U32 B, U32 Rn, U32 Rd, U32 Rm) {
   clock->Tick(1);
   if (B) {
     auto addr = registers.get((Register)Rn);
-    auto memVal = memory->Read(AccessSize::Byte, addr, Sequentiality::NSEQ);
-    memory->Write(AccessSize::Byte, addr, registers.get((Register)Rm),
-                  Sequentiality::SEQ);
+    auto memVal = memory->Read(AccessSize::Byte, addr, NSEQ);
+    memory->Write(AccessSize::Byte, addr, registers.get((Register)Rm), SEQ);
     registers.get((Register)Rd) = memVal;
   } else {
     auto addr = registers.get((Register)Rn);
 	auto wordBoundaryOffset = addr % 4;  
 
-    auto memVal = memory->Read(AccessSize::Word, addr - wordBoundaryOffset, Sequentiality::NSEQ);
+    auto memVal = memory->Read(AccessSize::Word, addr - wordBoundaryOffset, NSEQ);
     if (wordBoundaryOffset) {
         bool emptyCarry = 0;
         const U32 ROR = 0b11;
         Shift(memVal, wordBoundaryOffset * 8, ROR, emptyCarry, false);
     }
 
-    memory->Write(AccessSize::Word, addr - wordBoundaryOffset, registers.get((Register)Rm),
-                  Sequentiality::SEQ);
+    memory->Write(AccessSize::Word, addr - wordBoundaryOffset, registers.get((Register)Rm), SEQ);
     registers.get((Register)Rd) = memVal;
   }
 }
@@ -685,14 +683,14 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
       if (wordBoundaryOffset) {
 		spdlog::get("std")->warn("half word boundary offset logic potentially wrong");
 		auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
-                            Sequentiality::NSEQ);
+                            NSEQ);
         bool emptyCarry = 0;
         const U32 ROR = 0b11;
         Shift(value, wordBoundaryOffset * 8, ROR, emptyCarry, false);
 		destReg = value;
       }
 	  else{
-      	destReg = memory->Read(AccessSize::Half, memAddr, Sequentiality::NSEQ);
+      	destReg = memory->Read(AccessSize::Half, memAddr, NSEQ);
 	  }
 
       if (S) // Signed
@@ -712,7 +710,7 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
     } else // Byte
     {
       if (S) {
-        destReg = memory->Read(AccessSize::Byte, memAddr, Sequentiality::NSEQ);
+        destReg = memory->Read(AccessSize::Byte, memAddr, NSEQ);
         if (destReg >> 7) {
           destReg |= NBIT_MASK(24) << 8;
         }
@@ -727,7 +725,7 @@ void CPU::ArmHalfwordDT(U32 P, U32 U, U32 W, U32 L, U32 Rn, U32 Rd, U32 S,
     {
 	  if (Rd==15) value += EXTRA_PC_INC;
 	  auto memOffset = memAddr & 1;
-      memory->Write(AccessSize::Half, memAddr - memOffset, value, Sequentiality::NSEQ);
+      memory->Write(AccessSize::Half, memAddr - memOffset, value, NSEQ);
     }
   }
 }
@@ -776,11 +774,11 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
 	auto &destReg = registers.get((Register)Rd);
     clock->Tick(1);
     if (B) {
-      destReg = memory->Read(AccessSize::Byte, memAddr, Sequentiality::NSEQ);
+      destReg = memory->Read(AccessSize::Byte, memAddr, NSEQ);
     } else {
       auto wordBoundaryOffset = memAddr % 4;
       auto value = memory->Read(AccessSize::Word, memAddr - wordBoundaryOffset,
-                                Sequentiality::NSEQ);
+                                NSEQ);
       if (wordBoundaryOffset) {
         bool emptyCarry = 0;
         const U32 ROR = 0b11;
@@ -795,10 +793,10 @@ void CPU::ArmSingleDataTransfer(U32 I, U32 P, U32 U, U32 B, U32 W, U32 L,
   } else {
 	if (Rd==15) value += EXTRA_PC_INC;
     if (B) {
-      memory->Write(AccessSize::Byte, memAddr, value, Sequentiality::NSEQ);
+      memory->Write(AccessSize::Byte, memAddr, value, NSEQ);
     } else {
 	  auto wordBoundaryOffset = memAddr % 4;  
-      memory->Write(AccessSize::Word, memAddr - wordBoundaryOffset, value, Sequentiality::NSEQ);
+      memory->Write(AccessSize::Word, memAddr - wordBoundaryOffset, value, NSEQ);
     }
   }
 }
@@ -880,9 +878,9 @@ void CPU::ArmBlockDataTransfer(U32 P, U32 U, U32 S, U32 W, U32 L, U32 Rn,
 
   auto saved = 0;
   for (auto reg : toSave) {
-    auto accessType = Sequentiality::SEQ;
+    auto accessType = SEQ;
     if (saved == 0) {
-      accessType = Sequentiality::NSEQ;
+      accessType = NSEQ;
     }
 
     if (L) {

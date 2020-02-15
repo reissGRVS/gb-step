@@ -18,7 +18,7 @@
 #include "system_clock.hpp"
 #include "utils.hpp"
 
-class Memory {
+class Memory : public ReadWriteInterface {
 public:
 	Memory(std::shared_ptr<SystemClock> clock,
 		std::string biosPath,
@@ -31,12 +31,12 @@ public:
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
 	U32 Read(const AccessSize& size,
-		const U32& address,
-		const Sequentiality& type);
+		U32 address,
+		const Sequentiality& type) override;
 	void Write(const AccessSize& size,
-		const U32& address,
-		const U32& value,
-		const Sequentiality& type);
+		U32 address,
+		U32 value,
+		const Sequentiality& type) override;
 
 	U8 GetByte(const U32& address);
 	U16 GetHalf(const U32& address);

@@ -18,13 +18,13 @@ public:
 		std::shared_ptr<IRIORegisters> ir);
 
 	std::string Name() override { return "IO_BASE"; };
-	U32 Read(AccessSize size,
+	U32 Read(const AccessSize& size,
 		U32 address,
-		Sequentiality seq) override;
-	void Write(AccessSize size,
+		const Sequentiality& seq) override;
+	void Write(const AccessSize& size,
 		U32 address,
 		U32 value,
-		Sequentiality seq) override;
+		const Sequentiality& seq) override;
 
 	virtual ~IORegisters() = default;
 

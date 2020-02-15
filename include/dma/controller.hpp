@@ -21,13 +21,13 @@ public:
 	void CntHUpdateCallback(U8 id, U16 value);
 	void EventCallback(Event event, bool start);
 
-	U32 Read(AccessSize size,
+	U32 Read(const AccessSize& size,
 		U32 address,
-		Sequentiality) override;
-	void Write(AccessSize size,
+		const Sequentiality&) override;
+	void Write(const AccessSize& size,
 		U32 address,
 		U32 value,
-		Sequentiality) override;
+		const Sequentiality&) override;
 
 private:
 	std::shared_ptr<Memory> memory;

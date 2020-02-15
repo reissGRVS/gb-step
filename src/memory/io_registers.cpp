@@ -27,9 +27,9 @@ std::shared_ptr<ReadWriteInterface> IORegisters::GetRegisterSet(U32 address)
 	return {};
 }
 
-U32 IORegisters::Read(AccessSize size,
+U32 IORegisters::Read(const AccessSize& size,
 	U32 address,
-	Sequentiality seq)
+	const Sequentiality& seq)
 {
 	if (size == Word) {
 		auto lowerHalf = Read(Half, address, seq);
@@ -49,10 +49,10 @@ U32 IORegisters::Read(AccessSize size,
 	}
 }
 
-void IORegisters::Write(AccessSize size,
+void IORegisters::Write(const AccessSize& size,
 	U32 address,
 	U32 value,
-	Sequentiality seq)
+	const Sequentiality& seq)
 {
 
 	if (size == Word) {

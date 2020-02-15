@@ -13,7 +13,7 @@ enum AccessSize { Byte = 0xFFu,
 	Word = 0xFFFFFFFFu };
 template <std::size_t SIZE>
 uint32_t ReadToSize(std::array<U8, SIZE>& arr,
-	U32 address, AccessSize size)
+	U32 address, const AccessSize& size)
 {
 
 	switch (size) {
@@ -46,7 +46,7 @@ uint32_t ReadToSize(std::array<U8, SIZE>& arr,
 
 template <std::size_t SIZE>
 void WriteToSize(std::array<U8, SIZE>& arr,
-	U32 address, U32 value, AccessSize size)
+	U32 address, U32 value, const AccessSize& size)
 {
 	switch (size) {
 	case AccessSize::Byte: {
@@ -89,14 +89,14 @@ class ReadWriteInterface {
 
 public:
 	virtual std::string Name() = 0;
-	virtual U32 Read(AccessSize size,
+	virtual U32 Read(const AccessSize& size,
 		U32 address,
-		Sequentiality type)
+		const Sequentiality& type)
 		= 0;
-	virtual void Write(AccessSize size,
+	virtual void Write(const AccessSize& size,
 		U32 address,
 		U32 value,
-		Sequentiality type)
+		const Sequentiality& type)
 		= 0;
 
 

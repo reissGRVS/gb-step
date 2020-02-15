@@ -1,18 +1,18 @@
 #include "dma/controller.hpp"
 
 namespace DMA {
-U32 Controller::Read(AccessSize size,
+U32 Controller::Read(const AccessSize& size,
 	U32 address,
-	Sequentiality)
+	const Sequentiality&)
 {
 	U32 actualIndex = address - DMA_IO_START;
 	return ReadToSize(registers, actualIndex, size);
 }
 
-void Controller::Write(AccessSize size,
+void Controller::Write(const AccessSize& size,
 	U32 address,
 	U32 value,
-	Sequentiality)
+	const Sequentiality&)
 {
 
 	if (size == Byte) {

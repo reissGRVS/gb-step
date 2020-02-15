@@ -2,7 +2,7 @@
 #include "memory/regions.hpp"
 #include "spdlog/spdlog.h"
 
-U32 Timers::Read(AccessSize size, U32 address, Sequentiality seq) {
+U32 Timers::Read(const AccessSize& size, U32 address, const Sequentiality& seq) {
   if (size == Byte) {
     auto half = Read(Half, address & ~1, seq);
     if (address & 1) {
@@ -36,7 +36,7 @@ U32 Timers::Read(AccessSize size, U32 address, Sequentiality seq) {
   }
 }
 
-void Timers::Write(AccessSize size, U32 address, U32 value, Sequentiality) {
+void Timers::Write(const AccessSize& size, U32 address, U32 value, const Sequentiality&) {
   if (size == Byte) {
     spdlog::get("std")->error("Byte Timer Write - Needs implemented?");
     exit(-1);
