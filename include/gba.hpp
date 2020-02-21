@@ -34,7 +34,7 @@ public:
             std::bind(&DMA::Controller::EventCallback, dma,
                       DMA::Controller::Event::VBLANK, std::placeholders::_1))),
         debugger(memory), 
-		timers(std::make_shared<Timers>(memory, std::static_pointer_cast<IRQChannel>(cpu))) 
+		timers(std::make_shared<Timers>(std::static_pointer_cast<IRQChannel>(cpu))) 
 		{
     memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
                                             &debugger, std::placeholders::_1));

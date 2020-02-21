@@ -7,107 +7,91 @@
 
 void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 {
-	const auto vCount = GET_HALF(VCOUNT);
-	const U16 fbIndex = vCount * Screen::SCREEN_WIDTH;
-	auto backdrop = memory->GetHalf(PRAM_START);
+	const U16 fbIndex = GET_HALF(VCOUNT) * Screen::SCREEN_WIDTH;
 
 	for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
+		auto pos = fbIndex + x;
+
 		OptPixel firstPrioPixel = {};
-		bool firstPrioPixelFound = false;
-		U8 firstPrio = -1;
 		OptPixel secondPrioPixel = {};
-		bool secondPrioPixelFound = false;
-		bool blend = false;
+		bool applyEffects = false;
+		
+		//Find highest priority pixel, and second if alphablending is enabled
 		for (const auto& bg : bgOrder) {
-			if (!firstPrioPixelFound)
-			{
-				if (rows[bg][x].has_value())
+			if (rows[bg][x].has_value()) {
+				if (!firstPrioPixel.has_value())
 				{
 					firstPrioPixel = rows[bg][x];
-					firstPrio = GetLayerPriority(bg);
-
-					depth[fbIndex+x] = firstPrio;
-					secondtarget[fbIndex+x] = bldCnt.secondTarget[bg];
-					firstPrioPixelFound = true;
-					if (!bldCnt.firstTarget[bg] || bldCnt.colorSpecialEffect != BldCnt::AlphaBlending)
-					{
-						break;
-					}
-					else
-					{
-						blend = true;
-					}
+					depth[pos] = GetLayerPriority(bg);
+					secondtarget[pos] = bldCnt.secondTarget[bg];
+					applyEffects = bldCnt.firstTarget[bg];
 				}
+				else if (bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
+				{
+					//If next found pixel is a blend target keep track of it
+					if (bldCnt.secondTarget[bg])
+						secondPrioPixel = rows[bg][x];
+					break;
+				}
+			}
+		}
+
+
+		if (firstPrioPixel.has_value())
+		{	
+			if (!applyEffects || bldCnt.colorSpecialEffect == BldCnt::None)
+			{
+				fb[pos] = firstPrioPixel.value();
 			}
 			else
 			{
-				if (rows[bg][x].has_value())
-				{
-					secondPrioPixel = rows[bg][x];
-					secondPrioPixelFound = true;
-					if (!bldCnt.secondTarget[bg])
-					{
-						blend = false;
-					}
-					break;
-				}
-			}	
-		}
-
-		if (firstPrioPixel.has_value())
-		{
-			switch (bldCnt.colorSpecialEffect)
-			{
-			case BldCnt::None:
-			{
-				fb[fbIndex+x] = firstPrioPixel.value();
-				break;
-			}
-			case BldCnt::AlphaBlending:
-			{
-				if (blend && !secondPrioPixelFound)
-				{
-					if (bldCnt.secondTarget[5])
-					{
-						secondPrioPixel = backdrop;
-					}
-					else
-					{
-						blend = false;
-					}
-				}
-
-				if (blend)
-				{
-					Pixel firstPixel{firstPrioPixel.value()};
-					Pixel secondPixel{secondPrioPixel.value()};
-					firstPixel.Blend(secondPixel, eva, evb);
-					fb[fbIndex+x] = firstPixel.Value();
-				}
-				else
-				{
-					fb[fbIndex+x] = firstPrioPixel.value();
-				}
-				break;
-			}
-			case BldCnt::BrightnessIncrease:
-			{
-				Pixel firstPixel{firstPrioPixel.value()};
-				firstPixel.BrightnessIncrease(evy);
-				fb[fbIndex+x] = firstPixel.Value();
-				break;
-			}
-			case BldCnt::BrightnessDecrease:
-			{
-				Pixel firstPixel{firstPrioPixel.value()};
-				firstPixel.BrightnessDecrease(evy);
-				fb[fbIndex+x] = firstPixel.Value();
-				break;
-			}
+				SetSFXPixel(firstPrioPixel, secondPrioPixel, fb[pos]);
 			}
 		}
 
 	}
+}
+
+
+void PPU::SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest)
+{
+	if (!firstPrioPixel.has_value())
+		return;
+
+	Pixel firstPixel{firstPrioPixel.value()};
+
+	switch (bldCnt.colorSpecialEffect)
+	{
+		case BldCnt::None:
+		{
+			break;
+		}
+		case BldCnt::AlphaBlending:
+		{
+			//Blend with backdrop if possible
+			if (!secondPrioPixel.has_value() && bldCnt.secondTarget[5])
+				secondPrioPixel = dest;
+
+			if (secondPrioPixel.has_value())
+			{
+				Pixel secondPixel{secondPrioPixel.value()};
+				firstPixel.Blend(secondPixel, eva, evb);
+			}
+			break;
+		}
+		case BldCnt::BrightnessIncrease:
+		{
+			firstPixel.BrightnessIncrease(evy);
+			break;
+		}
+		case BldCnt::BrightnessDecrease:
+		{
+			firstPixel.BrightnessDecrease(evy);
+			break;
+		}
+	}
+
+	dest = firstPixel.Value();
 }
 
 void PPU::DrawLine()

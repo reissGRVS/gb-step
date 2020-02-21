@@ -58,6 +58,7 @@ private:
 
 	// Draw Control
 	void MergeRows(std::vector<uint8_t>& bgOrder);
+	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest);
 	void DrawLine();
 	uint8_t GetLayerPriority(uint8_t layer);
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
