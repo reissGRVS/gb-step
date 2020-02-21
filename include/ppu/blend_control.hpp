@@ -16,6 +16,14 @@ struct BldCnt {
 		colorSpecialEffect = (ColorSpecialEffect) BIT_RANGE(value, 6, 7);
 	}
 
+	enum TargetLayer {
+		Bg0 = 0,
+		Bg1 = 1,
+		Bg2 = 2,
+		Bg3 = 3,
+		Sprites = 4,
+		Backdrop = 5
+	};
 	std::array<bool, 6> firstTarget = {};
 	
 	enum ColorSpecialEffect {

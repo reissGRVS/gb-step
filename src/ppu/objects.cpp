@@ -44,6 +44,7 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	const auto SPRITE_PIXEL_WIDTH = TILE_PIXEL_WIDTH * spriteWidth;
 	const auto SPRITE_PIXEL_HEIGHT = TILE_PIXEL_HEIGHT * spriteHeight;
 	//Transfer sprite data to tempSprite
+	tempSprite.fill({});
 	auto tempSpriteIndexStart = 0u;
 	for (U16 tileY = 0; tileY < spriteHeight; tileY++) {
 		tempSpriteIndexStart = tileY * ROW_TILE_PIXEL_TOTAL;
@@ -57,38 +58,18 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 			auto startOfTileAddress = OBJ_START_ADDRESS + (tileNumber * colorDepth * TILE_PIXEL_HEIGHT);
 			
 			// Transfer tile data to tempSprite
-			auto positionInTile = 0u;
+			auto pixelAddress = startOfTileAddress;
 			for (auto pixy = 0u; pixy < TILE_PIXEL_HEIGHT; pixy++) {
 				for (auto pixx = 0u; pixx < TILE_PIXEL_WIDTH; pixx++) {
-					const auto pixelPalette = memory->GetByte(startOfTileAddress + positionInTile);
-
 					if (colorDepth == 4) {
-						auto color1 = BIT_RANGE(pixelPalette, 0, 3);
-						if (color1 == 0)
-							tempSprite[tempSpriteIndex] = {};
-						else
-							tempSprite[tempSpriteIndex] = GetBgColorFromSubPalette(paletteNumber, color1, true);
-						
-						tempSpriteIndex++;
+						FetchDecode4BitPixel(pixelAddress, tempSprite[tempSpriteIndex++], paletteNumber, true, true);
 						pixx++;
-						
-						auto color2 = BIT_RANGE(pixelPalette, 4, 7);
-						if (color2 == 0)
-							tempSprite[tempSpriteIndex] = {};
-						else
-							tempSprite[tempSpriteIndex] = GetBgColorFromSubPalette(paletteNumber, color2, true);
-						tempSpriteIndex++;
-
+						FetchDecode4BitPixel(pixelAddress, tempSprite[tempSpriteIndex++], paletteNumber, false, true);
 					} else // equal to 8
 					{
-						if (pixelPalette == 0)
-							tempSprite[tempSpriteIndex] = {};
-						else
-							tempSprite[tempSpriteIndex] = GetBgColorFromPalette(pixelPalette, true);
-						tempSpriteIndex++;
+						FetchDecode8BitPixel(pixelAddress, tempSprite[tempSpriteIndex++], true);
 					}
-
-					positionInTile++;
+					pixelAddress++;
 				}
 				tempSpriteIndex += SPRITE_PIXEL_WIDTH - TILE_PIXEL_WIDTH;
 			}
@@ -163,7 +144,7 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 					if (pixel)
 					{
 						OptPixel secondPixel = {};
-						if (secondtarget[fbPos] || bldCnt.secondTarget[5])
+						if (secondtarget[fbPos] || bldCnt.secondTarget[BldCnt::TargetLayer::Backdrop])
 						{
 							secondPixel = fb[fbPos];
 						}
@@ -175,10 +156,15 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 							blended.Blend({secondPixel.value()}, eva, evb);
 							fb[fbPos] = blended.Value();
 						}
-						else
+						else if (bldCnt.firstTarget[BldCnt::TargetLayer::Sprites])
 						{
 							SetSFXPixel(pixel, secondPixel, fb[fbPos]);
 						}
+						else
+						{
+							fb[fbPos] = pixel.value();
+						}
+						
 					}
 				}
 			}

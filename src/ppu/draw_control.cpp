@@ -1,6 +1,5 @@
 #include "memory/regions.hpp"
 #include "ppu/ppu.hpp"
-#include "ppu/pixel.hpp"
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 #include <map>
@@ -52,48 +51,6 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 	}
 }
 
-
-void PPU::SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest)
-{
-	if (!firstPrioPixel.has_value())
-		return;
-
-	Pixel firstPixel{firstPrioPixel.value()};
-
-	switch (bldCnt.colorSpecialEffect)
-	{
-		case BldCnt::None:
-		{
-			break;
-		}
-		case BldCnt::AlphaBlending:
-		{
-			//Blend with backdrop if possible
-			if (!secondPrioPixel.has_value() && bldCnt.secondTarget[5])
-				secondPrioPixel = dest;
-
-			if (secondPrioPixel.has_value())
-			{
-				Pixel secondPixel{secondPrioPixel.value()};
-				firstPixel.Blend(secondPixel, eva, evb);
-			}
-			break;
-		}
-		case BldCnt::BrightnessIncrease:
-		{
-			firstPixel.BrightnessIncrease(evy);
-			break;
-		}
-		case BldCnt::BrightnessDecrease:
-		{
-			firstPixel.BrightnessDecrease(evy);
-			break;
-		}
-	}
-
-	dest = firstPixel.Value();
-}
-
 void PPU::DrawLine()
 {
 	auto vCount = GET_HALF(VCOUNT);
@@ -101,7 +58,10 @@ void PPU::DrawLine()
 	auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
 	auto bgMode = BIT_RANGE(dispCnt, 0, 2);
 	auto frame = BIT_RANGE(dispCnt, 4, 4);
-	rowsFilled.fill(0);
+	for (auto& row : rows)
+	{
+		row.fill({});
+	}
 
 	switch (bgMode) {
 	case 0: {

@@ -33,11 +33,6 @@ void PPU::TextBGLine(const U32& BG_ID)
 	while (x < Screen::SCREEN_WIDTH) {
 		//TilePixelAtAbsoluteBGPosition
 		// Get tile coords
-		if (rowsFilled[x] > 1)
-		{
-			x++;
-			continue;
-		}
 
 		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
 		auto mapX = absoluteX / TILE_PIXEL_WIDTH;
@@ -69,27 +64,13 @@ void PPU::TextBGLine(const U32& BG_ID)
 				px = TILE_PIXEL_WIDTH - (px + 1);
 			}
 
-			auto pixelPalette = memory->GetByte(startOfTileAddress + (px / pixelsPerByte) + positionInTileY);
-
-			OptPixel pixel = {};
+			auto pixelAddress = startOfTileAddress + (px / pixelsPerByte) + positionInTileY;
 			if (bgCnt.colorDepth == 4) {
-				if ((px % 2 == 0)) {
-					pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
-				} else {
-					pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
-				}
-
-				if (pixelPalette != 0)
-					pixel = GetBgColorFromSubPalette(paletteNumber, pixelPalette, false);
+				FetchDecode4BitPixel(pixelAddress, rows[BG_ID][x], paletteNumber, (px % 2 == 0), false);
 			} else // equal to 8
 			{
-				if (pixelPalette != 0)
-					pixel = GetBgColorFromPalette(pixelPalette, false);
+				FetchDecode8BitPixel(pixelAddress, rows[BG_ID][x], false);
 			}
-
-			rows[BG_ID][x] = pixel;
-			if (pixel)
-				rowsFilled[x]++;
 			x++;
 		}
 	}

@@ -8,7 +8,7 @@
 #include "ppu/obj_attributes.hpp"
 #include "ppu/tile_info.hpp"
 #include "screen.hpp"
-
+#include "utils.hpp"
 #include "memory/regions.hpp"
 
 #include <optional>
@@ -58,7 +58,6 @@ private:
 
 	// Draw Control
 	void MergeRows(std::vector<uint8_t>& bgOrder);
-	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest);
 	void DrawLine();
 	uint8_t GetLayerPriority(uint8_t layer);
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
@@ -85,11 +84,39 @@ private:
 
 	// Draw Utils
 
-	U16 GetBgColorFromSubPalette(const U32& paletteNumber,
-		const U32& colorID,
+	U16 GetBgColorFromSubPalette(const U8& paletteNumber,
+		const U8& colorID,
 		bool obj = false);
-	U16 GetBgColorFromPalette(const U32& colorID,
+	U16 GetBgColorFromPalette(const U8& colorID,
 		bool obj = false);
+
+	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest);
+	
+	template <typename T>
+	void FetchDecode8BitPixel(U32 address, T& dest, bool obj)
+	{
+		auto pixelPalette = memory->GetByte(address);
+		if (pixelPalette != 0)
+		{
+			dest = GetBgColorFromPalette(pixelPalette, obj);
+		}
+	}
+
+	template <typename T>
+	void FetchDecode4BitPixel(U32 address, T& dest, U8 paletteNumber, bool evenPixel, bool obj)
+	{
+		auto pixelPalette = memory->GetByte(address);
+		if (evenPixel) {
+			pixelPalette = BIT_RANGE(pixelPalette, 0, 3);
+		} else {
+			pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
+		}
+
+		if (pixelPalette != 0)
+		{
+			dest = GetBgColorFromSubPalette(paletteNumber, pixelPalette, obj);
+		}
+	}
 
 	std::shared_ptr<Memory> memory;
 	Screen& screen;
@@ -100,7 +127,6 @@ private:
 	Screen::Framebuffer depth{ 4 };
 	std::array<bool, Screen::SCREEN_TOTAL> secondtarget{ false };
 	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
-	std::array<U8, Screen::SCREEN_WIDTH> rowsFilled{};
 	Screen::Framebuffer fb{};
 	State state = Visible;
 	U32 tickCount = 0;

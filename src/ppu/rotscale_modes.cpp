@@ -47,7 +47,6 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 			}
 			else
 			{
-				rows[BG_ID][rowX] = {};
 				continue;
 			}
 		}
@@ -63,15 +62,7 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 		auto tileNumber = memory->GetByte(bgCnt.mapDataBase + mapIndex);
 		const U16 BYTES_PER_TILE = TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT;
 		auto pixelAddress = bgCnt.tileDataBase + (tileNumber * BYTES_PER_TILE) + (tileY * TILE_PIXEL_WIDTH) + tileX;
-		auto pixelPalette = memory->GetByte(pixelAddress);
-		if (pixelPalette != 0)
-		{
-			rows[BG_ID][rowX] = GetBgColorFromPalette(pixelPalette, false);
-		}
-		else
-		{
-			rows[BG_ID][rowX] = {};
-		}
-		
+		FetchDecode8BitPixel(pixelAddress, rows[BG_ID][rowX], false);
 	}
 }
+
