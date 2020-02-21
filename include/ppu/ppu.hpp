@@ -65,8 +65,9 @@ private:
 
 	// Objects
 	void DrawObjects();
+	void InitTempSprite(ObjAttributes objAttrs);
 	void DrawObject(ObjAttributes objAttrs);
-	void DrawTile(const TileInfo& info);
+	void SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency);
 
 	std::array<OptPixel, 64*64> tempSprite = {};
 

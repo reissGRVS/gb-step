@@ -21,12 +21,13 @@ void PPU::DrawObjects()
 			auto objAttr1 = memory->GetHalf(objAddress + 2);
 			auto objAttr2 = memory->GetHalf(objAddress + 4);
 			auto objAttrs = ObjAttributes(objAttr0, objAttr1, objAttr2);
+			InitTempSprite(objAttrs);
 			DrawObject(objAttrs);
 		}
 	}
 }
 
-void PPU::DrawObject(ObjAttributes objAttrs)
+void PPU::InitTempSprite(ObjAttributes objAttrs)
 {
 	auto [spriteWidth, spriteHeight] = OBJ_DIMENSIONS[objAttrs.attr1.b.objSize][objAttrs.attr0.b.objShape];
 	auto topLeftTile = objAttrs.attr2.b.characterName;
@@ -34,15 +35,12 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	auto halfTiles = objAttrs.attr0.b.colorsPalettes ? 2u : 1u;
 	U16 colorDepth = objAttrs.attr0.b.colorsPalettes ? 8u : 4u;
 	auto tileYIncrement = characterMapping ? (halfTiles * spriteWidth) : 0x20;
-	auto startX = objAttrs.attr1.b.xCoord;
-	auto startY = objAttrs.attr0.b.yCoord;
 	auto paletteNumber = objAttrs.attr2.b.paletteNumber;
 	
-
 	const auto TILE_PIXEL_TOTAL = TILE_PIXEL_HEIGHT * TILE_PIXEL_WIDTH;
 	const auto ROW_TILE_PIXEL_TOTAL = TILE_PIXEL_TOTAL * spriteWidth;
 	const auto SPRITE_PIXEL_WIDTH = TILE_PIXEL_WIDTH * spriteWidth;
-	const auto SPRITE_PIXEL_HEIGHT = TILE_PIXEL_HEIGHT * spriteHeight;
+
 	//Transfer sprite data to tempSprite
 	tempSprite.fill({});
 	auto tempSpriteIndexStart = 0u;
@@ -76,10 +74,19 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 			tempSpriteIndexStart += TILE_PIXEL_WIDTH;
 		}
 	}
+}
 
-	//Set up affine transformations
+void PPU::DrawObject(ObjAttributes objAttrs)
+{
+	auto [spriteWidth, spriteHeight] = OBJ_DIMENSIONS[objAttrs.attr1.b.objSize][objAttrs.attr0.b.objShape];
+	auto startX = objAttrs.attr1.b.xCoord;
+	auto startY = objAttrs.attr0.b.yCoord;
 
+	const auto SPRITE_PIXEL_WIDTH = TILE_PIXEL_WIDTH * spriteWidth;
+	const auto SPRITE_PIXEL_HEIGHT = TILE_PIXEL_HEIGHT * spriteHeight;
 	const auto FLOAT_SCALE = 256;
+	
+	// Initialise Affine parameters
 	auto dx = FLOAT_SCALE;
 	auto dmx = 0;
 	auto dy = 0;
@@ -108,69 +115,72 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 		}
 	}
 	
+	
+	const auto DBL_SPRITE_HEIGHT = SPRITE_PIXEL_HEIGHT * (objAttrs.attr0.b.objDisable ? 2 : 1);
+	const auto DBL_SPRITE_WIDTH = SPRITE_PIXEL_WIDTH * (objAttrs.attr0.b.objDisable ? 2 : 1);
+	const auto HALF_SPRITE_HEIGHT = DBL_SPRITE_HEIGHT / 2;
+	const auto HALF_SPRITE_WIDTH = DBL_SPRITE_WIDTH / 2;
+
 	//Perform Affine Transformation
-	{
-		const auto DBL_SPRITE_HEIGHT = SPRITE_PIXEL_HEIGHT * (objAttrs.attr0.b.objDisable ? 2 : 1);
-		const auto DBL_SPRITE_WIDTH = SPRITE_PIXEL_WIDTH * (objAttrs.attr0.b.objDisable ? 2 : 1);
-		const auto HALF_SPRITE_HEIGHT = DBL_SPRITE_HEIGHT / 2;
-		const auto HALF_SPRITE_WIDTH = DBL_SPRITE_WIDTH / 2;
 
-		S32 yAdj = -HALF_SPRITE_WIDTH * dy + -HALF_SPRITE_HEIGHT * dmy;
-		S32 xAdj = -HALF_SPRITE_WIDTH * dx + -HALF_SPRITE_HEIGHT * dmx;
-		//Transfer tempSprite to framebuffer
-		for (U16 y = 0; y < DBL_SPRITE_HEIGHT; y++) {
-			U16 fbY = (startY + y) % MAX_SPRITE_Y;
-			
-			auto xAdjLineBegin = xAdj;
-			auto yAdjLineBegin = yAdj;
+	S32 yAdj = -HALF_SPRITE_WIDTH * dy + -HALF_SPRITE_HEIGHT * dmy;
+	S32 xAdj = -HALF_SPRITE_WIDTH * dx + -HALF_SPRITE_HEIGHT * dmx;
+	for (U16 y = 0; y < DBL_SPRITE_HEIGHT; y++) {
+		U16 fbY = (startY + y) % MAX_SPRITE_Y;
+		
+		auto xAdjLineBegin = xAdj;
+		auto yAdjLineBegin = yAdj;
 
-			for (U16 x = 0; x < DBL_SPRITE_WIDTH; x++) {
-				S16 newX = xAdj/FLOAT_SCALE + rotX;
-				S16 newY = yAdj/FLOAT_SCALE + rotY;
-				xAdj+=dx;
-				yAdj+=dy;
+		for (U16 x = 0; x < DBL_SPRITE_WIDTH; x++) {
+			S16 newX = xAdj/FLOAT_SCALE + rotX;
+			S16 newY = yAdj/FLOAT_SCALE + rotY;
+			xAdj+=dx;
+			yAdj+=dy;
 
-				if (newX >= SPRITE_PIXEL_WIDTH || newY >= SPRITE_PIXEL_HEIGHT || newX < 0 || newY < 0) continue;
-				auto tempSpriteIndex = newY * SPRITE_PIXEL_WIDTH + newX;
+			if (newX >= SPRITE_PIXEL_WIDTH || newY >= SPRITE_PIXEL_HEIGHT || newX < 0 || newY < 0) continue;
+			auto tempSpriteIndex = newY * SPRITE_PIXEL_WIDTH + newX;
 
-				U16 fbX = (startX + x) % MAX_SPRITE_X;
-				if (fbX < Screen::SCREEN_WIDTH && fbY < Screen::SCREEN_HEIGHT) {
-					auto fbPos = fbX + (Screen::SCREEN_WIDTH * fbY);
-					if (depth[fbPos] < objAttrs.attr2.b.priority) {
-						continue;
-					}
-
-					auto pixel = tempSprite[tempSpriteIndex];
-					if (pixel)
-					{
-						OptPixel secondPixel = {};
-						if (secondtarget[fbPos] || bldCnt.secondTarget[BldCnt::TargetLayer::Backdrop])
-						{
-							secondPixel = fb[fbPos];
-						}
-						
-						//Semi-transparent OBJ SFX override
-						if (objAttrs.attr0.b.objMode == 1 && pixel && secondPixel)
-						{
-							Pixel blended = pixel.value();
-							blended.Blend({secondPixel.value()}, eva, evb);
-							fb[fbPos] = blended.Value();
-						}
-						else if (bldCnt.firstTarget[BldCnt::TargetLayer::Sprites])
-						{
-							SetSFXPixel(pixel, secondPixel, fb[fbPos]);
-						}
-						else
-						{
-							fb[fbPos] = pixel.value();
-						}
-						
-					}
+			U16 fbX = (startX + x) % MAX_SPRITE_X;
+			if (fbX < Screen::SCREEN_WIDTH && fbY < Screen::SCREEN_HEIGHT) {
+				auto fbPos = fbX + (Screen::SCREEN_WIDTH * fbY);
+				if (depth[fbPos] < objAttrs.attr2.b.priority) {
+					continue;
 				}
+				SetObjPixel(tempSprite[tempSpriteIndex], fbPos, objAttrs.attr0.b.objMode);
 			}
-
-			xAdj = xAdjLineBegin + dmx;
-			yAdj =	yAdjLineBegin + dmy;
 		}
+
+		xAdj = xAdjLineBegin + dmx;
+		yAdj =	yAdjLineBegin + dmy;
+	}
+}
+
+void PPU::SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency)
+{
+	if (pixel)
+	{
+		//Find blending target pixel if exists
+		OptPixel secondPixel = {};
+		if (secondtarget[fbPos])
+		{
+			secondPixel = fb[fbPos];
+		}
+		
+		//Semi-transparent OBJ SFX override
+		if (objectTransparency && pixel && secondPixel)
+		{
+			Pixel blended = pixel.value();
+			blended.Blend({secondPixel.value()}, eva, evb);
+			fb[fbPos] = blended.Value();
+		}
+		else if (bldCnt.firstTarget[BldCnt::TargetLayer::Sprites])
+		{
+			SetSFXPixel(pixel, secondPixel, fb[fbPos]);
+		}
+		else
+		{
+			fb[fbPos] = pixel.value();
+		}
+		
 	}
 }
