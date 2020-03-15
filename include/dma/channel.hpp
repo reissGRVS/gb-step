@@ -15,6 +15,7 @@ public:
 	void UpdateDetails(U16 value);
 
 	void DoTransferStep();
+	void DoSoundTransfer();
 
 	const std::int_fast8_t ID;
 	const U32 SAD;
@@ -36,11 +37,12 @@ public:
 	U16 destAddrCtl;
 	U16 srcAddrCtl;
 
+	U32 dest;
+
 private:
 	std::shared_ptr<Memory> memory;
 
 	U32 source;
-	U32 dest;
 	U32 wordCount;
 };
 } // namespace DMA

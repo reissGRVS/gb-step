@@ -13,6 +13,8 @@ endif()
 set(SOURCE_FILES
 	src/main.cpp
 	src/joypad.cpp
+	src/apu/apu.cpp
+	src/apu/apu_io_registers.cpp
 	src/arm7tdmi/arm_opcodes.cpp
 	src/arm7tdmi/cpu.cpp
 	src/arm7tdmi/ir_io_registers.cpp

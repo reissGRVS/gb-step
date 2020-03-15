@@ -1,5 +1,6 @@
 #pragma once
 
+#include "apu/apu_io_registers.hpp"
 #include "arm7tdmi/ir_io_registers.hpp"
 #include "dma/dma_io_registers.hpp"
 #include "int.hpp"
@@ -15,7 +16,8 @@ public:
 	IORegisters(std::shared_ptr<TimersIORegisters> timers,
 		std::shared_ptr<DMAIORegisters> dma,
 		std::shared_ptr<LCDIORegisters> lcd,
-		std::shared_ptr<IRIORegisters> ir);
+		std::shared_ptr<IRIORegisters> ir,
+		std::shared_ptr<APUIORegisters> apu);
 
 	std::string Name() override { return "IO_BASE"; };
 	U32 Read(const AccessSize& size,
@@ -35,6 +37,7 @@ private:
 	std::shared_ptr<DMAIORegisters> dma;
 	std::shared_ptr<LCDIORegisters> lcd;
 	std::shared_ptr<IRIORegisters> ir;
+	std::shared_ptr<APUIORegisters> apu;
 
 	std::array<U8, IOREG_SIZE>
 		backup{};

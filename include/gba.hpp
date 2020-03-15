@@ -1,5 +1,6 @@
 #pragma once
 
+#include "apu/apu.hpp"
 #include "arm7tdmi/cpu.hpp"
 #include "debugger.hpp"
 #include "dma/controller.hpp"
@@ -43,7 +44,8 @@ public:
         std::static_pointer_cast<TimersIORegisters>(timers),
         std::static_pointer_cast<DMAIORegisters>(dma),
         std::static_pointer_cast<LCDIORegisters>(ppu),
-        std::static_pointer_cast<IRIORegisters>(cpu));
+        std::static_pointer_cast<IRIORegisters>(cpu),
+		std::static_pointer_cast<APUIORegisters>(apu));
     memory->AttachIORegisters(ioRegisters);
     memory->AttachIRIORegisters(std::static_pointer_cast<IRIORegisters>(cpu));
     cpu->Reset();
@@ -75,6 +77,7 @@ private:
   std::shared_ptr<ARM7TDMI::CPU> cpu;
   std::shared_ptr<DMA::Controller> dma;
   std::shared_ptr<PPU> ppu;
+  std::shared_ptr<APU> apu;
   Debugger debugger;
   std::shared_ptr<Timers> timers;
 };

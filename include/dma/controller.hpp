@@ -14,7 +14,9 @@ public:
 	enum Event { IMMEDIATE,
 		VBLANK,
 		HBLANK,
-		SPECIAL };
+		SPECIAL,
+		FIFOA,
+		FIFOB };
 
 	void Execute();
 	bool IsActive();

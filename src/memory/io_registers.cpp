@@ -4,11 +4,13 @@
 IORegisters::IORegisters(std::shared_ptr<TimersIORegisters> timers,
 	std::shared_ptr<DMAIORegisters> dma,
 	std::shared_ptr<LCDIORegisters> lcd,
-	std::shared_ptr<IRIORegisters> ir)
+	std::shared_ptr<IRIORegisters> ir,
+	std::shared_ptr<APUIORegisters> apu)
 	: timers(timers)
 	, dma(dma)
 	, lcd(lcd)
 	, ir(ir)
+	, apu(apu)
 {
 }
 
@@ -22,6 +24,8 @@ std::shared_ptr<ReadWriteInterface> IORegisters::GetRegisterSet(U32 address)
 		return ir;
 	} else if (IN_RANGE(address, TimersIORegisters::TIMER_IO_START, TimersIORegisters::TIMER_IO_END)) {
 		return timers;
+	} else if (IN_RANGE(address, APUIORegisters::APU_IO_START, APUIORegisters::APU_IO_END)) {
+		return apu;
 	}
 
 	return {};

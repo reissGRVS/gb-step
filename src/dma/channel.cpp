@@ -101,6 +101,16 @@ void Channel::UpdateDetails(U16 value)
 
 }
 
+void Channel::DoSoundTransfer(){
+
+	for (int i = 0; i < 4; i++)
+	{
+		memory->Write(Word, dest, memory->Read(Word, source, SEQ), SEQ);
+		source += srcStep;
+	}
+	active = false;
+}
+
 void Channel::DoTransferStep()
 {
 	if (wordCount > 0) {
