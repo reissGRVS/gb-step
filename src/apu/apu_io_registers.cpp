@@ -11,19 +11,17 @@ U32 APU::Read(const AccessSize& size, U32 address, const Sequentiality&) {
 
 void APU::Write(const AccessSize& size, U32 address, U32 value, const Sequentiality&) {
 
-	if (address == FIFO_A) 
+	if (address == FIFO_A || address == FIFO_A+2) 
 	{
 		fifo[0].Push((S8)BIT_RANGE(value, 0, 7));
 		fifo[0].Push((S8)BIT_RANGE(value, 8, 15));
-		fifo[0].Push((S8)BIT_RANGE(value, 16, 23));
-		fifo[0].Push((S8)BIT_RANGE(value, 24, 31));
 	}
-	if (address == FIFO_B) 
+
+
+	if (address == FIFO_B || address == FIFO_B+2) 
 	{
 		fifo[1].Push((S8)BIT_RANGE(value, 0, 7));
 		fifo[1].Push((S8)BIT_RANGE(value, 8, 15));
-		fifo[1].Push((S8)BIT_RANGE(value, 16, 23));
-		fifo[1].Push((S8)BIT_RANGE(value, 24, 31));
 	}
 	U32 actualIndex = address - APU_IO_START;
 	WriteToSize(registers, actualIndex, value, size);

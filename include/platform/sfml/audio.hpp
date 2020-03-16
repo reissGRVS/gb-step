@@ -12,63 +12,37 @@ public:
 	static const U32 sampleFreq = 32768;
 	AudioStream()
 	{
-		initialize(1u, sampleFreq);
+		initialize(2u, sampleFreq);
 	}
 	bool playing = false;
 	void PushOne(const S16& value)
 	{
-		if (!playing)
-		{
-			samples.Push(value * 10);
-			if (samples.IsFull()) 
-			{
-				play();
-				playing = true;
-			}
-		}
-		
-
+		samples.Push(value);	
 	}
 
-	static const U32 BUFFER_SIZE = sampleFreq*10;
+	static const U32 BUFFER_SIZE = 10000;
 private:
 
     virtual bool onGetData(Chunk& data)
     {
-		
-		if (samples.IsFull())
+		if (samples.Size() < (BUFFER_SIZE/2))
 		{
-			data.sampleCount = BUFFER_SIZE;
-			data.samples = samples.elems;
-			samples.Reset();
-			return true;
+			data.samples = emptyBuffer.data();
+		 	data.sampleCount = BUFFER_SIZE/10;
+		 	return true;
 		}
 		else
 		{
-			return false;
+			data.sampleCount = (BUFFER_SIZE/2);
+			U16 i = 0;
+			while (samples.IsEmpty() == false && i < (BUFFER_SIZE/2u))
+			{
+				buffer[i] = samples.Pop();
+				i++;
+			}
+			data.samples = buffer.data();
+			return true;
 		}
-		
-
-
-		// if (samples.Size() < (BUFFER_SIZE/2))
-		// {
-		// 	data.samples = emptyBuffer.data();
-		//  	data.sampleCount = BUFFER_SIZE/10;
-		// 	std::cout << "empty" << std::endl;
-		//  	return false;
-		// }
-		// else
-		// {
-		// 	data.sampleCount = (BUFFER_SIZE/2);
-		// 	U16 i = 0;
-		// 	while (samples.IsEmpty() == false && i < (BUFFER_SIZE/2u))
-		// 	{
-		// 		buffer[i] = samples.Pop();
-		// 		i++;
-		// 	}
-		// 	data.samples = buffer.data();
-		// 	return true;
-		// }
     }
 
     virtual void onSeek(sf::Time)

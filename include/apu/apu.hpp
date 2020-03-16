@@ -19,7 +19,7 @@ public:
 		audioStream.play();
 	}
 
-	std::ofstream out{"gba_left.raw", std::ios::binary};
+	std::ofstream out{"gba.raw", std::ios::binary};
 
 	U32 Read(const AccessSize& size,
 		U32 address,
@@ -62,8 +62,8 @@ public:
 	void Sample()
 	{
 		//todo: fix
-		//auto soundBias = Read(AccessSize::Half, SOUNDBIAS, Sequentiality::FREE);
-		//auto biasLevel = BIT_RANGE(soundBias, 1, 9);
+		auto soundBias = Read(AccessSize::Half, SOUNDBIAS, Sequentiality::FREE);
+		auto biasLevel = BIT_RANGE(soundBias, 1, 9);
 		//auto amplitudeRes = BIT_RANGE(soundBias, 14, 15);
 		auto soundCntH = Read(AccessSize::Half, SOUNDCNT_H, Sequentiality::FREE);
 		auto soundAVolume = BIT_RANGE(soundCntH, 2, 2) ? 4 : 2;
@@ -76,20 +76,26 @@ public:
 		S16 rightSample = 0;
 		if (soundAEnableRight) rightSample += lastSample[0] * soundAVolume;
 		if (soundBEnableRight) rightSample += lastSample[1] * soundBVolume;
-		// rightSample += biasLevel;
+		rightSample += biasLevel;
 		if (rightSample < 0) rightSample = 0;
 		if (rightSample > 0x3FF) rightSample = 0x3FF;
-		// rightSample -= 0x200;
+		rightSample -= 0x200;
 
 		S16 leftSample = 0;
 		if (soundAEnableLeft) leftSample += lastSample[0] * soundAVolume;
 		if (soundBEnableLeft) leftSample += lastSample[1] * soundBVolume;
-		// leftSample += biasLevel;
-		if (leftSample < 0) leftSample = 0u;
+		leftSample += biasLevel;
+		if (leftSample < 0) leftSample = 0;
 		if (leftSample > 0x3FF) leftSample = 0x3FF;
-		// leftSample -= 0x200;
+		leftSample -= 0x200;
 
-		//audioStream.PushOne(rightSample);
+		rightSample *= 20;
+		leftSample *= 20;
+		out.write(reinterpret_cast<char const *>(&rightSample),
+			sizeof rightSample);
+		out.write(reinterpret_cast<char const *>(&leftSample),
+			sizeof leftSample);
+		audioStream.PushOne(rightSample);
 		audioStream.PushOne(leftSample);
 	}
 

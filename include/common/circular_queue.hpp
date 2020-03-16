@@ -1,5 +1,5 @@
 #pragma once
-
+#include <iostream>
 template <class T, size_t N>
 class CircularQueue {
 	public:

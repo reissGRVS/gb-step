@@ -105,7 +105,8 @@ void Channel::DoSoundTransfer(){
 
 	for (int i = 0; i < 4; i++)
 	{
-		memory->Write(Word, dest, memory->Read(Word, source, SEQ), SEQ);
+		U32 readVal = memory->Read(Word, source, SEQ);
+		memory->Write(Word, dest, readVal, SEQ);
 		source += srcStep;
 	}
 	active = false;
