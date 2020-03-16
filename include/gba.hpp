@@ -35,8 +35,16 @@ public:
             std::bind(&DMA::Controller::EventCallback, dma,
                       DMA::Controller::Event::VBLANK, std::placeholders::_1))),
         debugger(memory), 
-		timers(std::make_shared<Timers>(std::static_pointer_cast<IRQChannel>(cpu))) 
+		apu(std::make_shared<APU>(
+			std::bind(&DMA::Controller::EventCallback, dma, DMA::Controller::Event::FIFOA, true),
+			std::bind(&DMA::Controller::EventCallback, dma, DMA::Controller::Event::FIFOB, true))),
+		timers(std::make_shared<Timers>(
+			std::static_pointer_cast<IRQChannel>(cpu),
+			std::bind(&APU::FIFOUpdate, apu, std::placeholders::_1)
+		))
+		
 		{
+
     memory->SetDebugWriteCallback(std::bind(&Debugger::NotifyMemoryWrite,
                                             &debugger, std::placeholders::_1));
 
@@ -67,6 +75,7 @@ public:
       auto ticks = sysClock->SinceLastCheck();
       ppu->Execute(ticks);
       timers->Update(ticks);
+	  apu->Tick(ticks);
     }
   };
 
@@ -77,7 +86,7 @@ private:
   std::shared_ptr<ARM7TDMI::CPU> cpu;
   std::shared_ptr<DMA::Controller> dma;
   std::shared_ptr<PPU> ppu;
-  std::shared_ptr<APU> apu;
   Debugger debugger;
+  std::shared_ptr<APU> apu;
   std::shared_ptr<Timers> timers;
 };

@@ -1,7 +1,7 @@
 #include "timers/timers.hpp"
 
-Timers::Timers(std::shared_ptr<IRQChannel> irqChannel)
-	: irqChannel(irqChannel)
+Timers::Timers(std::shared_ptr<IRQChannel> irqChannel, std::function<void(U8)> apuCallback)
+	: irqChannel(irqChannel), apuCallback(apuCallback)
 {
 }
 
@@ -32,6 +32,11 @@ void Timers::Update(const U32 ticks)
 			if (overflow && timers[timerIndex].irqEnable) {
 				
 				irqChannel->RequestInterrupt(timerInterrupts[timerIndex]);
+			}
+
+			if (overflow && (timerIndex == 0 || timerIndex == 1))
+			{
+				apuCallback(timerIndex);
 			}
 		}
 		ticksToOverflowKnown = false;

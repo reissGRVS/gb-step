@@ -4,6 +4,14 @@ template <class T, size_t N>
 class CircularQueue {
 	public:
 
+
+		void Reset()
+		{
+			elems_count = 0;
+			startIndex = 0;
+			endIndex = 0;
+		}
+
 		bool IsEmpty()
 		{
 			return elems_count == 0;
@@ -14,10 +22,15 @@ class CircularQueue {
 			return elems_count == N;
 		}
 
+		size_t Size()
+		{
+			return elems_count;
+		}
+
 		T Pop()
 		{
 			if (IsEmpty())
-				return 0;
+				return (T) 0;
 
 			T val = elems[startIndex];
 			startIndex++;
@@ -30,6 +43,7 @@ class CircularQueue {
 			return val;
 		}
 
+		
 		void Push(T val)
 		{
 			if (IsFull())
@@ -44,9 +58,9 @@ class CircularQueue {
 			elems_count++;
 		}
 
+		T elems[N] = {0};
 	private:
 		size_t elems_count = 0;
 		size_t startIndex = 0;
 		size_t endIndex = 0;
-		T elems[N];
 };

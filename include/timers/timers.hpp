@@ -2,6 +2,7 @@
 
 #include <array>
 #include <memory>
+#include <functional>
 
 #include "arm7tdmi/irq_channel.hpp"
 #include "memory/regions.hpp"
@@ -11,7 +12,7 @@
 
 class Timers : public TimersIORegisters {
 public:
-	Timers(std::shared_ptr<IRQChannel> irqChannel);
+	Timers(std::shared_ptr<IRQChannel> irqChannel, std::function<void(U8)> apuCallback);
 	virtual ~Timers() = default;
 	void Update(const U32 ticks);
 	void SetReloadValue(U8 id, U16 value);
@@ -27,7 +28,8 @@ public:
 
 private:
 	std::shared_ptr<IRQChannel> irqChannel;
-	
+	std::function<void(U8)> apuCallback;
+
 	U32 heldTicks;
 	U32 minTicks;
 	bool ticksToOverflowKnown = false;
