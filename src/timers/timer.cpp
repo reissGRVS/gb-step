@@ -20,7 +20,7 @@ void Timer::UpdateCntH(U16 value)
 
 U32 Timer::CounterUpdate(U32 ticks)
 {
-	const U32 MAX_COUNT = 0x1000;
+	const U32 MAX_COUNT = 0x10000;
 	U32 overflow = 0;
 	if (ticksLeft <= ticks) {
 		ticks -= ticksLeft;

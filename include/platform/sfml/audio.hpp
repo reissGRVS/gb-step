@@ -20,7 +20,7 @@ public:
 		samples.Push(value);	
 	}
 
-	static const U32 BUFFER_SIZE = 10000;
+	static const U32 BUFFER_SIZE = sampleFreq/2;
 private:
 
     virtual bool onGetData(Chunk& data)

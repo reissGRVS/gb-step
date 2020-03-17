@@ -30,7 +30,7 @@ public:
 		const Sequentiality&) override;
 
 
-	U16 tickThreshold = 512;
+	const U32 tickThreshold = 512;
 	void Tick(U32 t)
 	{
 		ticks += t;
