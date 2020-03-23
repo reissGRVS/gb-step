@@ -4,15 +4,14 @@
 #include "common/circular_queue.hpp"
 #include "int.hpp"
 #include "utils.hpp"
-#include <iostream>
 
 class AudioStream : public sf::SoundStream
 {
 public:
-	static const U32 sampleFreq = 32768;
+	static const U32 SAMPLE_FREQ = 32768;
 	AudioStream()
 	{
-		initialize(2u, sampleFreq);
+		initialize(2u, SAMPLE_FREQ);
 	}
 	bool playing = false;
 	void PushOne(const S16& value)
@@ -20,7 +19,7 @@ public:
 		samples.Push(value);	
 	}
 
-	static const U32 BUFFER_SIZE = sampleFreq/2;
+	static const U32 BUFFER_SIZE = SAMPLE_FREQ/2;
 private:
 
     virtual bool onGetData(Chunk& data)

@@ -7,40 +7,20 @@ Timers::Timers(std::shared_ptr<IRQChannel> irqChannel, std::function<void(U8)> a
 
 void Timers::Update(const U32 ticks)
 {
-	heldTicks += ticks;
-	
-	if (!ticksToOverflowKnown)
-	{
-		U32 curMinTicks = 0xFFFFFFFF;
-		for (auto& timer : timers)
+
+	U32 overflow = 0;
+	for (auto timerIndex = 0u; timerIndex < 4u; timerIndex++) {
+		overflow = timers[timerIndex].Update(ticks, overflow);
+
+		if (overflow && timers[timerIndex].irqEnable) {
+			
+			irqChannel->RequestInterrupt(timerInterrupts[timerIndex]);
+		}
+
+		if (overflow && (timerIndex == 0 || timerIndex == 1))
 		{
-			if (timer.ticksLeft < curMinTicks)
-			{
-				curMinTicks = timer.ticksLeft;
-			}
+			apuCallback(timerIndex);
 		}
-		minTicks = curMinTicks;
-		ticksToOverflowKnown = true;
-	}
-
-	if (heldTicks >= minTicks)
-	{
-		U32 overflow = 0;
-		for (auto timerIndex = 0u; timerIndex < 4u; timerIndex++) {
-			overflow = timers[timerIndex].Update(heldTicks, overflow);
-
-			if (overflow && timers[timerIndex].irqEnable) {
-				
-				irqChannel->RequestInterrupt(timerInterrupts[timerIndex]);
-			}
-
-			if (overflow && (timerIndex == 0 || timerIndex == 1))
-			{
-				apuCallback(timerIndex);
-			}
-		}
-		ticksToOverflowKnown = false;
-		heldTicks = 0;
 	}
 }
 

@@ -191,7 +191,7 @@ Op CPU::ArmOperation(OpCode opcode) {
       return ArmSWI_P();
     } else {
       spdlog::get("std")->error("Attempting CoProc???");
-      exit(-1);
+	  return ArmUndefined_P();
     }
   }
   default: {
