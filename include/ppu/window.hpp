@@ -2,6 +2,7 @@
 
 #include "utils.hpp"
 #include "int.hpp"
+#include <iostream>
 
 enum WindowID {
 	Win0,
@@ -21,17 +22,22 @@ struct Window {
 	{
 		X2 = BIT_RANGE(value, 0, 7);
 		X1 = BIT_RANGE(value, 8, 15);
+
+		if (X2 > 240 || X1 > X2) X2 = 240;
+
 	}
-	U8 X1;
-	U8 X2;
+	U16 X1;
+	U16 X2;
 
 	void SetYValues(U16 value)
 	{
 		Y2 = BIT_RANGE(value, 0, 7);
 		Y1 = BIT_RANGE(value, 8, 15);
+
+		if (Y2 > 160 || Y1 > Y2) Y2 = 160;
 	}
-	U8 Y1;
-	U8 Y2;
+	U16 Y1;
+	U16 Y2;
 
 
 	void SetSettings(U8 value)

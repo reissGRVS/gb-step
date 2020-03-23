@@ -160,9 +160,14 @@ void PPU::SetObjPixel(OptPixel& pixel, U32 fbPos, U8 objMode, U16 prio)
 {
 	if (pixel)
 	{
+		if (objMode == 2)
+		{
+			objFb[fbPos].mask = true;
+			return;	
+		}
+
 		objFb[fbPos].pixel = pixel;
 		objFb[fbPos].prio = prio;
 		objFb[fbPos].transparency = (objMode == 1);
-		objFb[fbPos].mask = (objMode == 2);
 	}
 }

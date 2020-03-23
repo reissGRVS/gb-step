@@ -3,21 +3,54 @@
 #include "spdlog/spdlog.h"
 #include "utils.hpp"
 #include <map>
-
+#include <iostream>
 
 const Window& PPU::GetActiveWindow(U16 x, U16 y)
 {
-	if (windows[WindowID::Win0].InRange(x,y)) return windows[WindowID::Win0];
-	if (windows[WindowID::Win1].InRange(x,y)) return windows[WindowID::Win1];
+
+	if (windows[WindowID::Win0].InRange(x,y) && dispCnt.win0Display) 
+	{
+		return windows[WindowID::Win0];
+	}
+	if (windows[WindowID::Win1].InRange(x,y) && dispCnt.win1Display) 
+	{
+		return windows[WindowID::Win1];
+	}
 
 	auto fbIndex = (y * Screen::SCREEN_WIDTH + x);
-	if (objFb[fbIndex].mask) return windows[WindowID::Obj];
+	if (objFb[fbIndex].mask && dispCnt.objWindowDisplay) 
+	{
+		return windows[WindowID::Obj];
+	}
 
-	return windows[WindowID::Outside];
+	if (dispCnt.objWindowDisplay || dispCnt.win0Display || dispCnt.win1Display)
+		return windows[WindowID::Outside];
+	else
+		return fullyEnabledWindow;
 }
 
 void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 {
+
+	//Refresh Window values
+	{
+		auto winIn = GET_HALF(WININ);
+		auto winOut = GET_HALF(WINOUT);
+
+		windows[WindowID::Win0].SetXValues(GET_HALF(WIN0H));
+		windows[WindowID::Win0].SetYValues(GET_HALF(WIN0V));
+		windows[WindowID::Win0].SetSettings(BIT_RANGE(winIn, 0, 5));
+
+		windows[WindowID::Win1].SetXValues(GET_HALF(WIN1H));
+		windows[WindowID::Win1].SetYValues(GET_HALF(WIN1V));
+		windows[WindowID::Win1].SetSettings(BIT_RANGE(winIn, 8, 13));
+
+		windows[WindowID::Outside].SetSettings(BIT_RANGE(winOut, 0, 5));
+
+		windows[WindowID::Obj].SetSettings(BIT_RANGE(winOut, 8, 13));
+	}
+
+
 	const auto y = GET_HALF(VCOUNT);
 	const U16 fbIndex = y * Screen::SCREEN_WIDTH;
 

@@ -131,7 +131,9 @@ private:
 	std::function<void(bool)> VBlankCallback;
 
 	
-	std::array<Window, 4> windows;
+	Window fullyEnabledWindow = Window{0, 255, 0, 255, {true, true, true, true}, true, true};
+	
+	std::array<Window, 4> windows {};
 
 	struct ObjPixel {
 		OptPixel pixel;

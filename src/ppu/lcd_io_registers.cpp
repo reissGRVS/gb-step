@@ -1,5 +1,6 @@
 #include "ppu/ppu.hpp"
 #include "spdlog/spdlog.h"
+#include <iostream>
 
 U32 PPU::Read(const AccessSize& size, U32 address, const Sequentiality&) {
   U32 actualIndex = address - LCD_IO_START;
@@ -11,5 +12,36 @@ U32 PPU::Read(const AccessSize& size, U32 address, const Sequentiality&) {
 void PPU::Write(const AccessSize& size, U32 address, U32 value, const Sequentiality&) {
   U32 actualIndex = address - LCD_IO_START;
 
+
+
+  if (size == Half)
+  {
+	  switch (address)
+	  {
+		case WIN0H: windows[WindowID::Win0].SetXValues(value); break;
+		case WIN0V: windows[WindowID::Win0].SetYValues(value); break;
+		case WIN1H: windows[WindowID::Win1].SetXValues(value); break;
+		case WIN1V: windows[WindowID::Win1].SetYValues(value); break;
+		case WININ:
+		{
+			windows[WindowID::Win0].SetSettings(BIT_RANGE(value, 0, 5));
+			windows[WindowID::Win1].SetSettings(BIT_RANGE(value, 8, 13));
+			break;
+		}
+		case WINOUT:
+		{
+			windows[WindowID::Outside].SetSettings(BIT_RANGE(value, 0, 5));
+			windows[WindowID::Obj].SetSettings(BIT_RANGE(value, 8, 13));
+			break;
+		}
+		default:
+			break;
+	  }
+  }
+  else if (size == Byte && address >= WIN0H	&& address <= WINOUT+2)
+  {
+	  std::cout << "Byte window write needs implemented" << std::endl;
+	  exit(01);
+  }
   WriteToSize(registers, actualIndex, value, size);
 }
