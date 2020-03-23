@@ -83,10 +83,7 @@ void PPU::ToVBlank()
 	DrawObjects();
 	screen.render(fb);
 	fb.fill(memory->GetHalf(PRAM_START));
-	depth.fill(MAX_DEPTH);
-	secondtarget.fill(false);
 	
-
 	// Set VBlank flag and Request Interrupt
 	UpdateDispStat(VBlankFlag, true);
 

@@ -20,14 +20,14 @@ U16 PPU::GetBgColorFromPalette(const U8& colorID,
 	return memory->GetHalf(colorID * 2 + paletteStart);
 }
 
-void PPU::SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest)
+void PPU::SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest, BldCnt::ColorSpecialEffect effect)
 {
 	if (!firstPrioPixel.has_value())
 		return;
 
 	Pixel firstPixel{firstPrioPixel.value()};
 
-	switch (bldCnt.colorSpecialEffect)
+	switch (effect)
 	{
 		case BldCnt::None:
 		{

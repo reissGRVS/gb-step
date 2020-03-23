@@ -67,7 +67,7 @@ private:
 	void DrawObjects();
 	void InitTempSprite(ObjAttributes objAttrs);
 	void DrawObject(ObjAttributes objAttrs);
-	void SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency);
+	void SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency, U16 prio);
 
 	std::array<OptPixel, 64*64> tempSprite = {};
 
@@ -91,7 +91,7 @@ private:
 	U16 GetBgColorFromPalette(const U8& colorID,
 		bool obj = false);
 
-	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest);
+	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest, BldCnt::ColorSpecialEffect effect);
 	
 	template <typename T>
 	void FetchDecode8BitPixel(U32 address, T& dest, bool obj)
@@ -125,9 +125,18 @@ private:
 	std::function<void(bool)> HBlankCallback;
 	std::function<void(bool)> VBlankCallback;
 
-	Screen::Framebuffer depth{ 4 };
-	std::array<bool, Screen::SCREEN_TOTAL> secondtarget{ false };
+	
+	struct ObjPixel {
+		OptPixel pixel;
+		U16 prio;
+		bool transparency;
+	};
+
+	const ObjPixel emptyObjPixel {{}, 5, false};
+
+	std::array<ObjPixel, Screen::SCREEN_TOTAL> objFb;
 	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
+
 	Screen::Framebuffer fb{};
 	State state = Visible;
 	U32 tickCount = 0;

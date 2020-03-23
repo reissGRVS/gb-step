@@ -12,39 +12,69 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 		auto pos = fbIndex + x;
 
 		OptPixel firstPrioPixel = {};
+		U16 firstPrio = 5;
 		OptPixel secondPrioPixel = {};
+		U16 secondPrio = 5;
 		bool applyEffects = false;
 		
-		//Find highest priority pixel, and second if alphablending is enabled
+		//Find highest priority background pixel, and second if alphablending is enabled
 		for (const auto& bg : bgOrder) {
 			if (rows[bg][x].has_value()) {
 				if (!firstPrioPixel.has_value())
 				{
+					firstPrio = GetLayerPriority(bg);
 					firstPrioPixel = rows[bg][x];
-					depth[pos] = GetLayerPriority(bg);
-					secondtarget[pos] = bldCnt.secondTarget[bg];
 					applyEffects = bldCnt.firstTarget[bg];
 				}
 				else if (bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
 				{
 					//If next found pixel is a blend target keep track of it
 					if (bldCnt.secondTarget[bg])
+					{
 						secondPrioPixel = rows[bg][x];
+						secondPrio = GetLayerPriority(bg);
+					}
 					break;
 				}
 			}
 		}
 
+		//if objPixel is greater than first replace first and push first to second if applicable
+		ObjPixel objPixel = objFb[pos];
+		bool forceBlend = false;
+		if (objPixel.prio <= firstPrio)
+		{
+			applyEffects = bldCnt.firstTarget[BldCnt::TargetLayer::Sprites];
+			forceBlend = objPixel.transparency;
+			if (forceBlend || bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
+			{
+				secondPrioPixel = firstPrioPixel;
+			}
+			firstPrioPixel = objPixel.pixel;
+		}
+		else if (objPixel.prio <= secondPrio)
+		{
+			if (bldCnt.secondTarget[BldCnt::TargetLayer::Sprites])
+				secondPrioPixel = objPixel.pixel;
+			else
+				secondPrioPixel = {};
+		}
+		//else if objPixel is greater than second replace second if applicable
+
 
 		if (firstPrioPixel.has_value())
 		{	
-			if (!applyEffects || bldCnt.colorSpecialEffect == BldCnt::None)
+			if (forceBlend)
+			{
+				SetSFXPixel(firstPrioPixel, secondPrioPixel, fb[pos], BldCnt::AlphaBlending);
+			}
+			else if (!applyEffects || bldCnt.colorSpecialEffect == BldCnt::None)
 			{
 				fb[pos] = firstPrioPixel.value();
 			}
 			else
 			{
-				SetSFXPixel(firstPrioPixel, secondPrioPixel, fb[pos]);
+				SetSFXPixel(firstPrioPixel, secondPrioPixel, fb[pos], bldCnt.colorSpecialEffect);
 			}
 		}
 

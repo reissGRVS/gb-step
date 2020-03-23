@@ -13,6 +13,7 @@ const U16 MAX_SPRITE_X = 512, MAX_SPRITE_Y = 256;
 
 void PPU::DrawObjects()
 {
+	objFb.fill(emptyObjPixel);
 	for (S32 i = OAM_ENTRIES - 1; i >= 0; i--) {
 		auto objAddress = OAM_START + (i * 8);
 		auto objAttr0 = memory->GetHalf(objAddress);
@@ -143,10 +144,10 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 			U16 fbX = (startX + x) % MAX_SPRITE_X;
 			if (fbX < Screen::SCREEN_WIDTH && fbY < Screen::SCREEN_HEIGHT) {
 				auto fbPos = fbX + (Screen::SCREEN_WIDTH * fbY);
-				if (depth[fbPos] < objAttrs.attr2.b.priority) {
+				if (objFb[fbPos].prio < objAttrs.attr2.b.priority) {
 					continue;
 				}
-				SetObjPixel(tempSprite[tempSpriteIndex], fbPos, objAttrs.attr0.b.objMode);
+				SetObjPixel(tempSprite[tempSpriteIndex], fbPos, objAttrs.attr0.b.objMode, objAttrs.attr2.b.priority);
 			}
 		}
 
@@ -155,32 +156,12 @@ void PPU::DrawObject(ObjAttributes objAttrs)
 	}
 }
 
-void PPU::SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency)
+void PPU::SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency, U16 prio)
 {
 	if (pixel)
 	{
-		//Find blending target pixel if exists
-		OptPixel secondPixel = {};
-		if (secondtarget[fbPos])
-		{
-			secondPixel = fb[fbPos];
-		}
-		
-		//Semi-transparent OBJ SFX override
-		if (objectTransparency && pixel && secondPixel)
-		{
-			Pixel blended = pixel.value();
-			blended.Blend({secondPixel.value()}, eva, evb);
-			fb[fbPos] = blended.Value();
-		}
-		else if (bldCnt.firstTarget[BldCnt::TargetLayer::Sprites])
-		{
-			SetSFXPixel(pixel, secondPixel, fb[fbPos]);
-		}
-		else
-		{
-			fb[fbPos] = pixel.value();
-		}
-		
+		objFb[fbPos].pixel = pixel;
+		objFb[fbPos].prio = prio;
+		objFb[fbPos].transparency = objectTransparency;
 	}
 }
