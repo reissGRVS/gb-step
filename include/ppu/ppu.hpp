@@ -5,8 +5,10 @@
 #include "ppu/bg_control_info.hpp"
 #include "ppu/blend_control.hpp"
 #include "ppu/lcd_io_registers.hpp"
+#include "ppu/lcd_control.hpp"
 #include "ppu/obj_attributes.hpp"
 #include "ppu/tile_info.hpp"
+#include "ppu/window.hpp"
 #include "screen.hpp"
 #include "utils.hpp"
 #include "memory/regions.hpp"
@@ -59,15 +61,18 @@ private:
 	// Draw Control
 	void MergeRows(std::vector<uint8_t>& bgOrder);
 	void DrawLine();
+	const Window& GetActiveWindow(U16 x, U16 y);
 	uint8_t GetLayerPriority(uint8_t layer);
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
 		uint8_t screenDisplay);
 
+	DispCnt dispCnt{0};
+	
 	// Objects
 	void DrawObjects();
 	void InitTempSprite(ObjAttributes objAttrs);
 	void DrawObject(ObjAttributes objAttrs);
-	void SetObjPixel(OptPixel& pixel, U32 fbPos, bool objectTransparency, U16 prio);
+	void SetObjPixel(OptPixel& pixel, U32 fbPos, U8 objectTransparency, U16 prio);
 
 	std::array<OptPixel, 64*64> tempSprite = {};
 
@@ -126,13 +131,16 @@ private:
 	std::function<void(bool)> VBlankCallback;
 
 	
+	std::array<Window, 4> windows;
+
 	struct ObjPixel {
 		OptPixel pixel;
 		U16 prio;
 		bool transparency;
+		bool mask;
 	};
 
-	const ObjPixel emptyObjPixel {{}, 5, false};
+	const ObjPixel emptyObjPixel {{}, 5, false, false};
 
 	std::array<ObjPixel, Screen::SCREEN_TOTAL> objFb;
 	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
@@ -150,3 +158,4 @@ private:
 
 	const U16 MAX_DEPTH = 4;
 };
+

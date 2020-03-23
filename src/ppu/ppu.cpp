@@ -101,6 +101,8 @@ void PPU::OnVBlankLineFinish()
 		UpdateDispStat(VBlankFlag, false);
 	}
 	if (vCount >= TOTAL_LINES) {
+		//TODO: Move these too own functions
+
 		//Reload RotScale registers
 		{
 			for (auto bgId = 2; bgId <= 3; bgId++)
@@ -123,6 +125,23 @@ void PPU::OnVBlankLineFinish()
 			if (evy > 16) {evy = 16;}
 		}
 
+		//Refresh Window values
+		{
+			auto winIn = GET_HALF(WININ);
+			auto winOut = GET_HALF(WINOUT);
+
+			windows[WindowID::Win0].SetXValues(GET_HALF(WIN0H));
+			windows[WindowID::Win0].SetYValues(GET_HALF(WIN0V));
+			windows[WindowID::Win0].SetSettings(BIT_RANGE(winIn, 0, 5));
+
+			windows[WindowID::Win1].SetXValues(GET_HALF(WIN1H));
+			windows[WindowID::Win1].SetYValues(GET_HALF(WIN1V));
+			windows[WindowID::Win1].SetSettings(BIT_RANGE(winIn, 8, 13));
+
+			windows[WindowID::Outside].SetSettings(BIT_RANGE(winOut, 0, 5));
+
+			windows[WindowID::Obj].SetSettings(BIT_RANGE(winOut, 8, 13));
+		}
 
 		memory->SetHalf(VCOUNT, 0);
 		VBlankCallback(false);

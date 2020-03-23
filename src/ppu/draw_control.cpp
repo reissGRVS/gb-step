@@ -4,13 +4,28 @@
 #include "utils.hpp"
 #include <map>
 
+
+const Window& PPU::GetActiveWindow(U16 x, U16 y)
+{
+	if (windows[WindowID::Win0].InRange(x,y)) return windows[WindowID::Win0];
+	if (windows[WindowID::Win1].InRange(x,y)) return windows[WindowID::Win1];
+
+	auto fbIndex = (y * Screen::SCREEN_WIDTH + x);
+	if (objFb[fbIndex].mask) return windows[WindowID::Obj];
+
+	return windows[WindowID::Outside];
+}
+
 void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 {
-	const U16 fbIndex = GET_HALF(VCOUNT) * Screen::SCREEN_WIDTH;
+	const auto y = GET_HALF(VCOUNT);
+	const U16 fbIndex = y * Screen::SCREEN_WIDTH;
 
 	for (auto x = 0u; x < Screen::SCREEN_WIDTH; x++) {
 		auto pos = fbIndex + x;
-
+		
+		const Window& activeWindow = GetActiveWindow(x, y);
+		
 		OptPixel firstPrioPixel = {};
 		U16 firstPrio = 5;
 		OptPixel secondPrioPixel = {};
@@ -19,6 +34,8 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 		
 		//Find highest priority background pixel, and second if alphablending is enabled
 		for (const auto& bg : bgOrder) {
+			if (!activeWindow.bgEnable[bg]) continue;
+
 			if (rows[bg][x].has_value()) {
 				if (!firstPrioPixel.has_value())
 				{
@@ -39,28 +56,33 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 			}
 		}
 
-		//if objPixel is greater than first replace first and push first to second if applicable
-		ObjPixel objPixel = objFb[pos];
 		bool forceBlend = false;
-		if (objPixel.prio <= firstPrio)
-		{
-			applyEffects = bldCnt.firstTarget[BldCnt::TargetLayer::Sprites];
-			forceBlend = objPixel.transparency;
-			if (forceBlend || bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
-			{
-				secondPrioPixel = firstPrioPixel;
-			}
-			firstPrioPixel = objPixel.pixel;
-		}
-		else if (objPixel.prio <= secondPrio)
-		{
-			if (bldCnt.secondTarget[BldCnt::TargetLayer::Sprites])
-				secondPrioPixel = objPixel.pixel;
-			else
-				secondPrioPixel = {};
-		}
-		//else if objPixel is greater than second replace second if applicable
 
+		//Check if obj is higher priority than selected layers
+		if (activeWindow.objEnable)
+		{
+			ObjPixel objPixel = objFb[pos];
+			
+			if (objPixel.prio <= firstPrio)
+			{
+				applyEffects = bldCnt.firstTarget[BldCnt::TargetLayer::Sprites];
+				forceBlend = objPixel.transparency;
+				if (forceBlend || bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
+				{
+					secondPrioPixel = firstPrioPixel;
+				}
+				firstPrioPixel = objPixel.pixel;
+			}
+			else if (objPixel.prio <= secondPrio)
+			{
+				if (bldCnt.secondTarget[BldCnt::TargetLayer::Sprites])
+					secondPrioPixel = objPixel.pixel;
+				else
+					secondPrioPixel = {};
+			}
+		}
+
+		if (!activeWindow.sfxEnable) applyEffects = false; //TODO: should this override forceblend?
 
 		if (firstPrioPixel.has_value())
 		{	
@@ -84,10 +106,10 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 void PPU::DrawLine()
 {
 	auto vCount = GET_HALF(VCOUNT);
-	auto dispCnt = GET_HALF(DISPCNT);
-	auto screenDisplay = BIT_RANGE(dispCnt, 8, 11);
-	auto bgMode = BIT_RANGE(dispCnt, 0, 2);
-	auto frame = BIT_RANGE(dispCnt, 4, 4);
+	dispCnt = DispCnt(GET_HALF(DISPCNT));
+	auto screenDisplay = dispCnt.screenDisplay;
+	auto bgMode = dispCnt.bgMode;
+	auto frame = dispCnt.frameSelect;
 	for (auto& row : rows)
 	{
 		row.fill({});
