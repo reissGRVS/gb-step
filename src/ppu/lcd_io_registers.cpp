@@ -34,11 +34,18 @@ void PPU::Write(const AccessSize& size, U32 address, U32 value, const Sequential
 			windows[WindowID::Obj].SetSettings(BIT_RANGE(value, 8, 13));
 			break;
 		}
+		case MOSAIC:
+		{
+			mosaic.bgHSize = BIT_RANGE(value, 0, 3) + 1;
+			mosaic.bgVSize = BIT_RANGE(value, 4, 7) + 1;
+			mosaic.objHSize = BIT_RANGE(value, 8, 11) + 1;
+			mosaic.objVSize = BIT_RANGE(value, 12, 15) + 1;
+		}
 		default:
 			break;
 	  }
   }
-  else if (size == Byte && address >= WIN0H	&& address <= WINOUT+2)
+  else if (size == Byte && address >= WIN0H	&& address <= MOSAIC+2)
   {
 	  std::cout << "Byte window write needs implemented" << std::endl;
 	  exit(01);

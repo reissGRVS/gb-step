@@ -49,6 +49,13 @@ private:
 
 	using OptPixel = std::optional<U16>;
 
+	struct Mosaic {
+		U8 bgHSize;
+		U8 bgVSize;
+		U8 objHSize;
+		U8 objVSize;
+	} mosaic;
+
 	// State Management
 	void ToHBlank();
 	void OnHBlankFinish();
@@ -66,6 +73,7 @@ private:
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
 		uint8_t screenDisplay);
 
+	BGControlInfo bgCnt[4] = {BGControlInfo(0,0),BGControlInfo(0,0),BGControlInfo(0,0),BGControlInfo(0,0)};
 	DispCnt dispCnt{0};
 	
 	// Objects

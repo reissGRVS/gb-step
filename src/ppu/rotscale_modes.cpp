@@ -15,16 +15,20 @@ const U32 BGPD[2] = { BG2PD, BG3PD };
 
 void PPU::RotScaleBGLine(const U32& BG_ID)
 {
-	auto bgCnt = BGControlInfo(BG_ID,  GET_HALF(BGCNT[BG_ID]));
+	bgCnt[BG_ID].UpdateValue(GET_HALF(BGCNT[BG_ID]));
 
 	auto dx = (S16)GET_HALF(BGPA[BG_ID-2]);
 	auto dmx = (S16)GET_HALF(BGPB[BG_ID-2]);
 	auto dy = (S16)GET_HALF(BGPC[BG_ID-2]);
 	auto dmy = (S16)GET_HALF(BGPD[BG_ID-2]);
 
-	auto [maxX, maxY] = ROTSCALE_BGMAP_SIZES[bgCnt.screenSize];
+	auto [maxX, maxY] = ROTSCALE_BGMAP_SIZES[bgCnt[BG_ID].screenSize];
 
 	auto y = GET_HALF(VCOUNT);
+	//floor to mosaic
+	if (bgCnt[BG_ID].mosaic)
+		y = (y/mosaic.bgVSize)*mosaic.bgVSize;
+
 	auto refx = bgXRef[BG_ID-2] + (y * (S32)dmx);
 	auto refy = bgYRef[BG_ID-2] + (y * (S32)dmy);
 	for (auto rowX = 0u; rowX < Screen::SCREEN_WIDTH; rowX++) {
@@ -38,7 +42,7 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 
 		if (x >= maxX || y >= maxY || negativeCoords)
 		{
-			if (bgCnt.wrapAround)
+			if (bgCnt[BG_ID].wrapAround)
 			{
 				x %= maxX;
 				y %= maxY;
@@ -59,9 +63,9 @@ void PPU::RotScaleBGLine(const U32& BG_ID)
 
 
 		//Draw Pixel
-		auto tileNumber = memory->GetByte(bgCnt.mapDataBase + mapIndex);
+		auto tileNumber = memory->GetByte(bgCnt[BG_ID].mapDataBase + mapIndex);
 		const U16 BYTES_PER_TILE = TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT;
-		auto pixelAddress = bgCnt.tileDataBase + (tileNumber * BYTES_PER_TILE) + (tileY * TILE_PIXEL_WIDTH) + tileX;
+		auto pixelAddress = bgCnt[BG_ID].tileDataBase + (tileNumber * BYTES_PER_TILE) + (tileY * TILE_PIXEL_WIDTH) + tileX;
 		FetchDecode8BitPixel(pixelAddress, rows[BG_ID][rowX], false);
 	}
 }

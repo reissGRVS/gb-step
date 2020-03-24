@@ -68,12 +68,16 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 		//Find highest priority background pixel, and second if alphablending is enabled
 		for (const auto& bg : bgOrder) {
 			if (!activeWindow.bgEnable[bg]) continue;
+			auto mapX = x;
 
-			if (rows[bg][x].has_value()) {
+			if (bgCnt[bg].mosaic)
+				mapX = mosaic.bgHSize * (mapX/mosaic.bgHSize);
+
+			if (rows[bg][mapX].has_value()) {
 				if (!firstPrioPixel.has_value())
 				{
 					firstPrio = GetLayerPriority(bg);
-					firstPrioPixel = rows[bg][x];
+					firstPrioPixel = rows[bg][mapX];
 					applyEffects = bldCnt.firstTarget[bg];
 				}
 				else if (bldCnt.colorSpecialEffect == BldCnt::AlphaBlending)
@@ -81,7 +85,7 @@ void PPU::MergeRows(std::vector<uint8_t>& bgOrder)
 					//If next found pixel is a blend target keep track of it
 					if (bldCnt.secondTarget[bg])
 					{
-						secondPrioPixel = rows[bg][x];
+						secondPrioPixel = rows[bg][mapX];
 						secondPrio = GetLayerPriority(bg);
 					}
 					break;
@@ -202,9 +206,7 @@ void PPU::DrawLine()
 
 uint8_t PPU::GetLayerPriority(uint8_t layer)
 {
-	auto bgCnt = GET_HALF(BGCNT[layer]);
-	auto bgPriority = BIT_RANGE(bgCnt, 0, 1);
-	return bgPriority;
+	return bgCnt[layer].priority;;
 }
 
 std::vector<uint8_t> PPU::GetBGDrawOrder(std::vector<uint8_t> layers,

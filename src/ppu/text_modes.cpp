@@ -15,34 +15,40 @@ const U32 BYTES_PER_ENTRY = 2;
 
 void PPU::TextBGLine(const U32& BG_ID)
 {
-	auto bgCnt = BGControlInfo(BG_ID, GET_HALF(BGCNT[BG_ID]));
+	bgCnt[BG_ID] = BGControlInfo(BG_ID, GET_HALF(BGCNT[BG_ID]));
+
 	auto bgXOffset = GET_HALF(BGHOFS[BG_ID]) & NBIT_MASK(9);
 	auto bgYOffset = GET_HALF(BGVOFS[BG_ID]) & NBIT_MASK(9);
 
 	auto y = GET_HALF(VCOUNT);
-	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][1];
+	
+	//floor to mosaic
+	if (bgCnt[BG_ID].mosaic)
+		y = (y/mosaic.bgVSize)*mosaic.bgVSize;
+
+	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt[BG_ID].screenSize][1];
 	
 	auto mapY = absoluteY / TILE_PIXEL_HEIGHT;
 	auto mapIndexY = ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
 	auto pixelY = absoluteY % TILE_PIXEL_HEIGHT;
 	auto flippedPixelY = TILE_PIXEL_HEIGHT - (pixelY + 1);
-	auto bytesPerTile = bgCnt.colorDepth * TILE_PIXEL_HEIGHT;
-	auto pixelsPerByte = 8 / bgCnt.colorDepth;
+	auto bytesPerTile = bgCnt[BG_ID].colorDepth * TILE_PIXEL_HEIGHT;
+	auto pixelsPerByte = 8 / bgCnt[BG_ID].colorDepth;
 	
 	auto x = 0u;
 	while (x < Screen::SCREEN_WIDTH) {
 		//TilePixelAtAbsoluteBGPosition
 		// Get tile coords
 
-		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt.screenSize][0];
+		auto absoluteX = (x + bgXOffset) % TEXT_BGMAP_SIZES[bgCnt[BG_ID].screenSize][0];
 		auto mapX = absoluteX / TILE_PIXEL_WIDTH;
 		auto mapIndex = (mapX % TILE_AREA_WIDTH) + mapIndexY;
 		auto pixelX = absoluteX % TILE_PIXEL_WIDTH;
 		
 
-		auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt.screenSize);
+		auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt[BG_ID].screenSize);
 		// Parse tile data
-		auto bgMapEntry = memory->GetHalf(bgCnt.mapDataBase + screenAreaAddressInc + (mapIndex * BYTES_PER_ENTRY));
+		auto bgMapEntry = memory->GetHalf(bgCnt[BG_ID].mapDataBase + screenAreaAddressInc + (mapIndex * BYTES_PER_ENTRY));
 		auto tileNumber = BIT_RANGE(bgMapEntry, 0, 9);
 		bool horizontalFlip = BIT_RANGE(bgMapEntry, 10, 10);
 		bool verticalFlip = BIT_RANGE(bgMapEntry, 11, 11);
@@ -52,8 +58,8 @@ void PPU::TextBGLine(const U32& BG_ID)
 		auto py = verticalFlip ? flippedPixelY : pixelY;
 
 		// Calculate position of tile pixel
-		auto startOfTileAddress = bgCnt.tileDataBase + (tileNumber * bytesPerTile);
-		auto positionInTileY = (py * bgCnt.colorDepth);
+		auto startOfTileAddress = bgCnt[BG_ID].tileDataBase + (tileNumber * bytesPerTile);
+		auto positionInTileY = (py * bgCnt[BG_ID].colorDepth);
 		
 		for (auto px_ = pixelX; px_ < 8; px_++)
 		{
@@ -65,7 +71,7 @@ void PPU::TextBGLine(const U32& BG_ID)
 			}
 
 			auto pixelAddress = startOfTileAddress + (px / pixelsPerByte) + positionInTileY;
-			if (bgCnt.colorDepth == 4) {
+			if (bgCnt[BG_ID].colorDepth == 4) {
 				FetchDecode4BitPixel(pixelAddress, rows[BG_ID][x], paletteNumber, (px % 2 == 0), false);
 			} else // equal to 8
 			{

@@ -75,7 +75,21 @@ void PPU::InitTempSprite(ObjAttributes objAttrs)
 			tempSpriteIndexStart += TILE_PIXEL_WIDTH;
 		}
 	}
+
+	if (objAttrs.attr0.b.objMosaic && (mosaic.objVSize != 1 || mosaic.objHSize != 1))
+	{
+		for (U16 y = 0; y < spriteHeight*TILE_PIXEL_HEIGHT; y++) {
+			U16 mapY = mosaic.objVSize * (y/mosaic.objVSize);
+			for (U16 x = 0; x < spriteWidth*TILE_PIXEL_WIDTH; x++) {
+				U16 mapX = mosaic.objHSize * (x/mosaic.objHSize);
+				auto index = x + y * SPRITE_PIXEL_WIDTH;
+				auto mapIndex = mapX + mapY * SPRITE_PIXEL_WIDTH;
+				tempSprite[index] = tempSprite[mapIndex];
+			}
+		}
+	}
 }
+
 
 void PPU::DrawObject(ObjAttributes objAttrs)
 {
