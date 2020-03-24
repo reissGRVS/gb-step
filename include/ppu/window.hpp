@@ -15,7 +15,7 @@ struct Window {
 
 	bool InRange(U16 x, U16 y)
 	{
-		 return (x >= X1 && x <= X2 && y >= Y1 && y <= Y2 );
+		 return (x >= X1 && x < X2 && y >= Y1 && y < Y2 );
 	}
 
 	void SetXValues(U16 value)
