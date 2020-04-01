@@ -1,12 +1,14 @@
 #include "platform/logging.hpp"
 
+#ifdef NDEBUG
 #include <iostream>
 #include <spdlog/spdlog.h>
-
 LogLevel logLevel = LogLevel::INFO;
+#endif
 
 void SetLogLevel(LogLevel ll)
 {
+#ifdef NDEBUG
 	switch (ll) {
 	case ERROR:
 		spdlog::set_level(spdlog::level::level_enum::err);
@@ -24,10 +26,12 @@ void SetLogLevel(LogLevel ll)
 		spdlog::set_level(spdlog::level::level_enum::trace);
 		break;
 	}
+#endif
 }
 
 void ToggleLogLevel()
 {
+#ifdef NDEBUG
 	if (logLevel == TRACE) {
 		std::cout << "Toggled to INFO log level" << std::endl;
 		logLevel = INFO;
@@ -40,4 +44,5 @@ void ToggleLogLevel()
 	}
 
 	SetLogLevel(logLevel);
+#endif
 }

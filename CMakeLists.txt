@@ -1,9 +1,6 @@
-cmake_minimum_required(VERSION 3.10.0)  # CMake version check
-project(gba)               # Create project "simple_example"
-set(CMAKE_CXX_STANDARD 17)            # Enable c++17 standard
-if(NOT TARGET spdlog)
-    find_package(spdlog REQUIRED)
-endif()
+cmake_minimum_required(VERSION 3.10.0)
+project(gba)
+set(CMAKE_CXX_STANDARD 17)
 
 # SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 # SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
@@ -49,4 +46,11 @@ find_package(SFML 2 REQUIRED graphics window system audio)
 include_directories(${SFML_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
 target_compile_options(gba PRIVATE -Ofast -Wall -Wextra -pedantic -Werror)
-target_link_libraries(gba PRIVATE ${SFML_LIBRARIES} ${SFML_DEPENDENCIES} spdlog::spdlog)
+IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
+	if(NOT TARGET spdlog)
+		find_package(spdlog REQUIRED)
+	endif()
+	target_link_libraries(gba PRIVATE ${SFML_LIBRARIES} ${SFML_DEPENDENCIES} spdlog::spdlog)
+ELSE()
+	target_link_libraries(gba PRIVATE ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+ENDIF()
