@@ -1,6 +1,7 @@
 
 #include "debugger.hpp"
 #include "gba.hpp"
+#include "platform/sfml/joypad.hpp"
 #include "platform/sfml/window.hpp"
 #include <iostream>
 #include <string>

@@ -6,7 +6,7 @@
 #include "int.hpp"
 #include "platform/sfml/audio.hpp"
 #include <algorithm>
-#include <fstream>
+// #include <fstream>
 
 class APU : public APUIORegisters {
 
@@ -27,7 +27,7 @@ public:
 	void Sample();
 
 private:
-	std::ofstream out { "gba.raw", std::ios::binary };
+	// std::ofstream out { "gba.raw", std::ios::binary };
 
 	std::array<std::function<void()>, 2> FifoCallbacks;
 

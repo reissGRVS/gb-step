@@ -17,7 +17,9 @@ public:
 		BP
 	};
 
-	void keyUpdate();
+	virtual void keyUpdate() = 0;
+	U16 getKeyStatus();
+
 	static bool getKey(KEY key)
 	{
 		switch (key) {
@@ -31,12 +33,10 @@ public:
 				return false;
 			}
 		}
-
 		default:
 			return false;
 		}
 	}
-	U16 getKeyStatus();
 
 	static bool a;
 	static bool b;

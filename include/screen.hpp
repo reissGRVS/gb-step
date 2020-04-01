@@ -1,4 +1,5 @@
 #pragma once
+#include "int.hpp"
 #include <array>
 
 class Screen {

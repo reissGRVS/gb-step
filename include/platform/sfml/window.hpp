@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../joypad.hpp"
 #include "../../screen.hpp"
+#include "platform/sfml/joypad.hpp"
 #include <SFML/Graphics.hpp>
 #include <chrono>
 
@@ -10,7 +10,7 @@ public:
 	WindowSFML();
 	void render(const Framebuffer& fb) override;
 
-	Joypad joypad;
+	JoypadSFML joypad;
 
 private:
 	void translateFramebuffer(const Framebuffer& fb);
