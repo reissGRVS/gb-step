@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include "int.hpp"
+#include <array>
 #include <memory>
 
 #include "memory/memory.hpp"
@@ -58,15 +58,16 @@ enum ModeBits {
 };
 
 struct StatusRegister {
-	U32 ToU32(){
+	U32 ToU32()
+	{
 		U32 registerValue = modeBits
-		+ (thumb << 5)
-		+ (fiqDisable << 6)
-		+ (irqDisable << 7)
-		+ (v << 28)
-		+ (c << 29)
-		+ (z << 30)
-		+ (n << 31);
+			+ (thumb << 5)
+			+ (fiqDisable << 6)
+			+ (irqDisable << 7)
+			+ (v << 28)
+			+ (c << 29)
+			+ (z << 30)
+			+ (n << 31);
 
 		return registerValue;
 	}
@@ -101,8 +102,6 @@ struct StatusRegister {
 	bool n;
 };
 
-
-
 class RegisterSet {
 public:
 	enum ModeBank {
@@ -123,20 +122,19 @@ public:
 
 	void SwitchMode(ModeBits mode);
 
-
 	StatusRegister CPSR;
 	StatusRegister& GetSPSR();
 
 private:
 	ModeBank currentBank = ModeBank::SYS;
 
-	std::array<StatusRegister, 5> SPSR{};
+	std::array<StatusRegister, 5> SPSR {};
 	struct Registers {
-		std::array<U32, 16> ACTIVE{};
-		std::array<U32, 5> GPR{}; // R8-12 Other modes
-		std::array<U32, 5> GPR_FIQ{}; // R8-12 FIQ
-		std::array<U32, 6> SP{}; // R13 All modes
-		std::array<U32, 6> LR{}; // R14 All modes// System/Usr mode has no SPSR
+		std::array<U32, 16> ACTIVE {};
+		std::array<U32, 5> GPR {}; // R8-12 Other modes
+		std::array<U32, 5> GPR_FIQ {}; // R8-12 FIQ
+		std::array<U32, 6> SP {}; // R13 All modes
+		std::array<U32, 6> LR {}; // R14 All modes// System/Usr mode has no SPSR
 	} registers;
 };
 

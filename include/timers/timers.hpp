@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
-#include <memory>
 #include <functional>
+#include <memory>
 
 #include "arm7tdmi/irq_channel.hpp"
 #include "memory/regions.hpp"
@@ -34,12 +34,12 @@ private:
 	U32 minTicks;
 	bool ticksToOverflowKnown = false;
 
-	const std::array<Interrupt, 4> timerInterrupts{
+	const std::array<Interrupt, 4> timerInterrupts {
 		Interrupt::Timer0, Interrupt::Timer1, Interrupt::Timer2,
 		Interrupt::Timer3
 	};
 
-	std::array<Timer, 4> timers{
+	std::array<Timer, 4> timers {
 		Timer(0, TM0CNT_L), Timer(1, TM1CNT_L),
 		Timer(2, TM2CNT_L), Timer(3, TM3CNT_L)
 	};

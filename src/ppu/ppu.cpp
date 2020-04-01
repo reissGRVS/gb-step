@@ -1,6 +1,6 @@
 #include "ppu/ppu.hpp"
 #include "memory/regions.hpp"
-#include "spdlog/spdlog.h"
+
 #include "utils.hpp"
 #include <map>
 
@@ -60,6 +60,8 @@ void PPU::ToHBlank()
 	UpdateDispStat(HBlankFlag, true);
 
 	if (GetDispStat(HBlankIRQEnable)) {
+
+		LOG_DEBUG("HBlank IntReq")
 		irqChannel->RequestInterrupt(Interrupt::HBlank);
 	}
 }
@@ -71,6 +73,7 @@ void PPU::OnHBlankFinish()
 
 	auto vCount = IncrementVCount();
 	if (vCount >= VISIBLE_LINES) {
+		LOG_DEBUG("VBlank Finished")
 		ToVBlank();
 	} else {
 		state = Visible;
@@ -83,11 +86,12 @@ void PPU::ToVBlank()
 	DrawObjects();
 	screen.render(fb);
 	fb.fill(memory->GetHalf(PRAM_START));
-	
+
 	// Set VBlank flag and Request Interrupt
 	UpdateDispStat(VBlankFlag, true);
 
 	if (GetDispStat(VBlankIRQEnable)) {
+		LOG_DEBUG("VBlank IntReq")
 		irqChannel->RequestInterrupt(Interrupt::VBlank);
 	}
 	VBlankCallback(true);
@@ -105,24 +109,31 @@ void PPU::OnVBlankLineFinish()
 
 		//Reload RotScale registers
 		{
-			for (auto bgId = 2; bgId <= 3; bgId++)
-			{
-				auto bgX = memory->GetWord(BGX[bgId-2]);
-				bgXRef[bgId-2] = bgX;
-				if (BIT_RANGE(bgX, 27, 27)) bgXRef[bgId-2] |= 0xF0000000;
-				auto bgY = memory->GetWord(BGY[bgId-2]);
-				bgYRef[bgId-2] = bgY;
-				if (BIT_RANGE(bgY, 27, 27)) bgYRef[bgId-2] |= 0xF0000000;
+			for (auto bgId = 2; bgId <= 3; bgId++) {
+				auto bgX = memory->GetWord(BGX[bgId - 2]);
+				bgXRef[bgId - 2] = bgX;
+				if (BIT_RANGE(bgX, 27, 27))
+					bgXRef[bgId - 2] |= 0xF0000000;
+				auto bgY = memory->GetWord(BGY[bgId - 2]);
+				bgYRef[bgId - 2] = bgY;
+				if (BIT_RANGE(bgY, 27, 27))
+					bgYRef[bgId - 2] |= 0xF0000000;
 			}
-			bldCnt = BldCnt{GET_HALF(BLDCNT)};
+			bldCnt = BldCnt { GET_HALF(BLDCNT) };
 			U16 bldAlpha = GET_HALF(BLDALPHA);
 			eva = BIT_RANGE(bldAlpha, 0, 4);
-			if (eva > 16) {eva = 16;}
+			if (eva > 16) {
+				eva = 16;
+			}
 			evb = BIT_RANGE(bldAlpha, 8, 12);
-			if (evb > 16) {evb = 16;}
+			if (evb > 16) {
+				evb = 16;
+			}
 			U16 bldY = GET_HALF(BLDY);
 			evy = BIT_RANGE(bldY, 0, 4);
-			if (evy > 16) {evy = 16;}
+			if (evy > 16) {
+				evy = 16;
+			}
 		}
 
 		memory->SetHalf(VCOUNT, 0);
@@ -160,7 +171,7 @@ U16 PPU::IncrementVCount()
 	if (GetDispStat(VCountSetting) == vCount) {
 		UpdateDispStat(VCounterFlag, true);
 		if (GetDispStat(VCounterIRQEnable)) {
-			
+			LOG_DEBUG("VCount IntReq")
 			irqChannel->RequestInterrupt(Interrupt::VCounter);
 		}
 	} else {

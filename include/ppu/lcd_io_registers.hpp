@@ -10,5 +10,5 @@ public:
 	static const U32 LCD_IO_SIZE = LCD_IO_END - LCD_IO_START;
 
 protected:
-	std::array<U8, LCD_IO_SIZE> registers{};
+	std::array<U8, LCD_IO_SIZE> registers {};
 };

@@ -1,5 +1,4 @@
 #include "arm7tdmi/registers.hpp"
-#include "spdlog/spdlog.h"
 
 namespace ARM7TDMI {
 
@@ -21,7 +20,7 @@ RegisterSet::ModeBank RegisterSet::getModeBank(ModeBits modeBits)
 	case ModeBits::SYS:
 		return RegisterSet::ModeBank::SYS;
 	default:
-		spdlog::get("std")->error("Invalid modeBits passed");
+		LOG_ERROR("Invalid modeBits passed")
 		exit(-1);
 	}
 }
@@ -67,7 +66,7 @@ bool RegisterSet::ConditionCheck(Condition cond)
 	case NV:
 		return false;
 	default:
-		spdlog::get("std")->error("Out of range register condition check");
+		LOG_ERROR("Out of range register condition check")
 		return false;
 	}
 }
@@ -89,20 +88,15 @@ void RegisterSet::SwitchMode(ModeBits mode)
 	registers.LR[(uint8_t)currentBank] = registers.ACTIVE[14];
 	registers.ACTIVE[14] = registers.LR[(uint8_t)newBank];
 
-	if (newBank == ModeBank::FIQ)
-	{
-		for (U16 i = 0; i < registers.GPR.size(); i++)
-		{
-			registers.GPR[i] = registers.ACTIVE[i+8];
-			registers.ACTIVE[i+8] = registers.GPR_FIQ[i];
+	if (newBank == ModeBank::FIQ) {
+		for (U16 i = 0; i < registers.GPR.size(); i++) {
+			registers.GPR[i] = registers.ACTIVE[i + 8];
+			registers.ACTIVE[i + 8] = registers.GPR_FIQ[i];
 		}
-	}
-	else if (currentBank == ModeBank::FIQ)
-	{
-		for (U16 i = 0; i < registers.GPR.size(); i++)
-		{
-			registers.GPR_FIQ[i] = registers.ACTIVE[i+8];
-			registers.ACTIVE[i+8] = registers.GPR[i];
+	} else if (currentBank == ModeBank::FIQ) {
+		for (U16 i = 0; i < registers.GPR.size(); i++) {
+			registers.GPR_FIQ[i] = registers.ACTIVE[i + 8];
+			registers.ACTIVE[i + 8] = registers.GPR[i];
 		}
 	}
 
@@ -114,10 +108,8 @@ StatusRegister& RegisterSet::GetSPSR()
 {
 	if (currentBank != ModeBank::SYS) {
 		return SPSR[(uint8_t)currentBank - 1];
-	}
-	else
-	{
-		spdlog::get("std")->error("Tried to access Sys SPSR @ PC {:X}", registers.ACTIVE[15]);
+	} else {
+		LOG_ERROR("Tried to access Sys SPSR @ PC {:X}", registers.ACTIVE[15])
 		return CPSR;
 	}
 }

@@ -98,13 +98,12 @@ void Channel::UpdateDetails(U16 value)
 	destAddrCtl = BIT_RANGE(dmaCnt, 5, 6);
 	srcAddrCtl = BIT_RANGE(dmaCnt, 7, 8);
 	CalculateTransferSteps();
-
 }
 
-void Channel::DoSoundTransfer(){
+void Channel::DoSoundTransfer()
+{
 
-	for (int i = 0; i < 4; i++)
-	{
+	for (int i = 0; i < 4; i++) {
 		U32 readVal = memory->Read(Word, source, SEQ);
 		memory->Write(Word, dest, readVal, SEQ);
 		source += srcStep;

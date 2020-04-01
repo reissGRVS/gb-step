@@ -28,6 +28,7 @@ set(SOURCE_FILES
 	src/memory/flash.cpp
 	src/memory/io_registers.cpp
 	src/platform/sfml/window.cpp
+	src/platform/logging.cpp
 	src/ppu/ppu.cpp
 	src/ppu/draw_control.cpp
 	src/ppu/draw_util.cpp

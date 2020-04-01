@@ -8,9 +8,9 @@
 #include <vector>
 
 #include "arm7tdmi/ir_io_registers.hpp"
+#include "arm7tdmi/irq_channel.hpp"
 #include "arm7tdmi/op_cache.hpp"
 #include "arm7tdmi/types.hpp"
-#include "arm7tdmi/irq_channel.hpp"
 #include "memory/read_write_interface.hpp"
 #include "opbacktrace.hpp"
 #include "registers.hpp"
@@ -25,8 +25,7 @@ public:
 		: clock(clock)
 		, memory(memory)
 	{
-		for (auto op2 = 0u; op2 < operand2Parameters.size(); op2++)
-		{
+		for (auto op2 = 0u; op2 < operand2Parameters.size(); op2++) {
 			operand2Parameters[op2] = DataProcOperand2(op2);
 		}
 	}
@@ -43,7 +42,7 @@ public:
 		U32 address,
 		U32 value,
 		const Sequentiality&) override;
-	
+
 	void RequestInterrupt(Interrupt i) override
 	{
 		auto intReq = Read(Half, IF, FREE);
@@ -56,22 +55,21 @@ public:
 	OpBacktrace backtrace;
 
 private:
-
 	struct DataProcOperand2 {
 		DataProcOperand2() {}
-		DataProcOperand2(U16 value) :
-		imm(BIT_RANGE(value, 0, 7)),
-		rotate(BIT_RANGE(value, 8, 11) * 2),
-		rm((Register)BIT_RANGE(value, 0, 3)),
-		shiftType(BIT_RANGE(value, 5, 6)),
-		fromReg(BIT_RANGE(value, 4, 4)),
-		shiftRegister((Register)BIT_RANGE(value, 8, 11)),
-		shiftAmount(BIT_RANGE(value, 7, 11)) {};
+		DataProcOperand2(U16 value)
+			: imm(BIT_RANGE(value, 0, 7))
+			, rotate(BIT_RANGE(value, 8, 11) * 2)
+			, rm((Register)BIT_RANGE(value, 0, 3))
+			, shiftType(BIT_RANGE(value, 5, 6))
+			, fromReg(BIT_RANGE(value, 4, 4))
+			, shiftRegister((Register)BIT_RANGE(value, 8, 11))
+			, shiftAmount(BIT_RANGE(value, 7, 11)) {};
 
 		//Immediate
 		U32 imm;
 		U8 rotate;
-		
+
 		//Non immediate
 		Register rm;
 		U8 shiftType;
@@ -101,7 +99,6 @@ private:
 		bool& carryOut,
 		bool regProvidedAmount);
 
-	
 	// Thumb Operations
 	Op ThumbOperation(OpCode opcode);
 
@@ -112,7 +109,7 @@ private:
 	Op ThumbALUOps_P();
 	Op ThumbHiRegOps_P();
 	Op ThumbPCRelativeLoad_P();
-	void ThumbPCRelativeLoad(U16 Word8 , U16 Rd);
+	void ThumbPCRelativeLoad(U16 Word8, U16 Rd);
 	Op ThumbLSRegOff_P();
 	Op ThumbLSSignExt_P();
 	Op ThumbLSImmOff_P();
@@ -128,7 +125,7 @@ private:
 	Op ThumbUncondBranch_P();
 	void ThumbUncondBranch(U16 Offset11);
 	Op ThumbLongBranchLink_P();
-	void ThumbLongBranchLink(U16 Offset,  U16 H);
+	void ThumbLongBranchLink(U16 Offset, U16 H);
 
 	Op ArmOperation(OpCode opcode);
 	// ARM Operations
@@ -160,7 +157,7 @@ private:
 		U32 Rd,
 		U32 Op2);
 	void DataProcessing(U32 I, U32 OpCode, U32 S, U32 Rn, U32 Rd, U32 Op2, bool Adr);
-	
+
 	void ArmMRS(bool Ps, U8 Rd);
 	void ArmMSR(bool I, bool Pd, bool flagsOnly, U16 source);
 

@@ -18,6 +18,6 @@ enum Interrupt {
 };
 
 class IRQChannel {
-	public:
-		virtual void RequestInterrupt(Interrupt i) = 0;		
+public:
+	virtual void RequestInterrupt(Interrupt i) = 0;
 };

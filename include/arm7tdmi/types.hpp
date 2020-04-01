@@ -2,8 +2,8 @@
 
 #include "int.hpp"
 #include <array>
-#include <utility>
 #include <functional>
+#include <utility>
 #include <vector>
 namespace ARM7TDMI {
 

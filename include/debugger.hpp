@@ -7,7 +7,6 @@
 #include <exception>
 #include <iostream>
 #include <memory>
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -15,7 +14,7 @@
 class Debugger {
 public:
 	Debugger(std::shared_ptr<Memory> memory)
-		: memory(memory){};
+		: memory(memory) {};
 
 	enum debugOp {
 		step,
@@ -52,10 +51,9 @@ private:
 
 	std::shared_ptr<Memory> memory;
 	int steps_till_next_break = 1;
-	spdlog::level::level_enum logLevel = spdlog::level::level_enum::info;
 	bool noRegBP = true;
 	bool memoryBreakpoint = false;
 	ARM7TDMI::StateView view;
-	std::array<std::optional<U32>, 16> regWatchedValues{};
+	std::array<std::optional<U32>, 16> regWatchedValues {};
 	std::unordered_set<U32> watchedAddresses;
 };

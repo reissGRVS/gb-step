@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include "int.hpp"
+#include <array>
 #include <iomanip>
 #include <iostream>
 #include <utility>
@@ -36,7 +36,7 @@ public:
 
 private:
 	U32 last = 0;
-	std::array<OpcodePCPair, BUFFER_SIZE> buffer{};
+	std::array<OpcodePCPair, BUFFER_SIZE> buffer {};
 };
 
 } // namespace ARM7TDMI

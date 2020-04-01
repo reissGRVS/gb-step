@@ -40,5 +40,5 @@ private:
 	std::shared_ptr<APUIORegisters> apu;
 
 	std::array<U8, IOREG_SIZE>
-		backup{};
+		backup {};
 };

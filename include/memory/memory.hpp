@@ -25,7 +25,7 @@ public:
 		Joypad& joypad);
 
 	std::string Name() { return "MEMORY"; };
-	void Save() {mem.ext.backup->Save();}
+	void Save() { mem.ext.backup->Save(); }
 	void AttachIORegisters(std::shared_ptr<IORegisters> io);
 	void AttachIRIORegisters(std::shared_ptr<IRIORegisters> irio);
 
@@ -43,7 +43,6 @@ public:
 	void SetByte(const U32& address, const U8& value);
 	void SetHalf(const U32& address, const U16& value);
 	void SetWord(const U32& address, const U32& value);
-
 
 	void SetIOWriteCallback(U32 address,
 		std::function<void(U32)> callback);
@@ -68,20 +67,20 @@ private:
 
 	struct MemoryMap {
 		struct {
-			std::array<U8, BIOS_SIZE> bios{};
-			std::array<U8, WRAMB_SIZE> wramb{};
-			std::array<U8, WRAMC_SIZE> wramc{};
-			std::shared_ptr<IORegisters> io{};
+			std::array<U8, BIOS_SIZE> bios {};
+			std::array<U8, WRAMB_SIZE> wramb {};
+			std::array<U8, WRAMC_SIZE> wramc {};
+			std::shared_ptr<IORegisters> io {};
 		} gen;
 
 		struct {
-			std::array<U8, PRAM_SIZE> pram{};
-			std::array<U8, VRAM_SIZE> vram{};
-			std::array<U8, OAM_SIZE> oam{};
+			std::array<U8, PRAM_SIZE> pram {};
+			std::array<U8, VRAM_SIZE> vram {};
+			std::array<U8, OAM_SIZE> oam {};
 		} disp;
 
 		struct {
-			std::array<U8, ROM_SIZE> rom{};
+			std::array<U8, ROM_SIZE> rom {};
 			std::unique_ptr<CartBackup> backup;
 		} ext;
 	} mem;

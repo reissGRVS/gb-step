@@ -16,7 +16,7 @@ void Controller::Write(const AccessSize& size,
 {
 
 	if (size == Byte) {
-		spdlog::get("std")->error("Byte DMA Write - Needs implemented?");
+		LOG_ERROR("Byte DMA Write - Needs implemented?")
 		exit(-1);
 	}
 

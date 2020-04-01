@@ -1,6 +1,6 @@
 #pragma once
 #include "memory/memory.hpp"
-#include "spdlog/spdlog.h"
+
 #include "utils.hpp"
 
 namespace DMA {

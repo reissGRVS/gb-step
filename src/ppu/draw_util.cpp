@@ -1,7 +1,7 @@
 #include "memory/regions.hpp"
-#include "ppu/ppu.hpp"
 #include "ppu/pixel.hpp"
-#include "spdlog/spdlog.h"
+#include "ppu/ppu.hpp"
+
 #include "utils.hpp"
 
 U16 PPU::GetBgColorFromSubPalette(const U8& paletteNumber,
@@ -25,37 +25,31 @@ void PPU::SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& 
 	if (!firstPrioPixel.has_value())
 		return;
 
-	Pixel firstPixel{firstPrioPixel.value()};
+	Pixel firstPixel { firstPrioPixel.value() };
 
-	switch (effect)
-	{
-		case BldCnt::None:
-		{
-			break;
-		}
-		case BldCnt::AlphaBlending:
-		{
-			//Blend with backdrop if possible
-			if (!secondPrioPixel.has_value() && bldCnt.secondTarget[5])
-				secondPrioPixel = dest;
+	switch (effect) {
+	case BldCnt::None: {
+		break;
+	}
+	case BldCnt::AlphaBlending: {
+		//Blend with backdrop if possible
+		if (!secondPrioPixel.has_value() && bldCnt.secondTarget[5])
+			secondPrioPixel = dest;
 
-			if (secondPrioPixel.has_value())
-			{
-				Pixel secondPixel{secondPrioPixel.value()};
-				firstPixel.Blend(secondPixel, eva, evb);
-			}
-			break;
+		if (secondPrioPixel.has_value()) {
+			Pixel secondPixel { secondPrioPixel.value() };
+			firstPixel.Blend(secondPixel, eva, evb);
 		}
-		case BldCnt::BrightnessIncrease:
-		{
-			firstPixel.BrightnessIncrease(evy);
-			break;
-		}
-		case BldCnt::BrightnessDecrease:
-		{
-			firstPixel.BrightnessDecrease(evy);
-			break;
-		}
+		break;
+	}
+	case BldCnt::BrightnessIncrease: {
+		firstPixel.BrightnessIncrease(evy);
+		break;
+	}
+	case BldCnt::BrightnessDecrease: {
+		firstPixel.BrightnessDecrease(evy);
+		break;
+	}
 	}
 
 	dest = firstPixel.Value();

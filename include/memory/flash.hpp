@@ -15,7 +15,6 @@ public:
 	    saveFilePath(saveFilePath),
 	    manufacturerID((size == Single) ? 0xBF : 0xC2),
         deviceID((size == Single) ? 0xD4 : 0x09) {
-    std::cout << saveFilePath << std::endl;
 	std::ifstream infile(saveFilePath);
     if (!infile.is_open()) {
       std::cout << "No existing savefile found at supplied path" << std::endl;
@@ -25,10 +24,8 @@ public:
     infile.read(reinterpret_cast<char *>(bank1.data()), FLASH_BANK_SIZE);
 	if (size == Double)
 	{
-		std::cout << "Position in file pre bank 2 " << infile.tellg() << std::endl;
 		infile.read(reinterpret_cast<char *>(bank2.data()), FLASH_BANK_SIZE);
 	}
-	std::cout << "Position in file" << infile.tellg() << std::endl;
   }
 
   void Save() override;

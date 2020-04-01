@@ -1,29 +1,29 @@
 #pragma once
 
-#include "memory/memory.hpp"
 #include "arm7tdmi/irq_channel.hpp"
+#include "memory/memory.hpp"
+#include "memory/regions.hpp"
 #include "ppu/bg_control_info.hpp"
 #include "ppu/blend_control.hpp"
-#include "ppu/lcd_io_registers.hpp"
 #include "ppu/lcd_control.hpp"
+#include "ppu/lcd_io_registers.hpp"
 #include "ppu/obj_attributes.hpp"
 #include "ppu/tile_info.hpp"
 #include "ppu/window.hpp"
 #include "screen.hpp"
 #include "utils.hpp"
-#include "memory/regions.hpp"
 
 #include <optional>
 #include <vector>
 
-#define GET_HALF(A) (U16)Read(Half, A, FREE)
+#define GET_HALF(A) (U16) Read(Half, A, FREE)
 class PPU : public LCDIORegisters {
 	enum State { Visible,
 		HBlank,
 		VBlank };
 
 public:
-	PPU(std::shared_ptr<Memory> memory_, Screen& screen_, 
+	PPU(std::shared_ptr<Memory> memory_, Screen& screen_,
 		std::shared_ptr<IRQChannel> irqChannel_,
 		std::function<void(bool)> HBlankCallback_,
 		std::function<void(bool)> VBlankCallback_)
@@ -46,7 +46,6 @@ public:
 		const Sequentiality&) override;
 
 private:
-
 	using OptPixel = std::optional<U16>;
 
 	struct Mosaic {
@@ -73,16 +72,16 @@ private:
 	std::vector<uint8_t> GetBGDrawOrder(std::vector<uint8_t> layers,
 		uint8_t screenDisplay);
 
-	BGControlInfo bgCnt[4] = {BGControlInfo(0,0),BGControlInfo(0,0),BGControlInfo(0,0),BGControlInfo(0,0)};
-	DispCnt dispCnt{0};
-	
+	BGControlInfo bgCnt[4] = { BGControlInfo(0, 0), BGControlInfo(0, 0), BGControlInfo(0, 0), BGControlInfo(0, 0) };
+	DispCnt dispCnt { 0 };
+
 	// Objects
 	void DrawObjects();
 	void InitTempSprite(ObjAttributes objAttrs);
 	void DrawObject(ObjAttributes objAttrs);
 	void SetObjPixel(OptPixel& pixel, U32 fbPos, U8 objectTransparency, U16 prio);
 
-	std::array<OptPixel, 64*64> tempSprite = {};
+	std::array<OptPixel, 64 * 64> tempSprite = {};
 
 	// Text Mode
 	void TextBGLine(const uint32_t& BG_ID);
@@ -105,13 +104,12 @@ private:
 		bool obj = false);
 
 	void SetSFXPixel(OptPixel& firstPrioPixel, OptPixel& secondPrioPixel, U16& dest, BldCnt::ColorSpecialEffect effect);
-	
+
 	template <typename T>
 	void FetchDecode8BitPixel(U32 address, T& dest, bool obj)
 	{
 		auto pixelPalette = memory->GetByte(address);
-		if (pixelPalette != 0)
-		{
+		if (pixelPalette != 0) {
 			dest = GetBgColorFromPalette(pixelPalette, obj);
 		}
 	}
@@ -126,8 +124,7 @@ private:
 			pixelPalette = BIT_RANGE(pixelPalette, 4, 7);
 		}
 
-		if (pixelPalette != 0)
-		{
+		if (pixelPalette != 0) {
 			dest = GetBgColorFromSubPalette(paletteNumber, pixelPalette, obj);
 		}
 	}
@@ -138,9 +135,8 @@ private:
 	std::function<void(bool)> HBlankCallback;
 	std::function<void(bool)> VBlankCallback;
 
-	
-	Window fullyEnabledWindow = Window{0, 255, 0, 255, {true, true, true, true}, true, true};
-	
+	Window fullyEnabledWindow = Window { 0, 255, 0, 255, { true, true, true, true }, true, true };
+
 	std::array<Window, 4> windows {};
 
 	struct ObjPixel {
@@ -150,12 +146,12 @@ private:
 		bool mask;
 	};
 
-	const ObjPixel emptyObjPixel {{}, 5, false, false};
+	const ObjPixel emptyObjPixel { {}, 5, false, false };
 
 	std::array<ObjPixel, Screen::SCREEN_TOTAL> objFb;
-	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows{};
+	std::array<std::array<OptPixel, Screen::SCREEN_WIDTH>, 4> rows {};
 
-	Screen::Framebuffer fb{};
+	Screen::Framebuffer fb {};
 	State state = Visible;
 	U32 tickCount = 0;
 
@@ -168,4 +164,3 @@ private:
 
 	const U16 MAX_DEPTH = 4;
 };
-

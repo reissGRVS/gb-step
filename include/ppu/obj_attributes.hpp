@@ -1,8 +1,8 @@
 #pragma once
 
+#include "int.hpp"
 #include "memory/regions.hpp"
 #include "utils.hpp"
-#include "int.hpp"
 
 struct ObjAttributes {
 	ObjAttributes(const uint16_t& objAttr0,
@@ -18,7 +18,7 @@ struct ObjAttributes {
 	{
 		return BIT_RANGE(attr1.full, 9, 13);
 	}
-	
+
 	union {
 		uint16_t full;
 		struct {

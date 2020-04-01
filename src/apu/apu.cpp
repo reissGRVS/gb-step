@@ -18,12 +18,14 @@
 		}
 	}
 
+	const U8 CHANNEL_TIMER_SELECT[2] = {10, 14};
+	
 	void APU::FIFOUpdate(U8 timerID)
 	{
 		for (auto i = 0; i <= 1; i++)
 		{
 			auto soundCntH = Read(AccessSize::Half, SOUNDCNT_H, Sequentiality::FREE);
-			auto timerSelect = 10 + 4 *i;
+			auto timerSelect = CHANNEL_TIMER_SELECT[i];
 			auto timer = BIT_RANGE(soundCntH, timerSelect, timerSelect);
 			if (timer == timerID)
 			{

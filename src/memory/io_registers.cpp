@@ -1,5 +1,4 @@
 #include "memory/io_registers.hpp"
-#include "spdlog/spdlog.h"
 
 IORegisters::IORegisters(std::shared_ptr<TimersIORegisters> timers,
 	std::shared_ptr<DMAIORegisters> dma,
@@ -41,14 +40,14 @@ U32 IORegisters::Read(const AccessSize& size,
 		return lowerHalf + (upperHalf << 16);
 	}
 
-	
+	LOG_TRACE("IO Read @ {:X}", address)
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
 		return regSet->Read(size, address, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
 		auto value = ReadToSize(backup, actualIndex, size);
-		
+		LOG_DEBUG("Unhandled IO Read {:X} @ {:X}", value, address)
 		return value;
 	}
 }
@@ -64,14 +63,13 @@ void IORegisters::Write(const AccessSize& size,
 		Write(Half, address + 2, value >> 16, seq);
 		return;
 	}
-
-	
+	LOG_TRACE("IO Write {:X} @ {:X}", value, address)
 	auto regSet = GetRegisterSet(address);
 	if (regSet.get() != nullptr) {
 		regSet->Write(size, address, value, seq);
 	} else {
 		U32 actualIndex = address - IOREG_START;
-		
+		LOG_DEBUG("Unhandled IO Write {:X} @ {:X}", value, address)
 		WriteToSize(backup, actualIndex, value, size);
 	}
 }

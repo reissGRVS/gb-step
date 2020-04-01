@@ -31,7 +31,7 @@ public:
 	}
 
 protected:
-	std::array<U8, IR_IO_SIZE> ioregisters{};
+	std::array<U8, IR_IO_SIZE> ioregisters {};
 
 	bool interruptReady = false;
 	void InterruptUpdate();

@@ -1,5 +1,6 @@
 #include "debugger.hpp"
 #include "joypad.hpp"
+#include "platform/logging.hpp"
 #include <iomanip>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -290,16 +291,5 @@ void Debugger::AddBreakpointCondition(std::string condition)
 
 void Debugger::ToggleLoggingLevel()
 {
-	if (logLevel == spdlog::level::level_enum::trace) {
-		std::cout << "Toggled to INFO log level" << std::endl;
-		logLevel = spdlog::level::level_enum::info;
-	} else if (logLevel == spdlog::level::level_enum::info) {
-		std::cout << "Toggled to DEBUG log level" << std::endl;
-		logLevel = spdlog::level::level_enum::debug;
-	} else {
-		std::cout << "Toggled to TRACE log level" << std::endl;
-		logLevel = spdlog::level::level_enum::trace;
-	}
-
-	spdlog::set_level(logLevel);
+	ToggleLogLevel();
 }

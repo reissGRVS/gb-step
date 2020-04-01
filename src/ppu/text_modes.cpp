@@ -1,9 +1,7 @@
 #include "memory/regions.hpp"
+#include "platform/logging.hpp"
 #include "ppu/ppu.hpp"
-#include "spdlog/spdlog.h"
 #include "utils.hpp"
-#include <iostream>
-
 
 const U32 BGHOFS[4] = { BG0HOFS, BG1HOFS, BG2HOFS, BG3HOFS };
 const U32 BGVOFS[4] = { BG0VOFS, BG1VOFS, BG2VOFS, BG3VOFS };
@@ -21,20 +19,20 @@ void PPU::TextBGLine(const U32& BG_ID)
 	auto bgYOffset = GET_HALF(BGVOFS[BG_ID]) & NBIT_MASK(9);
 
 	auto y = GET_HALF(VCOUNT);
-	
+
 	//floor to mosaic
 	if (bgCnt[BG_ID].mosaic)
-		y = (y/mosaic.bgVSize)*mosaic.bgVSize;
+		y = (y / mosaic.bgVSize) * mosaic.bgVSize;
 
 	auto absoluteY = (y + bgYOffset) % TEXT_BGMAP_SIZES[bgCnt[BG_ID].screenSize][1];
-	
+
 	auto mapY = absoluteY / TILE_PIXEL_HEIGHT;
 	auto mapIndexY = ((mapY % TILE_AREA_HEIGHT) * TILE_AREA_WIDTH);
 	auto pixelY = absoluteY % TILE_PIXEL_HEIGHT;
 	auto flippedPixelY = TILE_PIXEL_HEIGHT - (pixelY + 1);
 	auto bytesPerTile = bgCnt[BG_ID].colorDepth * TILE_PIXEL_HEIGHT;
 	auto pixelsPerByte = 8 / bgCnt[BG_ID].colorDepth;
-	
+
 	auto x = 0u;
 	while (x < Screen::SCREEN_WIDTH) {
 		//TilePixelAtAbsoluteBGPosition
@@ -44,7 +42,6 @@ void PPU::TextBGLine(const U32& BG_ID)
 		auto mapX = absoluteX / TILE_PIXEL_WIDTH;
 		auto mapIndex = (mapX % TILE_AREA_WIDTH) + mapIndexY;
 		auto pixelX = absoluteX % TILE_PIXEL_WIDTH;
-		
 
 		auto screenAreaAddressInc = GetScreenAreaOffset(mapX, mapY, bgCnt[BG_ID].screenSize);
 		// Parse tile data
@@ -60,9 +57,8 @@ void PPU::TextBGLine(const U32& BG_ID)
 		// Calculate position of tile pixel
 		auto startOfTileAddress = bgCnt[BG_ID].tileDataBase + (tileNumber * bytesPerTile);
 		auto positionInTileY = (py * bgCnt[BG_ID].colorDepth);
-		
-		for (auto px_ = pixelX; px_ < 8; px_++)
-		{
+
+		for (auto px_ = pixelX; px_ < 8; px_++) {
 			if (x >= Screen::SCREEN_WIDTH)
 				break;
 			auto px = px_;
@@ -103,9 +99,8 @@ U32 PPU::GetScreenAreaOffset(U32 mapX,
 		break;
 	}
 
-	if (screenAreaId > 3)
-	{
-		std::cerr << "screenAreaID oob" << std::endl;
+	if (screenAreaId > 3) {
+		LOG_ERROR("screenAreaID oob")
 		exit(01);
 	}
 

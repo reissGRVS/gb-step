@@ -1,7 +1,8 @@
 #include "timers/timers.hpp"
 
 Timers::Timers(std::shared_ptr<IRQChannel> irqChannel, std::function<void(U8)> apuCallback)
-	: irqChannel(irqChannel), apuCallback(apuCallback)
+	: irqChannel(irqChannel)
+	, apuCallback(apuCallback)
 {
 }
 
@@ -13,12 +14,11 @@ void Timers::Update(const U32 ticks)
 		overflow = timers[timerIndex].Update(ticks, overflow);
 
 		if (overflow && timers[timerIndex].irqEnable) {
-			
+			LOG_DEBUG("Timer {:X} IntReq", timerIndex)
 			irqChannel->RequestInterrupt(timerInterrupts[timerIndex]);
 		}
 
-		if (overflow && (timerIndex == 0 || timerIndex == 1))
-		{
+		if (overflow && (timerIndex == 0 || timerIndex == 1)) {
 			apuCallback(timerIndex);
 		}
 	}

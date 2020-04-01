@@ -28,5 +28,5 @@ struct Timer {
 	U32 prescalerCount = 0;
 	U32 ticksLeft = 0x1000;
 
-	const std::array<U16, 4> PRESCALER_SELECTION{ 1, 64, 256, 1024 };
+	const std::array<U16, 4> PRESCALER_SELECTION { 1, 64, 256, 1024 };
 };
